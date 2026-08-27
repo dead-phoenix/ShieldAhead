@@ -7,6 +7,9 @@ export function SettingsPage() {
   const profile = getHouseholdProfile()
   const consent = getConsentState()
   const offline = getOfflinePreferences()
+  const allowedConsentCount = consent
+    ? Object.values(consent.optionalCategories).filter(Boolean).length
+    : 0
 
   return (
     <section className="content-page profile-page" aria-labelledby="settings-title">
@@ -23,11 +26,11 @@ export function SettingsPage() {
               <div><dt>Health</dt><dd>{profile.healthNeeds?.join(', ') || 'Not provided'}</dd></div>
               <div><dt>Accessibility</dt><dd>{profile.accessibilityNeeds?.join(', ') || 'Not provided'}</dd></div>
             </dl>
-            <Link className="button button--quiet" to={appRoutes.householdBasics}>Edit details</Link>
+            <Link className="button button--quiet" to={appRoutes.editProfile}>Edit details</Link>
           </section>
           <section className="settings-group" aria-labelledby="stored-data-title"><h2 id="stored-data-title">Stored data</h2>
             <Link className="settings-row" to={appRoutes.offlineInformation}><Database aria-hidden="true" size={22} /><span><strong>Offline information</strong><small>{offline.wifiSaved || offline.supportSaved ? 'Wi-Fi and support records are available' : 'No public information selected'}</small></span><ArrowRight aria-hidden="true" size={19} /></Link>
-            <div className="settings-row settings-row--static"><ShieldCheck aria-hidden="true" size={22} /><span><strong>Consent choices</strong><small>{consent ? 'Saved on this device' : 'No choices saved'}</small></span></div>
+            <Link className="settings-row" to={appRoutes.consentSettings}><ShieldCheck aria-hidden="true" size={22} /><span><strong>Consent choices</strong><small>{consent ? `${allowedConsentCount} of 3 optional categories allowed` : 'No choices saved'}</small></span><ArrowRight aria-hidden="true" size={19} /></Link>
             <div className="settings-row settings-row--static"><MapPin aria-hidden="true" size={22} /><span><strong>Location use</strong><small>Postcode only — no live location access</small></span></div>
           </section>
           <section className="danger-link-section"><h2>Delete your information</h2><p>This permanently removes your private profile and choices from this device.</p><Link className="button button--danger-outline" to={appRoutes.deleteProfile}><Trash aria-hidden="true" size={19} /> Delete profile and choices</Link></section>

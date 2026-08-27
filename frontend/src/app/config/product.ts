@@ -21,6 +21,8 @@ export const appRoutes = {
   support: '/support',
   supportDetail: (id: string) => `/support/${id}`,
   settings: '/settings',
+  editProfile: '/settings/edit-profile',
+  consentSettings: '/settings/consent',
   offlineInformation: '/settings/offline-information',
   deleteProfile: '/settings/delete-profile',
 } as const

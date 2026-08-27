@@ -70,6 +70,44 @@ export function saveConsentState(consent: ConsentState): boolean {
   return writeStoredValue(storageKeys.consent, consent)
 }
 
+export function saveConsentChoices(
+  choices: Record<string, boolean>,
+): boolean {
+  const profile = getHouseholdProfile()
+  if (!profile) return false
+
+  const filteredProfile: HouseholdProfile = {
+    postcode: profile.postcode,
+    ...(choices.basics
+      ? {
+          name: profile.name,
+          age: profile.age,
+          householdSize: profile.householdSize,
+        }
+      : {}),
+    ...(choices.dependants
+      ? {
+          childrenUnder15: profile.childrenUnder15,
+          hasPets: profile.hasPets,
+        }
+      : {}),
+    ...(choices.needs
+      ? {
+          accessibilityNeeds: profile.accessibilityNeeds,
+          healthNeeds: profile.healthNeeds,
+        }
+      : {}),
+  }
+
+  const consentSaved = saveConsentState({
+    profileStorageAccepted: true,
+    optionalCategories: choices,
+    updatedAt: new Date().toISOString(),
+  })
+  const profileSaved = saveHouseholdProfile(filteredProfile)
+  return consentSaved && profileSaved
+}
+
 export function getOfflinePreferences(): OfflinePreferences {
   return (
     readStoredValue<OfflinePreferences>(storageKeys.offlinePreferences) ?? {

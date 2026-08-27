@@ -10,6 +10,8 @@ import { SetupCompletePage } from '../features/onboarding/pages/SetupCompletePag
 import { SetupReviewPage } from '../features/onboarding/pages/SetupReviewPage'
 import { SetupWelcomePage } from '../features/onboarding/pages/SetupWelcomePage'
 import { DeleteProfilePage } from '../features/settings/pages/DeleteProfilePage'
+import { EditProfilePage } from '../features/settings/pages/EditProfilePage'
+import { ConsentSettingsPage } from '../features/settings/pages/ConsentSettingsPage'
 import { OfflineInformationPage } from '../features/settings/pages/OfflineInformationPage'
 import { SettingsPage } from '../features/settings/pages/SettingsPage'
 import { SupportServiceDetailPage } from '../features/support-services/pages/SupportServiceDetailPage'
@@ -59,6 +61,8 @@ export function AppRouter() {
           <Route path={appRoutes.support} element={<SupportServicesPage />} />
           <Route path="/support/:id" element={<SupportServiceDetailPage />} />
           <Route path={appRoutes.settings} element={<SettingsPage />} />
+          <Route path={appRoutes.editProfile} element={<EditProfilePage />} />
+          <Route path={appRoutes.consentSettings} element={<ConsentSettingsPage />} />
           <Route path={appRoutes.offlineInformation} element={<OfflineInformationPage />} />
           <Route path={appRoutes.deleteProfile} element={<DeleteProfilePage />} />
           <Route path="*" element={<Navigate replace to={appRoutes.home} />} />
