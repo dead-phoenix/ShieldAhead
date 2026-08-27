@@ -1,70 +1,39 @@
-import { useState } from 'react'
+import { ArrowRight, Database, MapPin, ShieldCheck, Trash, UserCircle } from '@phosphor-icons/react'
 import { Link } from 'react-router-dom'
 import { appRoutes } from '../../../app/config/product'
-import {
-  clearOnboardingDraft,
-  getOnboardingDraft,
-} from '../../../storage/onboardingDraftStorage'
-import { StatusBanner } from '../../../shared/components/StatusBanner'
+import { getConsentState, getHouseholdProfile, getOfflinePreferences } from '../../../storage/onboardingDraftStorage'
 
 export function SettingsPage() {
-  const [hasDraft, setHasDraft] = useState(Boolean(getOnboardingDraft()))
-  const [confirmingDelete, setConfirmingDelete] = useState(false)
-
-  function deleteDraft() {
-    clearOnboardingDraft()
-    setHasDraft(false)
-    setConfirmingDelete(false)
-  }
+  const profile = getHouseholdProfile()
+  const consent = getConsentState()
+  const offline = getOfflinePreferences()
 
   return (
-    <section className="content-page" aria-labelledby="settings-title">
-      <h1 id="settings-title">My data</h1>
-      <p className="lead">
-        Review what this prototype stores locally. No account or cloud profile
-        is created.
-      </p>
-
-      <StatusBanner title="On-device storage">
-        <p>
-          {hasDraft
-            ? 'A household setup draft is stored in this browser.'
-            : 'No household setup draft is currently stored.'}
-        </p>
-      </StatusBanner>
-
-      {hasDraft ? (
-        <section className="danger-zone" aria-labelledby="delete-title">
-          <h2 id="delete-title">Delete setup draft</h2>
-          <p>This removes the current draft from this browser.</p>
-          {confirmingDelete ? (
-            <div className="confirm-actions">
-              <p>Delete this draft now?</p>
-              <button className="button button--danger" type="button" onClick={deleteDraft}>
-                Yes, delete draft
-              </button>
-              <button
-                className="button button--quiet"
-                type="button"
-                onClick={() => setConfirmingDelete(false)}
-              >
-                Keep draft
-              </button>
-            </div>
-          ) : (
-            <button
-              className="button button--danger-outline"
-              type="button"
-              onClick={() => setConfirmingDelete(true)}
-            >
-              Delete setup draft
-            </button>
-          )}
-        </section>
+    <section className="content-page profile-page" aria-labelledby="settings-title">
+      <div className="page-heading"><div><h1 id="settings-title">Your information</h1><p>Manage the details and settings stored on this device.</p></div></div>
+      {profile ? (
+        <>
+          <section className="profile-card" aria-labelledby="household-summary-title">
+            <div className="profile-card__heading"><UserCircle aria-hidden="true" size={28} weight="duotone" /><h2 id="household-summary-title">Household summary</h2></div>
+            <dl className="profile-grid">
+              <div><dt>Name</dt><dd>{profile.name || 'Not provided'}</dd></div>
+              <div><dt>Postcode</dt><dd>{profile.postcode === '3453' ? 'Harcourt 3453' : profile.postcode}</dd></div>
+              <div><dt>Household</dt><dd>{profile.householdSize ?? 'Not provided'}</dd></div>
+              <div><dt>Children</dt><dd>{profile.childrenUnder15 ?? 'Not provided'}</dd></div>
+              <div><dt>Health</dt><dd>{profile.healthNeeds?.join(', ') || 'Not provided'}</dd></div>
+              <div><dt>Accessibility</dt><dd>{profile.accessibilityNeeds?.join(', ') || 'Not provided'}</dd></div>
+            </dl>
+            <Link className="button button--quiet" to={appRoutes.householdBasics}>Edit details</Link>
+          </section>
+          <section className="settings-group" aria-labelledby="stored-data-title"><h2 id="stored-data-title">Stored data</h2>
+            <Link className="settings-row" to={appRoutes.offlineInformation}><Database aria-hidden="true" size={22} /><span><strong>Offline information</strong><small>{offline.wifiSaved || offline.supportSaved ? 'Wi-Fi and support records are available' : 'No public information selected'}</small></span><ArrowRight aria-hidden="true" size={19} /></Link>
+            <div className="settings-row settings-row--static"><ShieldCheck aria-hidden="true" size={22} /><span><strong>Consent choices</strong><small>{consent ? 'Saved on this device' : 'No choices saved'}</small></span></div>
+            <div className="settings-row settings-row--static"><MapPin aria-hidden="true" size={22} /><span><strong>Location use</strong><small>Postcode only — no live location access</small></span></div>
+          </section>
+          <section className="danger-link-section"><h2>Delete your information</h2><p>This permanently removes your private profile and choices from this device.</p><Link className="button button--danger-outline" to={appRoutes.deleteProfile}><Trash aria-hidden="true" size={19} /> Delete profile and choices</Link></section>
+        </>
       ) : (
-        <Link className="button button--primary" to={appRoutes.setup}>
-          Start device setup
-        </Link>
+        <div className="empty-profile"><UserCircle aria-hidden="true" size={48} weight="duotone" /><h2>No household profile saved</h2><p>You can still use example public information without creating an account.</p><Link className="button button--primary" to={appRoutes.setup}>Set up this device</Link></div>
       )}
     </section>
   )

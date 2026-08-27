@@ -1,141 +1,63 @@
 import { useState, type FormEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { appRoutes } from '../../../app/config/product'
-import { saveOnboardingDraft } from '../../../storage/onboardingDraftStorage'
+import { StepProgress } from '../../../shared/components/StepProgress'
+import { getHouseholdProfile, getOnboardingDraft, saveOnboardingDraft } from '../../../storage/onboardingDraftStorage'
 
 export function HouseholdBasicsPage() {
   const navigate = useNavigate()
-  const [householdError, setHouseholdError] = useState('')
-  const [postcodeError, setPostcodeError] = useState('')
+  const draft = getOnboardingDraft()
+  const savedProfile = getHouseholdProfile()
+  const currentProfile = draft?.profile ?? savedProfile ?? {}
   const [storageError, setStorageError] = useState('')
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
     const formData = new FormData(event.currentTarget)
-    const householdSize = Number(formData.get('householdSize'))
-    const postcode = String(formData.get('postcode') ?? '').trim()
-    let hasError = false
-
-    setHouseholdError('')
-    setPostcodeError('')
-    setStorageError('')
-
-    if (!Number.isInteger(householdSize) || householdSize < 1 || householdSize > 20) {
-      setHouseholdError('Enter a household size between 1 and 20.')
-      hasError = true
-    }
-
-    if (!/^\d{4}$/.test(postcode)) {
-      setPostcodeError('Enter a four-digit Australian postcode.')
-      hasError = true
-    }
-
-    if (hasError) {
-      return
-    }
-
+    const ageValue = String(formData.get('age') ?? '')
+    const sizeValue = String(formData.get('householdSize') ?? '')
     const wasSaved = saveOnboardingDraft({
-      currentStep: 'household-basics',
+      currentStep: 'household-needs',
       profile: {
+        ...currentProfile,
         name: String(formData.get('name') ?? '').trim() || undefined,
-        householdSize,
-        postcode,
+        age: ageValue ? Number(ageValue) : undefined,
+        householdSize: sizeValue ? Number(sizeValue) : undefined,
       },
       updatedAt: new Date().toISOString(),
     })
-
     if (!wasSaved) {
-      setStorageError(
-        'This browser could not save the draft. Check storage settings and try again.',
-      )
+      setStorageError('This browser could not save your draft. Check storage settings and try again.')
       return
     }
-
-    navigate(appRoutes.home)
+    navigate(appRoutes.householdNeeds)
   }
 
   return (
     <section className="flow-page" aria-labelledby="household-title">
-      <div className="step-progress">
-        <span>Step 2 of 5</span>
-        <progress value="2" max="5">
-          2 of 5
-        </progress>
-      </div>
-
-      <h1 id="household-title">Household basics</h1>
-      <p className="lead">
-        These answers create a draft on this device. They are not uploaded.
-      </p>
-
-      <form className="form-stack" onSubmit={handleSubmit} noValidate>
+      <StepProgress current={1} total={3} />
+      <h1 id="household-title">About your household</h1>
+      <p className="lead">Only the postcode is required. Everything else can be skipped.</p>
+      <form className="form-stack" onSubmit={handleSubmit}>
         <div className="field">
-          <label htmlFor="name">What should we call you? (optional)</label>
-          <input id="name" name="name" autoComplete="name" />
+          <label htmlFor="name">Name <span>Optional</span></label>
+          <input id="name" name="name" autoComplete="name" defaultValue={currentProfile.name} />
           <p className="field-help">A first name or nickname is enough.</p>
         </div>
-
-        <div className="field">
-          <label htmlFor="householdSize">How many people live with you?</label>
-          <input
-            aria-describedby={householdError ? 'household-size-error' : undefined}
-            aria-invalid={Boolean(householdError)}
-            id="householdSize"
-            name="householdSize"
-            type="number"
-            inputMode="numeric"
-            min="1"
-            max="20"
-            defaultValue="1"
-            required
-          />
-          {householdError ? (
-            <p className="field-error" id="household-size-error" role="alert">
-              {householdError}
-            </p>
-          ) : null}
+        <div className="field-grid">
+          <div className="field">
+            <label htmlFor="age">Age <span>Optional</span></label>
+            <input id="age" name="age" type="number" inputMode="numeric" min="0" max="120" defaultValue={currentProfile.age} />
+          </div>
+          <div className="field">
+            <label htmlFor="householdSize">Household size <span>Optional</span></label>
+            <input id="householdSize" name="householdSize" type="number" inputMode="numeric" min="1" max="20" defaultValue={currentProfile.householdSize} />
+          </div>
         </div>
-
-        <div className="field">
-          <label htmlFor="postcode">Home postcode</label>
-          <input
-            aria-describedby={postcodeError ? 'postcode-error' : 'postcode-help'}
-            aria-invalid={Boolean(postcodeError)}
-            id="postcode"
-            name="postcode"
-            inputMode="numeric"
-            autoComplete="postal-code"
-            maxLength={4}
-            required
-          />
-          {postcodeError ? (
-            <p className="field-error" id="postcode-error" role="alert">
-              {postcodeError}
-            </p>
-          ) : (
-            <p className="field-help" id="postcode-help">
-              Used to organise nearby information. Exact location is not needed.
-            </p>
-          )}
-        </div>
-
-        {storageError ? (
-          <p className="field-error" role="alert">
-            {storageError}
-          </p>
-        ) : null}
-
+        {storageError ? <p className="field-error" role="alert">{storageError}</p> : null}
         <div className="flow-actions">
-          <button className="button button--primary" type="submit">
-            Save draft and return home
-          </button>
-          <button
-            className="button button--quiet"
-            type="button"
-            onClick={() => navigate(appRoutes.setup)}
-          >
-            Back
-          </button>
+          <button className="button button--quiet" type="button" onClick={() => navigate(appRoutes.setupPrivacy)}>Back</button>
+          <button className="button button--primary" type="submit">Continue</button>
         </div>
       </form>
     </section>

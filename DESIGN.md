@@ -4,15 +4,16 @@ description: A calm, preparation-first interface for keeping local help readable
 colors:
   deep-navy: "#0f172a"
   on-deep-navy: "#ffffff"
-  service-blue: "#0369a1"
-  service-blue-hover: "#075985"
+  service-blue: "#2563eb"
+  service-blue-hover: "#1d4ed8"
+  support-teal: "#0d9488"
   page-ground: "#f8fafc"
   paper-surface: "#ffffff"
   quiet-surface: "#e8ecf1"
   primary-ink: "#020617"
   secondary-ink: "#475569"
   divider: "#cbd5e1"
-  focus-blue: "#0284c7"
+  focus-blue: "#2563eb"
   information-ground: "#e0f2fe"
   information-ink: "#0c4a6e"
   caution-ground: "#fef9c3"
@@ -23,24 +24,24 @@ colors:
   danger-ground: "#fef2f2"
 typography:
   display:
-    fontFamily: "Atkinson Hyperlegible, Segoe UI, Roboto, Helvetica, Arial, sans-serif"
-    fontSize: "clamp(1.75rem, 6vw, 2.5rem)"
+    fontFamily: "Atkinson Hyperlegible Next, Segoe UI, Roboto, Helvetica, Arial, sans-serif"
+    fontSize: "clamp(1.65rem, 5vw, 2rem)"
     fontWeight: 700
     lineHeight: 1.18
     letterSpacing: "-0.025em"
   title:
-    fontFamily: "Atkinson Hyperlegible, Segoe UI, Roboto, Helvetica, Arial, sans-serif"
+    fontFamily: "Atkinson Hyperlegible Next, Segoe UI, Roboto, Helvetica, Arial, sans-serif"
     fontSize: "1.375rem"
     fontWeight: 700
     lineHeight: 1.18
     letterSpacing: "-0.025em"
   body:
-    fontFamily: "Atkinson Hyperlegible, Segoe UI, Roboto, Helvetica, Arial, sans-serif"
+    fontFamily: "Atkinson Hyperlegible Next, Segoe UI, Roboto, Helvetica, Arial, sans-serif"
     fontSize: "1rem"
     fontWeight: 400
     lineHeight: 1.6
   label:
-    fontFamily: "Atkinson Hyperlegible, Segoe UI, Roboto, Helvetica, Arial, sans-serif"
+    fontFamily: "Atkinson Hyperlegible Next, Segoe UI, Roboto, Helvetica, Arial, sans-serif"
     fontSize: "0.875rem"
     fontWeight: 700
     lineHeight: 1.4
@@ -89,9 +90,9 @@ components:
 
 ## Overview
 
-**Creative North Star: "The Prepared Household Board"**
+**Creative North Star: "Safe Modernism"**
 
-ShieldAhead uses the visual logic of a household plan that has already been prepared and placed somewhere dependable. Information is divided by clear rules, status is written in plain words, and the next useful action is never hidden behind decoration. The interface is calm without becoming vague and institutional without becoming cold.
+ShieldAhead uses a calm public-service visual language for people who may be checking essential information under stress or with an unreliable connection. White and slate surfaces keep pages readable, service blue identifies primary action, and teal marks prepared or locally available information. Status is always written in plain words and the next useful action is never hidden behind decoration.
 
 The system is light-first because it is expected to be read on older phones, outdoors and under inconsistent ambient light. Deep navy establishes trust and structure; service blue is reserved for actions and navigation. Motion is limited to fast state feedback, and the layout remains legible when fonts fall back to the operating system stack.
 
@@ -132,11 +133,11 @@ The palette is restrained: neutral paper surfaces carry most content, deep navy 
 
 ## Typography
 
-**Display Font:** Atkinson Hyperlegible with the system humanist sans-serif stack as the offline-safe fallback.  
+**Display Font:** Atkinson Hyperlegible Next with the system humanist sans-serif stack as the offline-safe fallback.
 **Body Font:** The same family and fallback stack.  
 **Label Font:** The same family at a smaller, heavier role.
 
-**Character:** Atkinson Hyperlegible's Latin 400 and 700 weights are bundled with the application, so the intended type remains available offline. The system stack remains a resilient fallback. Hierarchy comes from size, weight and spacing rather than decorative font changes.
+**Character:** Atkinson Hyperlegible Next's Latin 400 and 700 weights are bundled with the application, so the intended type remains available offline. The system stack remains a resilient fallback. Hierarchy comes from size, weight and spacing rather than decorative font changes.
 
 ### Hierarchy
 
@@ -149,9 +150,9 @@ The palette is restrained: neutral paper surfaces carry most content, deep navy 
 
 ## Layout
 
-The application uses a 4/8px-derived spacing rhythm and a mobile-first content column. Phone layouts use 16px outer gutters and stack actions vertically; wider layouts increase the work area, place preparation status beside the main message and reveal desktop navigation. Form flows remain constrained to a readable column even on large screens.
+The application uses a 4/8px-derived spacing rhythm and a mobile-first content column. Phone layouts use 16px outer gutters and stack actions vertically; wider layouts use a 204px persistent sidebar and a restrained three-column dashboard. Form flows remain constrained to a readable column even on large screens.
 
-Breakpoints are behavioural rather than device-branded: actions become horizontal at 640px, and desktop navigation replaces bottom navigation at 832px. The bottom navigation uses four labelled destinations and reserves enough content padding to keep the final control reachable.
+Breakpoints are behavioural rather than device-branded: actions become horizontal at 640px, and desktop sidebar navigation replaces bottom navigation at 896px. The bottom navigation uses four labelled destinations and reserves enough content padding to keep the final control reachable.
 
 **The Prepared Order Rule.** A screen presents purpose, truth about data or privacy, then the action; secondary destinations follow afterward.
 
@@ -195,7 +196,7 @@ Controls use gently curved 8px corners. Information surfaces use a 14px radius. 
 
 ### Navigation
 
-Desktop navigation is a compact labelled row in the header. Mobile navigation is a fixed four-destination labelled bar with the current destination shown as a deep-navy field. Navigation never relies on icons alone.
+Desktop navigation is a persistent labelled sidebar. Mobile navigation is a fixed four-destination labelled bar. The current destination uses a pale teal field and blue label; navigation never relies on icons alone.
 
 ### Status Banner
 

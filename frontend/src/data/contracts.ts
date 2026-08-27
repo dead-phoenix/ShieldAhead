@@ -25,7 +25,7 @@ export interface WifiLocation {
   longitude?: number
   distanceKm?: number
   openingHours?: string
-  accessConditions?: string
+  accessConditions?: string[]
   dataUpdatedAt: string
 }
 
@@ -44,9 +44,16 @@ export interface SupportService {
   phone?: string
   website?: string
   eligibility?: string
+  partnerStatus?: 'partner' | 'open-referral' | 'unknown'
   availabilityStatus: AvailabilityStatus
   availabilityUpdatedAt?: string
   dataUpdatedAt: string
+}
+
+export interface OfflinePreferences {
+  wifiSaved: boolean
+  supportSaved: boolean
+  lastUpdatedAt?: string
 }
 
 export interface DatasetMetadata {
