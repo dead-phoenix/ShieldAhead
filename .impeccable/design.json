@@ -1,0 +1,154 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-08-27T17:41:26.4147948+10:00",
+  "title": "Design System: ShieldAhead",
+  "extensions": {
+    "colorMeta": {
+      "deep-navy": {
+        "role": "primary",
+        "displayName": "Deep Prepared Navy",
+        "canonical": "#0f172a",
+        "tonalRamp": ["#020617", "#0f172a", "#1e293b", "#334155", "#475569", "#94a3b8", "#cbd5e1", "#f1f5f9"]
+      },
+      "service-blue": {
+        "role": "primary",
+        "displayName": "Service Blue",
+        "canonical": "#0369a1",
+        "tonalRamp": ["#082f49", "#0c4a6e", "#075985", "#0369a1", "#0284c7", "#38bdf8", "#bae6fd", "#f0f9ff"]
+      },
+      "page-ground": {
+        "role": "neutral",
+        "displayName": "Page Ground",
+        "canonical": "#f8fafc",
+        "tonalRamp": ["#020617", "#1e293b", "#475569", "#94a3b8", "#cbd5e1", "#e2e8f0", "#f1f5f9", "#f8fafc"]
+      },
+      "caution-ground": {
+        "role": "tertiary",
+        "displayName": "Caution Paper",
+        "canonical": "#fef9c3",
+        "tonalRamp": ["#422006", "#713f12", "#854d0e", "#a16207", "#ca8a04", "#fde047", "#fef08a", "#fefce8"]
+      },
+      "danger": {
+        "role": "tertiary",
+        "displayName": "Recovery Red",
+        "canonical": "#b91c1c",
+        "tonalRamp": ["#450a0a", "#7f1d1d", "#991b1b", "#b91c1c", "#dc2626", "#f87171", "#fecaca", "#fef2f2"]
+      }
+    },
+    "typographyMeta": {
+      "display": {
+        "displayName": "Screen Heading",
+        "purpose": "One concise h1 per route with balanced wrapping."
+      },
+      "body": {
+        "displayName": "Plain Interface Body",
+        "purpose": "Instructions, descriptions and form help with offline-safe fallbacks."
+      },
+      "label": {
+        "displayName": "Action Label",
+        "purpose": "Buttons, navigation, status keys and form labels."
+      }
+    },
+    "shadows": [
+      {
+        "name": "prepared-surface",
+        "value": "0 0.75rem 1.75rem rgba(15, 23, 42, 0.1)",
+        "purpose": "Raises only the household preparation summary from the page ground."
+      }
+    ],
+    "motion": [
+      {
+        "name": "state-fast",
+        "value": "140ms cubic-bezier(0.16, 1, 0.3, 1)",
+        "purpose": "Hover and pressed feedback for controls."
+      },
+      {
+        "name": "state-standard",
+        "value": "220ms cubic-bezier(0.16, 1, 0.3, 1)",
+        "purpose": "Reserved for larger state transitions; disabled under reduced motion."
+      }
+    ],
+    "breakpoints": [
+      { "name": "actions-inline", "value": "640px" },
+      { "name": "desktop-navigation", "value": "832px" }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "The one highest-priority action on a screen.",
+      "html": "<button class=\"ds-button-primary\">Set up this device</button>",
+      "css": ".ds-button-primary { min-height: 48px; padding: .7rem 1.1rem; border: 2px solid transparent; border-radius: var(--radius-sm, .5rem); color: var(--color-on-primary, #fff); background: var(--color-accent, #0369a1); font: 700 .875rem/1.25 'Segoe UI', sans-serif; cursor: pointer; transition: background-color 140ms cubic-bezier(.16,1,.3,1); } .ds-button-primary:hover { background: var(--color-accent-hover, #075985); } .ds-button-primary:focus-visible { outline: 3px solid var(--color-focus, #0284c7); outline-offset: 3px; }"
+    },
+    {
+      "name": "Quiet Button",
+      "kind": "button",
+      "refersTo": "button-quiet",
+      "description": "Back, cancel and secondary navigation action.",
+      "html": "<button class=\"ds-button-quiet\">Not now</button>",
+      "css": ".ds-button-quiet { min-height: 48px; padding: .7rem 1.1rem; border: 2px solid var(--color-border, #cbd5e1); border-radius: var(--radius-sm, .5rem); color: var(--color-primary, #0f172a); background: var(--color-surface, #fff); font: 700 .875rem/1.25 'Segoe UI', sans-serif; cursor: pointer; } .ds-button-quiet:hover { background: var(--color-surface-muted, #e8ecf1); } .ds-button-quiet:focus-visible { outline: 3px solid var(--color-focus, #0284c7); outline-offset: 3px; }"
+    },
+    {
+      "name": "Text Input",
+      "kind": "input",
+      "refersTo": "text-input",
+      "description": "Persistent-label field for short household answers.",
+      "html": "<label class=\"ds-field\">Home postcode<input aria-describedby=\"ds-help\" inputmode=\"numeric\"><small id=\"ds-help\">A four-digit Australian postcode.</small></label>",
+      "css": ".ds-field { display: grid; gap: .5rem; color: var(--color-primary, #0f172a); font: 700 1rem/1.5 'Segoe UI', sans-serif; } .ds-field input { min-height: 48px; padding: .65rem .75rem; border: 2px solid var(--color-border, #cbd5e1); border-radius: var(--radius-sm, .5rem); color: var(--color-text, #020617); background: var(--color-surface, #fff); font-weight: 400; } .ds-field input:focus-visible { outline: 3px solid var(--color-focus, #0284c7); outline-offset: 3px; } .ds-field small { color: var(--color-text-muted, #475569); font-size: .875rem; font-weight: 400; }"
+    },
+    {
+      "name": "Caution Status Banner",
+      "kind": "custom",
+      "refersTo": "status-warning",
+      "description": "Explains unverified, incomplete or stale information.",
+      "html": "<section class=\"ds-status\"><strong>Prototype data only</strong><p>No verified locations are loaded yet.</p></section>",
+      "css": ".ds-status { padding: 1rem 1.5rem; border-radius: var(--radius-md, .875rem); color: var(--color-warning-text, #713f12); background: var(--color-warning-bg, #fef9c3); font: 400 1rem/1.6 'Segoe UI', sans-serif; } .ds-status strong { display: block; font-weight: 700; } .ds-status p { margin: .25rem 0 0; }"
+    },
+    {
+      "name": "Prepared Status List",
+      "kind": "custom",
+      "description": "The signature summary of household, local-data and region preparation.",
+      "html": "<dl class=\"ds-prepared\"><div><dt>Household setup</dt><dd>Not started</dd></div><div><dt>Local information</dt><dd>Not downloaded</dd></div></dl>",
+      "css": ".ds-prepared { margin: 0; overflow: hidden; border-radius: var(--radius-md, .875rem); color: var(--color-on-primary, #fff); background: var(--color-primary, #0f172a); box-shadow: 0 .75rem 1.75rem rgba(15,23,42,.1); font: 400 1rem/1.5 'Segoe UI', sans-serif; } .ds-prepared div { padding: 1rem 1.5rem; border-bottom: 1px solid rgba(255,255,255,.25); } .ds-prepared div:last-child { border-bottom: 0; } .ds-prepared dt { font-size: .875rem; font-weight: 700; } .ds-prepared dd { margin: .25rem 0 0; color: #e0f2fe; }"
+    },
+    {
+      "name": "Mobile Navigation",
+      "kind": "nav",
+      "description": "Four persistent labelled destinations; the active destination is explicit.",
+      "html": "<nav class=\"ds-mobile-nav\" aria-label=\"Primary navigation\"><a class=\"active\" href=\"#\">Home</a><a href=\"#\">Wi-Fi</a><a href=\"#\">Support</a><a href=\"#\">My data</a></nav>",
+      "css": ".ds-mobile-nav { padding: .5rem; display: grid; grid-template-columns: repeat(4,1fr); gap: .25rem; border-top: 1px solid var(--color-border, #cbd5e1); background: rgba(255,255,255,.96); } .ds-mobile-nav a { min-height: 48px; display: flex; align-items: center; justify-content: center; border-radius: var(--radius-sm, .5rem); color: var(--color-text-muted, #475569); font: 700 .875rem/1.2 'Segoe UI', sans-serif; text-decoration: none; } .ds-mobile-nav a.active { color: var(--color-on-primary, #fff); background: var(--color-primary, #0f172a); } .ds-mobile-nav a:focus-visible { outline: 3px solid var(--color-focus, #0284c7); outline-offset: 2px; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Prepared Household Board",
+    "overview": "ShieldAhead uses the visual logic of a household plan that has already been prepared and placed somewhere dependable. Information is divided by clear rules, status is written in plain words, and the next useful action is never hidden behind decoration. The interface is calm without becoming vague and institutional without becoming cold.",
+    "keyCharacteristics": [
+      "High-contrast, light-first public-service palette.",
+      "One clear primary action per screen.",
+      "Ruled information rows and explicit status language.",
+      "Mobile-first single-column flows with a wider desktop work area.",
+      "Low visual and motion complexity for older devices."
+    ],
+    "rules": [
+      { "name": "The Honest Status Rule", "body": "Status colour always travels with a title and plain-language explanation; colour is never the only signal.", "section": "colors" },
+      { "name": "The One Action Colour Rule", "body": "Service blue is for interactive priority, not decoration.", "section": "colors" },
+      { "name": "The Plain Reading Rule", "body": "Body text never drops below the base role, and essential copy is allowed to wrap rather than truncate.", "section": "typography" },
+      { "name": "The Prepared Order Rule", "body": "A screen presents purpose, truth about data or privacy, then the action; secondary destinations follow afterward.", "section": "layout" },
+      { "name": "The Flat-by-Default Rule", "body": "If hierarchy is already clear through spacing, tone or a divider, no shadow is added.", "section": "elevation" }
+    ],
+    "dos": [
+      "Do use semantic colour tokens and plain status labels together.",
+      "Do keep touch targets at least 48px and preserve a visible keyboard focus ring.",
+      "Do keep forms short, labelled and recoverable with progress shown for multi-step setup.",
+      "Do show empty, offline, stale and unverified states as complete screens."
+    ],
+    "donts": [
+      "Don't present mock records as verified local services.",
+      "Don't use decorative gradients, glass effects, excessive animation or emoji as structural icons.",
+      "Don't use colour alone for availability, connectivity, error or freshness.",
+      "Don't turn every destination or status into a floating card."
+    ]
+  }
+}

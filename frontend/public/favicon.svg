@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-labelledby="title">
+  <title id="title">ShieldAhead shield</title>
+  <rect width="64" height="64" rx="14" fill="#2563eb"/>
+  <path d="M32 10 49 17v13c0 11.2-6.8 20.4-17 24-10.2-3.6-17-12.8-17-24V17l17-7Z" fill="#fff" opacity=".97"/>
+  <path d="m24.5 31.5 5 5 10-11" fill="none" stroke="#0f766e" stroke-linecap="round" stroke-linejoin="round" stroke-width="4"/>
+</svg>
