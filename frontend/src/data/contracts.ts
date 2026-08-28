@@ -35,7 +35,7 @@ export interface SupportService {
   id: string
   name: string
   serviceTypes: string[]
-  address: string
+  address?: string
   suburb: string
   postcode: string
   latitude?: number
@@ -47,6 +47,7 @@ export interface SupportService {
   partnerStatus?: 'partner' | 'open-referral' | 'unknown'
   availabilityStatus: AvailabilityStatus
   availabilityUpdatedAt?: string
+  availabilityFreshness?: 'current' | 'stale'
   dataUpdatedAt: string
 }
 
