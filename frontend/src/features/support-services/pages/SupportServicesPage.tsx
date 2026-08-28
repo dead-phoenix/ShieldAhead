@@ -1,53 +1,93 @@
-import { ArrowRight, CloudSlash, HandHeart, MapPin, Warning } from '@phosphor-icons/react'
+import {
+  ArrowRight,
+  CheckCircle,
+  CloudSlash,
+  HandHeart,
+  LinkSimple,
+  MapPin,
+  Phone,
+  Warning,
+  XCircle,
+} from '@phosphor-icons/react'
 import { useMemo, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 import { appRoutes } from '../../../app/config/product'
-import { mockSupportServiceRepository } from '../../../data/mock/mockRepositories'
+import { getMockSupportServiceRepository } from '../../../data/mock/mockRepositories'
 import { useRepositoryData } from '../../../data/useRepositoryData'
-import { LoadingState } from '../../../shared/components/LoadingState'
 import { EmptyState } from '../../../shared/components/EmptyState'
+import { LoadingState } from '../../../shared/components/LoadingState'
 import { PrototypeBadge } from '../../../shared/components/PrototypeBadge'
+import { StatusBanner } from '../../../shared/components/StatusBanner'
 import { useOnlineStatus } from '../../../shared/hooks/useOnlineStatus'
 import { formatSavedDate } from '../../../shared/utils/formatDate'
 import { getHouseholdProfile, getOfflinePreferences } from '../../../storage/onboardingDraftStorage'
+import {
+  formatServiceAddress,
+  getAvailabilityPresentation,
+  sortSupportServices,
+  type AvailabilityTone,
+} from '../utils/supportServicePresentation'
 
 const filters = ['All services', 'Food', 'Financial', 'Emergency'] as const
 
+function AvailabilityIcon({ tone }: { tone: AvailabilityTone }) {
+  if (tone === 'normal') return <CheckCircle aria-hidden="true" size={19} weight="fill" />
+  if (tone === 'closed') return <XCircle aria-hidden="true" size={19} weight="fill" />
+  return <Warning aria-hidden="true" size={19} />
+}
+
 export function SupportServicesPage() {
-  const { data, isLoading, error, retry } = useRepositoryData(mockSupportServiceRepository.list)
+  const [searchParams] = useSearchParams()
+  const fixture = searchParams.get('fixture')
+  const repository = getMockSupportServiceRepository(fixture)
+  const { data, isLoading, error, retry } = useRepositoryData(repository.list)
   const [filter, setFilter] = useState<(typeof filters)[number]>('All services')
   const isOnline = useOnlineStatus()
   const postcode = getHouseholdProfile()?.postcode ?? '3453'
   const offline = getOfflinePreferences()
   const canReadRecords = isOnline || offline.supportSaved
+  const allServices = useMemo(
+    () => sortSupportServices(data?.records ?? []),
+    [data?.records],
+  )
   const services = useMemo(() => {
-    if (!data || filter === 'All services') return data?.records ?? []
-    return data.records.filter((service) => service.serviceTypes.some((type) => type.toLowerCase().includes(filter.toLowerCase())))
-  }, [data, filter])
+    if (filter === 'All services') return allServices
+    return allServices.filter((service) =>
+      service.serviceTypes.some((type) =>
+        type.toLowerCase().includes(filter.toLowerCase()),
+      ),
+    )
+  }, [allServices, filter])
+  const fixtureQuery = fixture ? `?fixture=${encodeURIComponent(fixture)}` : ''
 
   return (
     <section className="content-page" aria-labelledby="support-title">
       <div className="connectivity-strip"><CloudSlash aria-hidden="true" size={21} /><span><strong>{isOnline ? (offline.supportSaved ? 'Saved for offline use' : 'Online — not saved for offline use') : 'You are offline'}</strong><small>{canReadRecords ? `Showing ${isOnline ? 'prototype' : 'saved'} information near ${postcode}. Saved copy: ${formatSavedDate(data?.metadata.generatedAt ?? offline.lastUpdatedAt)}.` : 'No support information was selected for offline use.'}</small></span></div>
       <div className="page-heading"><div><h1 id="support-title">Nearby support services</h1><p>Find assistance closest to you.</p></div><PrototypeBadge /></div>
-      <div className="filter-row" aria-label="Filter support services">
+      {data && allServices.length > 0 ? <div className="filter-row" aria-label="Filter support services">
         {filters.map((item) => <button aria-pressed={filter === item} className={filter === item ? 'filter-chip is-active' : 'filter-chip'} key={item} type="button" onClick={() => setFilter(item)}>{item}</button>)}
-      </div>
+      </div> : null}
       {isLoading ? <LoadingState /> : null}
       {error ? <div className="error-state" role="alert"><p>{error}</p><button className="button button--quiet" type="button" onClick={retry}>Try again</button></div> : null}
       {!canReadRecords ? <EmptyState title="No saved support information available offline" action={<Link className="button button--primary" to={appRoutes.offlineInformation}>Choose offline information</Link>}><p>Connect to the internet to view prototype records, or select support information for offline use.</p></EmptyState> : null}
-      {data && canReadRecords ? (
+      {data?.metadata.freshnessStatus === 'stale' && canReadRecords ? <StatusBanner title="This saved support information may be out of date" tone="warning"><p>Saved copy: {formatSavedDate(data.metadata.generatedAt)}. Reconnect and <Link to={appRoutes.offlineInformation}>update saved information</Link> before relying on service details.</p></StatusBanner> : null}
+      {data && canReadRecords && allServices.length === 0 ? <EmptyState title="No nearby support services are listed" action={<Link className="button button--quiet" to={appRoutes.editProfile}>Check your postcode</Link>}><p>No prototype support services currently match postcode {postcode}.</p><p>This does not confirm that help is unavailable. The dataset may be incomplete or out of date.</p></EmptyState> : null}
+      {data && canReadRecords && allServices.length > 0 ? (
         <div className="service-list">
-          {services.map((service) => (
-            <article className="service-card" key={service.id}>
-              <div className="service-card__heading"><span className="record-row__icon"><HandHeart aria-hidden="true" size={25} weight="duotone" /></span><div><h2>{service.name}</h2><p><MapPin aria-hidden="true" size={17} /> {service.suburb} · {service.distanceKm} km</p></div></div>
-              <div className="service-tags">{service.serviceTypes.map((type) => <span key={type}>{type}</span>)}</div>
-              <div className={service.availabilityStatus === 'normal' ? 'availability availability--open' : 'availability availability--warning'}>
-                {service.availabilityStatus === 'normal' ? <HandHeart aria-hidden="true" size={19} /> : <Warning aria-hidden="true" size={19} />}
-                <span><strong>{service.availabilityStatus === 'normal' ? 'Example status — not verified' : 'Availability not confirmed'}</strong><small>{service.availabilityStatus === 'normal' ? `Saved copy: ${formatSavedDate(service.availabilityUpdatedAt)}` : 'Call ahead if a phone number is listed'}</small></span>
-              </div>
-              <Link className="service-card__link" to={appRoutes.supportDetail(service.id)}>View service details <ArrowRight aria-hidden="true" size={19} weight="bold" /></Link>
-            </article>
-          ))}
+          {services.map((service) => {
+            const availability = getAvailabilityPresentation(service)
+            return (
+              <article className="service-card" key={service.id}>
+                <div className="service-card__heading"><span className="record-row__icon"><HandHeart aria-hidden="true" size={25} weight="duotone" /></span><div><h2>{service.name}</h2><p><MapPin aria-hidden="true" size={17} /> {service.address ? formatServiceAddress(service) : `${service.suburb} VIC ${service.postcode} · Street address not confirmed`} · {service.distanceKm === undefined ? 'Distance not confirmed' : `${service.distanceKm} km`}</p><p><Phone aria-hidden="true" size={17} /> {service.phone ?? 'Phone not published'}{service.website ? <> · <a className="service-contact-link" href={service.website} target="_blank" rel="noreferrer"><LinkSimple aria-hidden="true" size={15} /> Website</a></> : null}</p></div></div>
+                <div className="service-tags">{service.serviceTypes.map((type) => <span key={type}>{type}</span>)}</div>
+                <div className={`availability availability--${availability.tone}`}>
+                  <AvailabilityIcon tone={availability.tone} />
+                  <span><strong>{availability.title}</strong><small>{availability.detail}</small></span>
+                </div>
+                <Link className="service-card__link" to={`${appRoutes.supportDetail(service.id)}${fixtureQuery}`}>View service details <ArrowRight aria-hidden="true" size={19} weight="bold" /></Link>
+              </article>
+            )
+          })}
           {!services.length ? <p className="empty-filter" role="status">No example services match this filter. Try another category.</p> : null}
         </div>
       ) : null}
