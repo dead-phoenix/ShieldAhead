@@ -12,7 +12,7 @@ export function StatusBanner({
   tone = 'info',
 }: StatusBannerProps) {
   return (
-    <section className={`status-banner status-banner--${tone}`} aria-label={title}>
+    <section className={`status-banner status-banner--${tone}`} aria-label={title} role="status" aria-live="polite">
       <strong>{title}</strong>
       <div>{children}</div>
     </section>

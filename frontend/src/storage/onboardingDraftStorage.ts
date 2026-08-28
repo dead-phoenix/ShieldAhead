@@ -130,6 +130,10 @@ export function saveUsualWifiSpot(id: string): void {
   window.localStorage.setItem(storageKeys.usualWifiSpot, id)
 }
 
+export function clearUsualWifiSpot(): void {
+  window.localStorage.removeItem(storageKeys.usualWifiSpot)
+}
+
 export function clearProfileAndChoices(removeOfflineInformation: boolean): void {
   window.localStorage.removeItem(storageKeys.householdProfile)
   window.localStorage.removeItem(storageKeys.consent)
