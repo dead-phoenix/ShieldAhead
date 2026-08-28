@@ -18,7 +18,7 @@ export interface ConsentState {
 export interface WifiLocation {
   id: string
   name: string
-  address: string
+  address?: string
   suburb: string
   postcode: string
   latitude?: number
@@ -62,6 +62,8 @@ export interface DatasetMetadata {
   sourceName: string
   coverageAreas: string[]
   limitations: string[]
+  freshnessStatus?: 'current' | 'stale'
+  removedRecordIds?: string[]
 }
 
 export interface DatasetResult<T> {
