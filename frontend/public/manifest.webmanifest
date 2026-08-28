@@ -1,0 +1,18 @@
+{
+  "name": "ShieldAhead",
+  "short_name": "ShieldAhead",
+  "description": "Prepare local Wi-Fi and support information for unreliable connections.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f8fafc",
+  "theme_color": "#2563eb",
+  "lang": "en-AU",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
