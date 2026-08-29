@@ -15,6 +15,7 @@ CORS(app)
 _cache = {
     "data": None,
     "timestamp": None,
+    "removed_ids": []
 }
 CACHE_TTL_SECONDS = 300  # 5 minutes
 
@@ -56,7 +57,7 @@ USEFUL_FACILITY_TYPES = [
 EXCLUDED_FACILITY_TYPES = [
     "camp", "rest area", "telephone", "reservoir",
     "tank", "rsl", "oval", "golf", "cemetery", "child care",
-    "school"
+    "school",
 ]
 
 
@@ -306,6 +307,9 @@ def get_wifi():
             wifi_error = None
             public_error = None
         else:
+            # Remember the previous snapshot's IDs before overwriting
+            previous_ids = {r["id"] for r in _cache["data"]} if _cache["data"] else set()
+
             # Source 1: VicFreeWiFi (confirmed wifi)
             wifi_records = []
             wifi_error = None
@@ -328,8 +332,18 @@ def get_wifi():
             all_records = [r for r in all_records if r.get("id") and r.get("name")]
 
             if all_records:
+                # Only compute removed IDs on a full successful refresh
+                # (both sources worked), so a partial failure doesn't
+                # falsely report everything from the failed source as removed.
+                if not wifi_error and not public_error and previous_ids:
+                    new_ids = {r["id"] for r in all_records}
+                    _cache["removed_ids"] = sorted(previous_ids - new_ids)
+                else:
+                    _cache["removed_ids"] = []
+
                 _cache["data"] = all_records
                 _cache["timestamp"] = now
+
 
          # Calculate distance for all records
         for record in all_records:
@@ -380,6 +394,7 @@ def get_wifi():
                 "sourceName": "VicFreeWiFi + Vicmap Features of Interest",
                 "coverageAreas": coverage,
                 "limitations": limitations,
+                "removedRecordIds": _cache["removed_ids"]
             },
         })
 
