@@ -2,8 +2,8 @@ import { ArrowRight, Clock, CloudSlash, Heart, MapPin, NavigationArrow, WifiHigh
 import { useEffect, useMemo } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { appRoutes } from '../../../app/config/product'
-import { getMockWifiRepository } from '../../../data/mock/mockRepositories'
 import { useRepositoryData } from '../../../data/useRepositoryData'
+import { getWifiRepository } from '../../../data/wifiRepository'
 import { LoadingState } from '../../../shared/components/LoadingState'
 import { EmptyState } from '../../../shared/components/EmptyState'
 import { PrototypeBadge } from '../../../shared/components/PrototypeBadge'
@@ -16,10 +16,13 @@ import { sortWifiLocations } from '../utils/sortWifiLocations'
 export function WifiListPage() {
   const [searchParams] = useSearchParams()
   const fixture = searchParams.get('fixture')
-  const repository = getMockWifiRepository(fixture)
+  const postcode = getHouseholdProfile()?.postcode ?? '3453'
+  const repository = useMemo(
+    () => getWifiRepository(fixture, postcode),
+    [fixture, postcode],
+  )
   const { data, isLoading, error, retry } = useRepositoryData(repository.list)
   const isOnline = useOnlineStatus()
-  const postcode = getHouseholdProfile()?.postcode ?? '3453'
   const usualSpot = getUsualWifiSpot()
   const offline = getOfflinePreferences()
   const canReadRecords = isOnline || offline.wifiSaved
