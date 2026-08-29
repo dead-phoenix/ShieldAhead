@@ -1,22 +1,31 @@
-from flask import Flask, jsonify
+from flask import Flask, jsonify, request
 from flask_cors import CORS
 import csv
 import io
-import requests
+import math
+import requests as http_requests
 from datetime import datetime, timezone
 
 app = Flask(__name__)
 CORS(app)
 
-#  VicFreeWiFi data fetching 
+#  Config 
 
 CKAN_BASE_URL = "https://discover.data.vic.gov.au"
 PACKAGE_SHOW_URL = f"{CKAN_BASE_URL}/api/3/action/package_show"
 DATASET_ID = "vicfreewifi-access-point-locations"
 
+FEATURE_SERVER_QUERY_URL = (
+    "https://services-ap1.arcgis.com/P744lA0wf4LlBZ84/ArcGIS/rest/services/"
+    "Vicmap_Features_of_Interest/FeatureServer/1/query"
+)
+
 HEADERS_CKAN = {
     "User-Agent": "CrisisSupportApp/1.0 (student-project)"
 }
+
+SEARCH_RADIUS_KM = 30
+FALLBACK_RESULT_COUNT = 10
 
 LOCATION_MAP = {
     "MEL": {"suburb": "Melbourne", "postcode": "3000"},
@@ -24,11 +33,77 @@ LOCATION_MAP = {
     "BR":  {"suburb": "Ballarat",  "postcode": "3350"},
 }
 
+PUBLIC_SPACE_KEYWORDS = [
+    "LIBRARY", "COMMUNITY", "NEIGHBOURHOOD HOUSE", "NEIGHBORHOOD HOUSE",
+    "CIVIC", "HALL", "LEARNING CENTRE", "LEARNING CENTER",
+]
+
+USEFUL_FACILITY_TYPES = [
+    "library", "community centre", "community center",
+    "neighbourhood house", "neighborhood house",
+    "learning centre", "learning center",
+]
+
+EXCLUDED_FACILITY_TYPES = [
+    "camp", "rest area", "telephone", "reservoir",
+    "tank", "rsl", "oval", "golf", "cemetery", "child care",
+    "school"
+]
+
+
+#  Geocoding 
+import re
+
+VIC_POSTCODE_PATTERN = re.compile(r"^3\d{3}$")
+
+
+def is_valid_vic_postcode(postcode):
+    """Check if postcode is a valid 4-digit Victorian postcode (3000-3999)."""
+    return bool(VIC_POSTCODE_PATTERN.match(postcode))
+
+
+def postcode_to_coords(postcode):
+    """Convert an Australian postcode to (lat, lng) using Nominatim."""
+    try:
+        resp = http_requests.get(
+            "https://nominatim.openstreetmap.org/search",
+            params={
+                "q": f"{postcode}, Victoria, Australia",
+                "format": "json",
+                "limit": 1,
+                "countrycodes": "au",
+            },
+            headers={"User-Agent": "CrisisSupportApp/1.0 (student-project)"},
+            timeout=5,
+        )
+        resp.raise_for_status()
+        results = resp.json()
+        if results:
+            return float(results[0]["lat"]), float(results[0]["lon"])
+    except Exception:
+        pass
+    return None, None
+
+
+#  Distance 
+
+def haversine_km(lat1, lon1, lat2, lon2):
+    """Calculate distance in km between two coordinates."""
+    R = 6371
+    d_lat = math.radians(lat2 - lat1)
+    d_lon = math.radians(lon2 - lon1)
+    a = (math.sin(d_lat / 2) ** 2 +
+         math.cos(math.radians(lat1)) * math.cos(math.radians(lat2)) *
+         math.sin(d_lon / 2) ** 2)
+    return R * 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
+
+
+#  VicFreeWiFi data 
 
 def fetch_wifi_csv():
     """Fetch VicFreeWiFi CSV data via DataVic CKAN API."""
     params = {"id": DATASET_ID}
-    resp = requests.get(PACKAGE_SHOW_URL, params=params, headers=HEADERS_CKAN, timeout=10)
+    resp = http_requests.get(PACKAGE_SHOW_URL, params=params, headers=HEADERS_CKAN, timeout=10)
     resp.raise_for_status()
     data = resp.json()
 
@@ -43,7 +118,7 @@ def fetch_wifi_csv():
     if not csv_url:
         return [], None
 
-    csv_resp = requests.get(csv_url, headers=HEADERS_CKAN, timeout=10)
+    csv_resp = http_requests.get(csv_url, headers=HEADERS_CKAN, timeout=10)
     csv_resp.raise_for_status()
 
     try:
@@ -60,7 +135,7 @@ def get_location_info(name):
     for prefix, info in LOCATION_MAP.items():
         if name.startswith(prefix):
             return info
-    return {"suburb": "Victoria", "postcode": ""}
+    return {"suburb": None, "postcode": None}
 
 
 def csv_to_wifi_locations(rows, last_modified):
@@ -68,42 +143,35 @@ def csv_to_wifi_locations(rows, last_modified):
     active = [r for r in rows if r.get("Status", "").upper() == "UP"]
     results = []
 
-    for i, row in enumerate(active):
+    for row in active:
         name = row.get("Long Name", row.get("Name", ""))
         short_name = row.get("Name", "")
         parts = name.split("-", 2)
-        display_name = parts[2] if len(parts) >= 3 else name
+        display_name = parts[2].strip() if len(parts) >= 3 else name
         location = get_location_info(short_name)
 
+        lat = float(row["Latitude"]) if row.get("Latitude") else None
+        lng = float(row["Longitude"]) if row.get("Longitude") else None
+
         results.append({
-            "id": short_name or f"wifi-{i}",
-            "name": display_name,
-            "address": name,
+            "id": f"vicfreewifi-{short_name}" if short_name else None,
+            "name": display_name or None,
+            "address": name or None,
             "suburb": location["suburb"],
             "postcode": location["postcode"],
-            "latitude": float(row["Latitude"]) if row.get("Latitude") else None,
-            "longitude": float(row["Longitude"]) if row.get("Longitude") else None,
+            "latitude": lat,
+            "longitude": lng,
             "distanceKm": None,
             "openingHours": None,
             "accessConditions": [],
+            "verificationStatus": "confirmed",
             "dataUpdatedAt": last_modified or datetime.now(timezone.utc).isoformat(),
         })
 
     return results
 
 
-#  Regional public spaces (libraries, community centres) 
-
-FEATURE_SERVER_QUERY_URL = (
-    "https://services-ap1.arcgis.com/P744lA0wf4LlBZ84/ArcGIS/rest/services/"
-    "Vicmap_Features_of_Interest/FeatureServer/1/query"
-)
-
-PUBLIC_SPACE_KEYWORDS = [
-    "LIBRARY", "COMMUNITY", "NEIGHBOURHOOD HOUSE", "NEIGHBORHOOD HOUSE",
-    "CIVIC", "HALL", "LEARNING CENTRE", "LEARNING CENTER",
-]
-
+#  Regional public spaces 
 
 def build_where_clause(keywords=PUBLIC_SPACE_KEYWORDS):
     """Build a SQL WHERE clause matching keywords against text fields."""
@@ -124,13 +192,13 @@ def fetch_public_spaces(page_size=2000):
     while True:
         params = {
             "where": where_clause,
-            "outFields": "name,feature_type,feature_subtype,theme1,theme2",
+            "outFields": "OBJECTID,name,feature_type,feature_subtype,theme1,theme2",
             "outSR": "4326",
             "resultOffset": offset,
             "resultRecordCount": page_size,
             "f": "json",
         }
-        resp = requests.post(FEATURE_SERVER_QUERY_URL, data=params, headers=HEADERS_CKAN, timeout=30)
+        resp = http_requests.post(FEATURE_SERVER_QUERY_URL, data=params, headers=HEADERS_CKAN, timeout=30)
         resp.raise_for_status()
         data = resp.json()
 
@@ -147,23 +215,11 @@ def fetch_public_spaces(page_size=2000):
     return all_features
 
 
-# Facility types that are genuinely likely to offer free wifi
-USEFUL_FACILITY_TYPES = ["library", "community centre", "community center",
-                         "neighbourhood house", "neighborhood house",
-                         "learning centre", "learning center"]
-
-EXCLUDED_FACILITY_TYPES = ["camp", "rest area", "telephone", "reservoir",
-                           "tank", "rsl", "oval", "golf", "cemetery",
-                           "child care"]
-
-
 def is_useful_facility(attrs):
-    """Only keep libraries and community centres — most likely to have wifi."""
+    """Only keep libraries and community centres."""
     text = " ".join(str(v) for v in attrs.values() if v).lower()
-
     if any(excluded in text for excluded in EXCLUDED_FACILITY_TYPES):
         return False
-
     return any(keyword in text for keyword in USEFUL_FACILITY_TYPES)
 
 
@@ -171,7 +227,7 @@ def public_spaces_to_wifi_locations(features):
     """Convert Vicmap public space features to WifiLocation format."""
     results = []
 
-    for i, feature in enumerate(features):
+    for feature in features:
         attrs = feature.get("attributes", {})
         geometry = feature.get("geometry", {})
         lat = geometry.get("y")
@@ -179,22 +235,22 @@ def public_spaces_to_wifi_locations(features):
 
         if lat is None or lon is None:
             continue
-
         if not is_useful_facility(attrs):
             continue
 
-        name = attrs.get("name", "")
+        name = attrs.get("name")
         if not name:
             continue
 
+        object_id = attrs.get("OBJECTID", "")
         facility_type = attrs.get("feature_subtype") or attrs.get("feature_type") or ""
 
         results.append({
-            "id": f"public-{i}",
+            "id": f"vicmap-{object_id}" if object_id else None,
             "name": name,
-            "address": name,
-            "suburb": "",
-            "postcode": "",
+            "address": None,
+            "suburb": None,
+            "postcode": None,
             "latitude": lat,
             "longitude": lon,
             "distanceKm": None,
@@ -203,47 +259,105 @@ def public_spaces_to_wifi_locations(features):
                 f"Facility type: {facility_type}",
                 "Free wifi likely but not confirmed — check with staff",
             ],
+            "verificationStatus": "likely",
             "dataUpdatedAt": datetime.now(timezone.utc).isoformat(),
         })
 
     return results
 
 
-#  API routes 
+#    API routes 
 
 @app.route("/api/wifi")
 def get_wifi():
-    """Return all available wifi/connectivity locations across Victoria."""
+    """Return nearby wifi locations filtered by postcode. Postcode is required."""
+    postcode = request.args.get("postcode", "").strip()
+
+    if not postcode:
+        return jsonify({"error": "postcode parameter is required"}), 400
+
+    if not is_valid_vic_postcode(postcode):
+        return jsonify({"error": f"Invalid Victorian postcode: {postcode}"}), 400
+
+    user_lat, user_lng = postcode_to_coords(postcode)
+
+    if user_lat is None or user_lng is None:
+        return jsonify({"error": f"Could not locate postcode: {postcode}"}), 400
+
     try:
         # Source 1: VicFreeWiFi (confirmed wifi)
-        rows, last_modified = fetch_wifi_csv()
-        wifi_records = csv_to_wifi_locations(rows, last_modified)
+        wifi_records = []
+        wifi_error = None
+        try:
+            rows, last_modified = fetch_wifi_csv()
+            wifi_records = csv_to_wifi_locations(rows, last_modified)
+        except Exception as e:
+            wifi_error = str(e)
 
         # Source 2: Regional public spaces (likely wifi)
-        public_features = fetch_public_spaces()
-        public_records = public_spaces_to_wifi_locations(public_features)
+        public_records = []
+        public_error = None
+        try:
+            public_features = fetch_public_spaces()
+            public_records = public_spaces_to_wifi_locations(public_features)
+        except Exception as e:
+            public_error = str(e)
 
         all_records = wifi_records + public_records
+        all_records = [r for r in all_records if r.get("id") and r.get("name")]
+
+         # Calculate distance for all records
+        for record in all_records:
+            if record["latitude"] is not None and record["longitude"] is not None:
+                dist = haversine_km(user_lat, user_lng, record["latitude"], record["longitude"])
+                record["distanceKm"] = round(dist, 1)
+
+        # Keep only records with a known distance, sorted nearest-first
+        all_with_distance = [r for r in all_records if r.get("distanceKm") is not None]
+        all_with_distance.sort(key=lambda r: r["distanceKm"])
+
+        # Filter to search radius
+        within_radius = [r for r in all_with_distance if r["distanceKm"] <= SEARCH_RADIUS_KM]
+
+        used_fallback = False
+        if within_radius:
+            all_records = within_radius
+        else:
+            # Fallback: nothing within radius, show nearest results anyway
+            all_records = all_with_distance[:FALLBACK_RESULT_COUNT]
+            used_fallback = True
+
+        # Build limitations
+        limitations = [
+            "VicFreeWiFi covers pilot areas only",
+            "Regional public spaces are inferred to have wifi based on facility type",
+        ]
+        if used_fallback:
+            limitations.append(
+                f"No wifi locations found within {SEARCH_RADIUS_KM}km of postcode {postcode} — "
+                f"showing the {len(all_records)} nearest known locations, which may be far away"
+            )
+        if wifi_error:
+            limitations.append("VicFreeWiFi data unavailable: showing regional public spaces only")
+        if public_error:
+            limitations.append("Regional public space data unavailable: showing confirmed VicFreeWiFi only")
+
+        # Build coverage areas
+        coverage = ["Central Melbourne", "Central Bendigo", "Central Ballarat"]
+        if not public_error:
+            coverage.append("Regional Victoria (libraries and community centres)")
 
         return jsonify({
             "records": all_records,
             "metadata": {
-                "version": "1.0",
+                "version": "1.1",
                 "generatedAt": datetime.now(timezone.utc).isoformat(),
                 "sourceName": "VicFreeWiFi + Vicmap Features of Interest",
-                "coverageAreas": [
-                    "Central Melbourne (confirmed)",
-                    "Central Bendigo (confirmed)",
-                    "Central Ballarat (confirmed)",
-                    "Regional Victoria (libraries and community centres — wifi likely but not confirmed)",
-                ],
-                "limitations": [
-                    "VicFreeWiFi covers pilot areas only",
-                    "Regional public spaces are inferred to have wifi based on facility type",
-                    "Opening hours and access conditions not available for all locations",
-                ],
+                "coverageAreas": coverage,
+                "limitations": limitations,
             },
         })
+
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
