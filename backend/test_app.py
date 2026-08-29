@@ -27,6 +27,7 @@ def reset_caches():
     app_module._cache["timestamp"] = None
     app_module._cache["removed_ids"] = []
     app_module._postcode_cache.clear()
+    app_module.limiter.reset()
     yield
 
 
@@ -287,6 +288,27 @@ def test_partial_source_failure_other_direction(client):
                 assert response.status_code == 200
                 limitations = response.json["metadata"]["limitations"]
                 assert any("Regional public space data unavailable" in lim for lim in limitations)
+
+def test_freshness_status_is_current_when_both_sources_succeed(client):
+    with patch("app.postcode_to_coords", return_value=(-36.757, 144.279)):
+        with patch("app.fetch_wifi_csv", return_value=([MOCK_WIFI_ROW], "2026-01-01")):
+            with patch("app.fetch_public_spaces", return_value=[MOCK_PUBLIC_FEATURE]):
+                response = client.get("/api/wifi?postcode=3550")
+                assert response.json["metadata"]["freshnessStatus"] == "current"
+
+def test_freshness_status_is_stale_when_wifi_source_fails(client):
+    with patch("app.postcode_to_coords", return_value=(-36.757, 144.279)):
+        with patch("app.fetch_wifi_csv", side_effect=Exception("VicFreeWiFi down")):
+            with patch("app.fetch_public_spaces", return_value=[MOCK_PUBLIC_FEATURE]):
+                response = client.get("/api/wifi?postcode=3550")
+                assert response.json["metadata"]["freshnessStatus"] == "stale"
+
+def test_freshness_status_is_stale_when_public_source_fails(client):
+    with patch("app.postcode_to_coords", return_value=(-36.757, 144.279)):
+        with patch("app.fetch_wifi_csv", return_value=([MOCK_WIFI_ROW], "2026-01-01")):
+            with patch("app.fetch_public_spaces", side_effect=Exception("Vicmap down")):
+                response = client.get("/api/wifi?postcode=3550")
+                assert response.json["metadata"]["freshnessStatus"] == "stale"
 
 def test_metadata_includes_removed_record_ids(client):
     with patch("app.postcode_to_coords", return_value=(-36.757, 144.279)):
