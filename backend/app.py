@@ -5,10 +5,18 @@ import io
 import math
 import time
 import requests as http_requests
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
 from datetime import datetime, timezone
 
 app = Flask(__name__)
 CORS(app)
+
+limiter = Limiter(
+    get_remote_address,
+    app=app,
+    default_limits=[],
+)
 
 #  Simple in-memory cache 
 
@@ -18,6 +26,8 @@ _cache = {
     "removed_ids": []
 }
 CACHE_TTL_SECONDS = 300  # 5 minutes
+#  Postcode-to-coordinates cache (never expires, coordinates don't change)
+_postcode_cache = {}
 
 #  Config 
 
@@ -73,7 +83,10 @@ def is_valid_vic_postcode(postcode):
 
 
 def postcode_to_coords(postcode):
-    """Convert an Australian postcode to (lat, lng) using Nominatim."""
+    """Convert an Australian postcode to (lat, lng) using Nominatim, with a local cache."""
+    if postcode in _postcode_cache:
+        return _postcode_cache[postcode]
+
     try:
         resp = http_requests.get(
             "https://nominatim.openstreetmap.org/search",
@@ -89,7 +102,9 @@ def postcode_to_coords(postcode):
         resp.raise_for_status()
         results = resp.json()
         if results:
-            return float(results[0]["lat"]), float(results[0]["lon"])
+            coords = (float(results[0]["lat"]), float(results[0]["lon"]))
+            _postcode_cache[postcode] = coords
+            return coords
     except Exception:
         pass
     return None, None
@@ -279,6 +294,7 @@ def public_spaces_to_wifi_locations(features):
 #    API routes 
 
 @app.route("/api/wifi")
+@limiter.limit("30 per minute")
 def get_wifi():
     """Return nearby wifi locations filtered by postcode. Postcode is required."""
     postcode = request.args.get("postcode", "").strip()
@@ -332,9 +348,6 @@ def get_wifi():
             all_records = [r for r in all_records if r.get("id") and r.get("name")]
 
             if all_records:
-                # Only compute removed IDs on a full successful refresh
-                # (both sources worked), so a partial failure doesn't
-                # falsely report everything from the failed source as removed.
                 if not wifi_error and not public_error and previous_ids:
                     new_ids = {r["id"] for r in all_records}
                     _cache["removed_ids"] = sorted(previous_ids - new_ids)
@@ -343,6 +356,10 @@ def get_wifi():
 
                 _cache["data"] = all_records
                 _cache["timestamp"] = now
+            elif wifi_error and public_error:
+                return jsonify({
+                    "error": "Both data sources are currently unavailable. Please try again later."
+                }), 503
 
 
          # Calculate distance for all records
@@ -399,7 +416,8 @@ def get_wifi():
         })
 
     except Exception as e:
-        return jsonify({"error": str(e)}), 500
+        app.logger.error(f"Unexpected error in /api/wifi: {e}")
+        return jsonify({"error": "An unexpected error occurred. Please try again later."}), 500
 
 
 #  Start server 
