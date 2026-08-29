@@ -3,11 +3,20 @@ from flask_cors import CORS
 import csv
 import io
 import math
+import time
 import requests as http_requests
 from datetime import datetime, timezone
 
 app = Flask(__name__)
 CORS(app)
+
+#  Simple in-memory cache 
+
+_cache = {
+    "data": None,
+    "timestamp": None,
+}
+CACHE_TTL_SECONDS = 300  # 5 minutes
 
 #  Config 
 
@@ -285,26 +294,42 @@ def get_wifi():
         return jsonify({"error": f"Could not locate postcode: {postcode}"}), 400
 
     try:
-        # Source 1: VicFreeWiFi (confirmed wifi)
-        wifi_records = []
-        wifi_error = None
-        try:
-            rows, last_modified = fetch_wifi_csv()
-            wifi_records = csv_to_wifi_locations(rows, last_modified)
-        except Exception as e:
-            wifi_error = str(e)
+        now = time.time()
+        cache_fresh = (
+            _cache["data"] is not None
+            and _cache["timestamp"] is not None
+            and (now - _cache["timestamp"]) < CACHE_TTL_SECONDS
+        )
 
-        # Source 2: Regional public spaces (likely wifi)
-        public_records = []
-        public_error = None
-        try:
-            public_features = fetch_public_spaces()
-            public_records = public_spaces_to_wifi_locations(public_features)
-        except Exception as e:
-            public_error = str(e)
+        if cache_fresh:
+            all_records = _cache["data"]
+            wifi_error = None
+            public_error = None
+        else:
+            # Source 1: VicFreeWiFi (confirmed wifi)
+            wifi_records = []
+            wifi_error = None
+            try:
+                rows, last_modified = fetch_wifi_csv()
+                wifi_records = csv_to_wifi_locations(rows, last_modified)
+            except Exception as e:
+                wifi_error = str(e)
 
-        all_records = wifi_records + public_records
-        all_records = [r for r in all_records if r.get("id") and r.get("name")]
+            # Source 2: Regional public spaces (likely wifi)
+            public_records = []
+            public_error = None
+            try:
+                public_features = fetch_public_spaces()
+                public_records = public_spaces_to_wifi_locations(public_features)
+            except Exception as e:
+                public_error = str(e)
+
+            all_records = wifi_records + public_records
+            all_records = [r for r in all_records if r.get("id") and r.get("name")]
+
+            if all_records:
+                _cache["data"] = all_records
+                _cache["timestamp"] = now
 
          # Calculate distance for all records
         for record in all_records:
