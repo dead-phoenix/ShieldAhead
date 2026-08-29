@@ -411,7 +411,8 @@ def get_wifi():
                 "sourceName": "VicFreeWiFi + Vicmap Features of Interest",
                 "coverageAreas": coverage,
                 "limitations": limitations,
-                "removedRecordIds": _cache["removed_ids"]
+                "removedRecordIds": _cache["removed_ids"],
+                "freshnessStatus": "current" if not (wifi_error or public_error) else "stale"
             },
         })
 
