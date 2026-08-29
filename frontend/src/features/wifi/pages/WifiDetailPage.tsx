@@ -1,9 +1,9 @@
 import { Clock, Heart, Info, MapPin, NavigationArrow, ShieldCheck, WifiHigh } from '@phosphor-icons/react'
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { Navigate, useParams, useSearchParams } from 'react-router-dom'
 import { appRoutes } from '../../../app/config/product'
-import { getMockWifiRepository } from '../../../data/mock/mockRepositories'
 import { useRepositoryData } from '../../../data/useRepositoryData'
+import { getWifiRepository } from '../../../data/wifiRepository'
 import { LoadingState } from '../../../shared/components/LoadingState'
 import { EmptyState } from '../../../shared/components/EmptyState'
 import { PageBackLink } from '../../../shared/components/PageBackLink'
@@ -16,7 +16,12 @@ import { clearUsualWifiSpot, getHouseholdProfile, getOfflinePreferences, getUsua
 export function WifiDetailPage() {
   const { id } = useParams()
   const [searchParams] = useSearchParams()
-  const repository = getMockWifiRepository(searchParams.get('fixture'))
+  const fixture = searchParams.get('fixture')
+  const postcode = getHouseholdProfile()?.postcode ?? '3453'
+  const repository = useMemo(
+    () => getWifiRepository(fixture, postcode),
+    [fixture, postcode],
+  )
   const { data, isLoading, error, retry } = useRepositoryData(repository.list)
   const [usualSpot, setUsualSpot] = useState(getUsualWifiSpot())
   const [message, setMessage] = useState('')
@@ -55,7 +60,7 @@ export function WifiDetailPage() {
       {data?.metadata.freshnessStatus === 'stale' ? <StatusBanner title="This saved Wi-Fi information may be out of date" tone="warning"><p>Saved copy: {formatSavedDate(data.metadata.generatedAt)}. Check for an update before relying on these details.</p></StatusBanner> : null}
       <div className="notice-card"><Info aria-hidden="true" size={22} /><p>Wi-Fi availability is not confirmed. Check before travelling.</p></div>
       <dl className="detail-list">
-        <div><dt><NavigationArrow aria-hidden="true" size={20} /> Distance</dt><dd>{location.distanceKm === undefined ? 'Distance from your postcode is not confirmed' : `${location.distanceKm} km from ${getHouseholdProfile()?.postcode ?? '3453'}`}</dd></div>
+        <div><dt><NavigationArrow aria-hidden="true" size={20} /> Distance</dt><dd>{location.distanceKm === undefined ? 'Distance from your postcode is not confirmed' : `${location.distanceKm} km from ${postcode}`}</dd></div>
         <div><dt><MapPin aria-hidden="true" size={20} /> Address</dt><dd>{location.address ? locationLabel : `Street address not confirmed. Listed for ${locationLabel}.`}</dd></div>
         <div><dt><Clock aria-hidden="true" size={20} /> Opening hours</dt><dd>{location.openingHours ?? 'Opening hours not confirmed'}</dd></div>
         <div><dt><WifiHigh aria-hidden="true" size={20} /> Access conditions</dt><dd>{location.accessConditions?.length ? <ul>{location.accessConditions.map((condition) => <li key={condition}>{condition}</li>)}</ul> : 'Access conditions not confirmed'}</dd></div>
