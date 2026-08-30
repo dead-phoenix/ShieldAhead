@@ -26,6 +26,7 @@ def reset_caches():
     app_module._cache["data"] = None
     app_module._cache["timestamp"] = None
     app_module._cache["removed_ids"] = []
+    app_module._cache["freshness_status"] = None
     app_module._postcode_cache.clear()
     app_module.limiter.reset()
     yield
@@ -310,6 +311,16 @@ def test_freshness_status_is_stale_when_public_source_fails(client):
                 response = client.get("/api/wifi?postcode=3550")
                 assert response.json["metadata"]["freshnessStatus"] == "stale"
 
+def test_cached_partial_result_remains_stale(client):
+    with patch("app.postcode_to_coords", return_value=(-36.757, 144.279)):
+        with patch("app.fetch_wifi_csv", side_effect=Exception("VicFreeWiFi down")):
+            with patch("app.fetch_public_spaces", return_value=[MOCK_PUBLIC_FEATURE]):
+                first = client.get("/api/wifi?postcode=3550")
+                cached = client.get("/api/wifi?postcode=3550")
+
+                assert first.json["metadata"]["freshnessStatus"] == "stale"
+                assert cached.json["metadata"]["freshnessStatus"] == "stale"
+
 def test_metadata_includes_removed_record_ids(client):
     with patch("app.postcode_to_coords", return_value=(-36.757, 144.279)):
         with patch("app.fetch_wifi_csv", return_value=([MOCK_WIFI_ROW], "2026-01-01")):
@@ -355,6 +366,18 @@ def test_total_source_failure_returns_503(client):
                 response = client.get("/api/wifi?postcode=3111")
                 assert response.status_code == 503
                 assert "unavailable" in response.json["error"].lower()
+
+def test_unexpected_processing_error_returns_500(client):
+    with patch("app.postcode_to_coords", return_value=(-36.757, 144.279)):
+        with patch("app.fetch_wifi_csv", return_value=([MOCK_WIFI_ROW], "2026-01-01")):
+            with patch("app.fetch_public_spaces", return_value=[MOCK_PUBLIC_FEATURE]):
+                with patch("app.haversine_km", side_effect=RuntimeError("unexpected")):
+                    response = client.get("/api/wifi?postcode=3550")
+
+                    assert response.status_code == 500
+                    assert response.json == {
+                        "error": "An unexpected error occurred. Please try again later."
+                    }
 
 
 # ============================================================

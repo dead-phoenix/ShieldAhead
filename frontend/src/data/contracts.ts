@@ -26,6 +26,7 @@ export interface WifiLocation {
   distanceKm?: number
   openingHours?: string
   accessConditions?: string[]
+  verificationStatus?: 'confirmed' | 'likely'
   dataUpdatedAt: string
 }
 

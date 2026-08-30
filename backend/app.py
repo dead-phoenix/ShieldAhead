@@ -23,10 +23,11 @@ limiter = Limiter(
 _cache = {
     "data": None,
     "timestamp": None,
-    "removed_ids": []
+    "removed_ids": [],
+    "freshness_status": None,
 }
 CACHE_TTL_SECONDS = 300  # 5 minutes
-#  Postcode-to-coordinates cache (never expires, coordinates don't change)
+# Postcode-to-coordinates cache lasts for the lifetime of this server process.
 _postcode_cache = {}
 
 #  Config 
@@ -322,6 +323,7 @@ def get_wifi():
             all_records = _cache["data"]
             wifi_error = None
             public_error = None
+            freshness_status = _cache["freshness_status"] or "current"
         else:
             # Remember the previous snapshot's IDs before overwriting
             previous_ids = {r["id"] for r in _cache["data"]} if _cache["data"] else set()
@@ -346,6 +348,7 @@ def get_wifi():
 
             all_records = wifi_records + public_records
             all_records = [r for r in all_records if r.get("id") and r.get("name")]
+            freshness_status = "current" if not (wifi_error or public_error) else "stale"
 
             if all_records:
                 if not wifi_error and not public_error and previous_ids:
@@ -356,6 +359,7 @@ def get_wifi():
 
                 _cache["data"] = all_records
                 _cache["timestamp"] = now
+                _cache["freshness_status"] = freshness_status
             elif wifi_error and public_error:
                 return jsonify({
                     "error": "Both data sources are currently unavailable. Please try again later."
@@ -412,7 +416,7 @@ def get_wifi():
                 "coverageAreas": coverage,
                 "limitations": limitations,
                 "removedRecordIds": _cache["removed_ids"],
-                "freshnessStatus": "current" if not (wifi_error or public_error) else "stale"
+                "freshnessStatus": freshness_status,
             },
         })
 

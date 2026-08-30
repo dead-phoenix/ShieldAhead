@@ -1029,6 +1029,44 @@ input[type='checkbox'] {
   padding: 0.25rem 0.55rem;
 }
 
+.verification-badge {
+  display: inline-flex;
+  width: fit-content;
+  min-height: 1.75rem;
+  align-items: center;
+  gap: 0.3rem;
+  margin-top: 0.4rem;
+  padding: 0.25rem 0.55rem;
+  border-radius: 0.3rem;
+  font-size: var(--text-xs);
+  font-weight: 700;
+  line-height: 1.35;
+}
+
+.badge-row .verification-badge {
+  margin-top: 0;
+}
+
+.verification-badge--confirmed {
+  background: var(--color-success-bg);
+  color: var(--color-success-text);
+}
+
+.verification-badge--likely {
+  background: var(--color-warning-bg);
+  color: var(--color-warning-text);
+}
+
+.notice-card--confirmed {
+  background: var(--color-success-bg);
+  color: var(--color-success-text);
+}
+
+.notice-card--likely {
+  background: var(--color-warning-bg);
+  color: var(--color-warning-text);
+}
+
 .back-link {
   display: inline-flex;
   min-height: 2.75rem;
