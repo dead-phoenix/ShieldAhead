@@ -3,7 +3,7 @@ import { useMemo, useState } from 'react'
 import { Navigate, useParams, useSearchParams } from 'react-router-dom'
 import { appRoutes } from '../../../app/config/product'
 import { useRepositoryData } from '../../../data/useRepositoryData'
-import { getWifiRepository } from '../../../data/wifiRepository'
+import { getWifiDataSourceMode, getWifiRepository } from '../../../data/wifiRepository'
 import { LoadingState } from '../../../shared/components/LoadingState'
 import { EmptyState } from '../../../shared/components/EmptyState'
 import { PageBackLink } from '../../../shared/components/PageBackLink'
@@ -12,11 +12,13 @@ import { StatusBanner } from '../../../shared/components/StatusBanner'
 import { useOnlineStatus } from '../../../shared/hooks/useOnlineStatus'
 import { formatSavedDate } from '../../../shared/utils/formatDate'
 import { clearUsualWifiSpot, getHouseholdProfile, getOfflinePreferences, getUsualWifiSpot, saveUsualWifiSpot } from '../../../storage/onboardingDraftStorage'
+import { WifiVerificationBadge } from '../components/WifiVerificationBadge'
 
 export function WifiDetailPage() {
   const { id } = useParams()
   const [searchParams] = useSearchParams()
   const fixture = searchParams.get('fixture')
+  const dataSourceMode = getWifiDataSourceMode(fixture)
   const postcode = getHouseholdProfile()?.postcode ?? '3453'
   const repository = useMemo(
     () => getWifiRepository(fixture, postcode),
@@ -56,9 +58,16 @@ export function WifiDetailPage() {
   return (
     <section className="detail-page" aria-labelledby="wifi-detail-title">
       <PageBackLink to={appRoutes.wifi}>Back to Wi-Fi list</PageBackLink>
-      <div className="page-heading"><div><h1 id="wifi-detail-title">{location.name}</h1><div className="badge-row"><PrototypeBadge /><span className="positive-chip"><ShieldCheck aria-hidden="true" size={15} /> {offline.wifiSaved ? 'Saved for offline use' : 'Online view only'}</span></div></div></div>
+      <div className="page-heading"><div><h1 id="wifi-detail-title">{location.name}</h1><div className="badge-row">{dataSourceMode === 'mock' ? <PrototypeBadge /> : null}<span className="positive-chip"><ShieldCheck aria-hidden="true" size={15} /> {offline.wifiSaved ? 'Saved for offline use' : 'Online view only'}</span><WifiVerificationBadge status={location.verificationStatus} /></div></div></div>
       {data?.metadata.freshnessStatus === 'stale' ? <StatusBanner title="This saved Wi-Fi information may be out of date" tone="warning"><p>Saved copy: {formatSavedDate(data.metadata.generatedAt)}. Check for an update before relying on these details.</p></StatusBanner> : null}
-      <div className="notice-card"><Info aria-hidden="true" size={22} /><p>Wi-Fi availability is not confirmed. Check before travelling.</p></div>
+      <div className={`notice-card${location.verificationStatus ? ` notice-card--${location.verificationStatus}` : ''}`}>
+        {location.verificationStatus === 'confirmed' ? <ShieldCheck aria-hidden="true" size={22} /> : <Info aria-hidden="true" size={22} />}
+        <p>{location.verificationStatus === 'confirmed'
+          ? 'This location appears in the official VicFreeWiFi listing. Opening hours and access conditions may still change.'
+          : location.verificationStatus === 'likely'
+            ? 'This facility is likely to offer Wi-Fi, but availability is not officially confirmed. Check with staff before travelling.'
+            : 'Wi-Fi availability is not confirmed. Check before travelling.'}</p>
+      </div>
       <dl className="detail-list">
         <div><dt><NavigationArrow aria-hidden="true" size={20} /> Distance</dt><dd>{location.distanceKm === undefined ? 'Distance from your postcode is not confirmed' : `${location.distanceKm} km from ${postcode}`}</dd></div>
         <div><dt><MapPin aria-hidden="true" size={20} /> Address</dt><dd>{location.address ? locationLabel : `Street address not confirmed. Listed for ${locationLabel}.`}</dd></div>

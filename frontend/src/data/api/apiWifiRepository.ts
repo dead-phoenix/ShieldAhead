@@ -41,6 +41,10 @@ function normalizeWifiLocation(value: unknown): WifiLocation {
     throw new Error('Wi-Fi API returned a record that is not an object.')
   }
 
+  const verificationStatus = value.verificationStatus === 'confirmed' || value.verificationStatus === 'likely'
+    ? value.verificationStatus
+    : undefined
+
   return {
     id: requiredString(value.id, 'record id'),
     name: requiredString(value.name, 'record name'),
@@ -52,6 +56,7 @@ function normalizeWifiLocation(value: unknown): WifiLocation {
     distanceKm: optionalNumber(value.distanceKm),
     openingHours: optionalString(value.openingHours),
     accessConditions: stringArray(value.accessConditions),
+    verificationStatus,
     dataUpdatedAt: requiredString(value.dataUpdatedAt, 'record update date'),
   }
 }

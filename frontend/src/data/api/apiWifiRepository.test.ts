@@ -14,6 +14,7 @@ const apiPayload = {
       distanceKm: null,
       openingHours: null,
       accessConditions: null,
+      verificationStatus: 'likely',
       dataUpdatedAt: '2026-08-29T00:00:00.000Z',
     },
   ],
@@ -59,6 +60,7 @@ describe('API Wi-Fi repository', () => {
       postcode: '',
       longitude: 144.263,
       accessConditions: [],
+      verificationStatus: 'likely',
     })
     expect(result.records[0].address).toBeUndefined()
     expect(result.records[0].latitude).toBeUndefined()

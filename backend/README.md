@@ -8,8 +8,8 @@ Flask API providing nearby free wifi/connectivity locations for Epic 2 (US 2.1).
 ## Requirements 环境要求
 
 - Python 3.10+ recommended / 建议使用 Python 3.10 及以上版本
-- **Internet connection required** — every request calls three external APIs (Nominatim, VicFreeWiFi, Vicmap). This will not work offline.
-  **需要联网** — 每次请求都会调用三个外部 API（Nominatim、VicFreeWiFi、Vicmap），断网环境下无法运行。
+- **Internet connection required for uncached requests** — the API uses Nominatim, VicFreeWiFi and Vicmap. Cached data can avoid repeat source calls for a short period, but the backend is not an offline data store.
+  **未缓存的请求需要联网** — API 使用 Nominatim、VicFreeWiFi 和 Vicmap。短时间内可使用缓存避免重复访问数据源，但后端并不是离线数据库。
 
 ## Setup 环境搭建
 
@@ -99,8 +99,8 @@ Results are combined, deduplicated, filtered to a 30km radius of the given postc
 
 - Wifi/library data is cached in memory for 5 minutes to avoid re-fetching both external sources on every request.
   wifi/图书馆数据在内存中缓存 5 分钟，避免每次请求都重新拉取两个外部数据源。
-- Postcode-to-coordinates lookups (via Nominatim) are cached permanently, since a postcode's coordinates never change.
-  邮编转坐标（通过 Nominatim）永久缓存，因为同一邮编的坐标不会变化。
+- Postcode-to-coordinates lookups (via Nominatim) are cached for the lifetime of the backend process. Restarting the server clears this in-memory cache.
+  邮编转坐标（通过 Nominatim）会在当前后端进程运行期间保留；重启服务器会清空这份内存缓存。
 
 ---
 
