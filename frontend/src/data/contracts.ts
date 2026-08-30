@@ -18,7 +18,7 @@ export interface ConsentState {
 export interface WifiLocation {
   id: string
   name: string
-  address: string
+  address?: string
   suburb: string
   postcode: string
   latitude?: number
@@ -26,6 +26,7 @@ export interface WifiLocation {
   distanceKm?: number
   openingHours?: string
   accessConditions?: string[]
+  verificationStatus?: 'confirmed' | 'likely'
   dataUpdatedAt: string
 }
 
@@ -35,7 +36,7 @@ export interface SupportService {
   id: string
   name: string
   serviceTypes: string[]
-  address: string
+  address?: string
   suburb: string
   postcode: string
   latitude?: number
@@ -47,6 +48,7 @@ export interface SupportService {
   partnerStatus?: 'partner' | 'open-referral' | 'unknown'
   availabilityStatus: AvailabilityStatus
   availabilityUpdatedAt?: string
+  availabilityFreshness?: 'current' | 'stale'
   dataUpdatedAt: string
 }
 
@@ -62,6 +64,8 @@ export interface DatasetMetadata {
   sourceName: string
   coverageAreas: string[]
   limitations: string[]
+  freshnessStatus?: 'current' | 'stale'
+  removedRecordIds?: string[]
 }
 
 export interface DatasetResult<T> {
