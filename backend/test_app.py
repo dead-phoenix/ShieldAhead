@@ -1,15 +1,14 @@
-import time
 import pytest
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch
 import app as app_module
 from app import (
     app,
-    is_valid_vic_postcode,
-    haversine_km,
-    is_useful_facility,
-    public_spaces_to_wifi_locations,
-    csv_to_wifi_locations,
-    get_location_info,
+    is_relevant,
+    infer_service_type,
+    stable_charity_id,
+    build_charity_address,
+    charity_to_support_service,
+    geocode_charities,
 )
 
 
@@ -23,167 +22,156 @@ def client():
 @pytest.fixture(autouse=True)
 def reset_caches():
     """Ensure each test starts with clean caches so tests don't interfere with each other."""
-    app_module._cache["data"] = None
-    app_module._cache["timestamp"] = None
-    app_module._cache["removed_ids"] = []
-    app_module._cache["freshness_status"] = None
+    app_module._charity_cache["data"] = None
+    app_module._charity_cache["timestamp"] = None
+    app_module._charity_cache["removed_ids"] = []
+    app_module._charity_cache["freshness_status"] = None
+    app_module._address_cache.clear()
     app_module._postcode_cache.clear()
     app_module.limiter.reset()
     yield
 
 
 # ============================================================
-# Postcode validation (no network needed)
+# Relevance filtering (no network needed)
 # ============================================================
 
-def test_valid_vic_postcode():
-    assert is_valid_vic_postcode("3453") is True
-    assert is_valid_vic_postcode("3000") is True
-    assert is_valid_vic_postcode("3999") is True
+def test_food_relief_charity_is_relevant():
+    charity = {"Charity_Legal_Name": "Test Food Bank", "Objects": "Provides food relief to disadvantaged families"}
+    assert is_relevant(charity) is True
 
-def test_invalid_vic_postcode():
-    assert is_valid_vic_postcode("9999") is False
-    assert is_valid_vic_postcode("abcd") is False
-    assert is_valid_vic_postcode("123") is False
-    assert is_valid_vic_postcode("34534") is False
+def test_unrelated_charity_is_not_relevant():
+    charity = {"Charity_Legal_Name": "Test Ballet School", "Objects": "Promotes classical dance education"}
+    assert is_relevant(charity) is False
 
 
 # ============================================================
-# Distance calculation (no network needed)
+# Service type inference (no network needed)
 # ============================================================
 
-def test_haversine_same_point_is_zero():
-    dist = haversine_km(-36.757, 144.279, -36.757, 144.279)
-    assert dist == pytest.approx(0, abs=0.01)
+def test_food_keyword_infers_food_relief():
+    charity = {"Charity_Legal_Name": "Community Food Relief Inc"}
+    assert infer_service_type(charity) == "Food relief"
 
-def test_haversine_known_distance():
-    dist = haversine_km(-37.8136, 144.9631, -36.7570, 144.2794)
-    assert 100 < dist < 160
+def test_homeless_keyword_infers_homelessness_support():
+    charity = {"Charity_Legal_Name": "Test Org", "Objects": "Supports people experiencing homelessness"}
+    assert infer_service_type(charity) == "Homelessness support"
 
+def test_financial_keyword_infers_financial_counselling():
+    charity = {"Charity_Legal_Name": "Test Org", "Objects": "Financial hardship counselling service"}
+    assert infer_service_type(charity) == "Financial counselling / hardship support"
 
-# ============================================================
-# Facility filtering: school exclusion, library/community inclusion
-# ============================================================
-
-def test_library_is_useful_facility():
-    attrs = {"feature_type": "Library", "name": "Test Library"}
-    assert is_useful_facility(attrs) is True
-
-def test_community_centre_is_useful_facility():
-    attrs = {"feature_type": "Community Centre", "name": "Test Centre"}
-    assert is_useful_facility(attrs) is True
-
-def test_school_is_excluded_even_with_learning_centre_in_name():
-    attrs = {"feature_type": "Special School", "name": "Test Learning Centre - School"}
-    assert is_useful_facility(attrs) is False
-
-def test_camp_ground_is_excluded():
-    attrs = {"feature_type": "Camp Ground", "name": "Test Camp"}
-    assert is_useful_facility(attrs) is False
-
-def test_unrelated_facility_is_excluded():
-    attrs = {"feature_type": "Golf Course", "name": "Test Golf Club"}
-    assert is_useful_facility(attrs) is False
+def test_no_specific_keyword_falls_back_to_generic_label():
+    charity = {"Charity_Legal_Name": "Test Org", "Objects": "crisis support of general welfare nature"}
+    # "crisis" matches before falling through to the generic label
+    result = infer_service_type(charity)
+    assert result in ("Emergency relief", "Community support services")
 
 
 # ============================================================
-# Public space -> WifiLocation conversion, including id/name filtering
+# Stable id generation (no network needed)
 # ============================================================
 
-def test_public_spaces_missing_id_produces_none_id():
-    """The conversion function itself doesn't filter — that happens later in get_wifi()."""
-    features = [
-        {
-            "attributes": {"OBJECTID": None, "name": "No ID Library", "feature_type": "Library"},
-            "geometry": {"y": -36.7, "x": 144.2},
-        }
-    ]
-    results = public_spaces_to_wifi_locations(features)
-    assert len(results) == 1
-    assert results[0]["id"] is None
+def test_stable_id_is_deterministic():
+    id1 = stable_charity_id("Test Charity", "Bendigo")
+    id2 = stable_charity_id("Test Charity", "Bendigo")
+    assert id1 == id2
 
-def test_api_drops_records_with_missing_id(client):
-    """The full API flow should filter out records with a None id before returning."""
-    no_id_feature = {
-        "attributes": {"OBJECTID": None, "name": "No ID Library", "feature_type": "Library"},
-        "geometry": {"y": -36.76, "x": 144.28},
+def test_stable_id_is_case_insensitive():
+    id1 = stable_charity_id("Test Charity", "Bendigo")
+    id2 = stable_charity_id("TEST CHARITY", "BENDIGO")
+    assert id1 == id2
+
+def test_different_names_produce_different_ids():
+    id1 = stable_charity_id("Charity A", "Bendigo")
+    id2 = stable_charity_id("Charity B", "Bendigo")
+    assert id1 != id2
+
+
+# ============================================================
+# Address building (no network needed)
+# ============================================================
+
+def test_build_address_combines_available_parts():
+    charity = {
+        "Address_Line_1": "1 Main Street",
+        "Town_City": "Castlemaine",
+        "State": "VIC",
+        "Postcode": "3450",
     }
-    with patch("app.postcode_to_coords", return_value=(-36.757, 144.279)):
-        with patch("app.fetch_wifi_csv", return_value=([], "2026-01-01")):
-            with patch("app.fetch_public_spaces", return_value=[no_id_feature]):
-                response = client.get("/api/wifi?postcode=3550")
-                names = [r["name"] for r in response.json["records"]]
-                assert "No ID Library" not in names
+    address = build_charity_address(charity)
+    assert "1 Main Street" in address
+    assert "Castlemaine" in address
+    assert "3450" in address
 
-def test_public_spaces_missing_name_are_dropped():
-    features = [
-        {
-            "attributes": {"OBJECTID": "123", "name": None, "feature_type": "Library"},
-            "geometry": {"y": -36.7, "x": 144.2},
-        }
-    ]
-    results = public_spaces_to_wifi_locations(features)
-    assert len(results) == 0
-
-def test_public_spaces_missing_coordinates_are_dropped():
-    features = [
-        {
-            "attributes": {"OBJECTID": "123", "name": "Test Library", "feature_type": "Library"},
-            "geometry": {"y": None, "x": None},
-        }
-    ]
-    results = public_spaces_to_wifi_locations(features)
-    assert len(results) == 0
-
-def test_valid_library_produces_likely_status():
-    features = [
-        {
-            "attributes": {"OBJECTID": "123", "name": "Test Library", "feature_type": "Library"},
-            "geometry": {"y": -36.7, "x": 144.2},
-        }
-    ]
-    results = public_spaces_to_wifi_locations(features)
-    assert len(results) == 1
-    assert results[0]["verificationStatus"] == "likely"
-    assert results[0]["id"] == "vicmap-123"
-    assert results[0]["suburb"] is None
-    assert results[0]["postcode"] is None
-
-def test_stable_id_does_not_depend_on_list_position():
-    feature = {
-        "attributes": {"OBJECTID": "999", "name": "Test Library", "feature_type": "Library"},
-        "geometry": {"y": -36.7, "x": 144.2},
-    }
-    result_first = public_spaces_to_wifi_locations([feature])
-    result_second = public_spaces_to_wifi_locations([{"attributes": {}, "geometry": {}}, feature])
-    assert result_first[0]["id"] == "vicmap-999"
+def test_build_address_skips_missing_parts():
+    charity = {"Town_City": "Harcourt", "State": "VIC", "Postcode": "3453"}
+    address = build_charity_address(charity)
+    assert address == "Harcourt, VIC, 3453"
 
 
 # ============================================================
-# VicFreeWiFi CSV -> WifiLocation conversion
+# Charity -> SupportService conversion (no network needed)
 # ============================================================
 
-def test_csv_inactive_rows_are_filtered():
-    rows = [{"Name": "BD-01-Test", "Long Name": "BD-01-Test", "Status": "FUTURE", "Latitude": "-36.7", "Longitude": "144.2"}]
-    results = csv_to_wifi_locations(rows, "2026-01-01")
-    assert len(results) == 0
+def test_conversion_uses_abn_when_present():
+    charity = {"Charity_Legal_Name": "Test Charity", "ABN": "12345678901", "Town_City": "Bendigo"}
+    service = charity_to_support_service(charity, "2026-01-01")
+    assert service["id"] == "acnc-12345678901"
 
-def test_csv_active_row_produces_confirmed_status():
-    rows = [{"Name": "BD-01-ArtGallery", "Long Name": "BD-01-ArtGallery", "Status": "UP", "Latitude": "-36.757711", "Longitude": "144.276886"}]
-    results = csv_to_wifi_locations(rows, "2026-01-01")
-    assert len(results) == 1
-    assert results[0]["verificationStatus"] == "confirmed"
-    assert results[0]["id"] == "vicfreewifi-BD-01-ArtGallery"
+def test_conversion_falls_back_to_stable_id_without_abn():
+    charity = {"Charity_Legal_Name": "Test Charity", "Town_City": "Bendigo"}
+    service = charity_to_support_service(charity, "2026-01-01")
+    assert service["id"].startswith("acnc-")
+    assert service["id"] != "acnc-None"
 
-def test_get_location_info_bendigo_prefix():
-    info = get_location_info("BD-01-ArtGallery")
-    assert info["suburb"] == "Bendigo"
-    assert info["postcode"] == "3550"
+def test_conversion_eligibility_is_always_empty():
+    """ACNC's open data has no eligibility field — must never be fabricated."""
+    charity = {"Charity_Legal_Name": "Test Charity", "Town_City": "Bendigo"}
+    service = charity_to_support_service(charity, "2026-01-01")
+    assert service["eligibilityConditions"] == []
 
-def test_get_location_info_unknown_prefix():
-    info = get_location_info("XX-01-Unknown")
-    assert info["suburb"] is None
-    assert info["postcode"] is None
+def test_conversion_stock_status_defaults_not_confirmed():
+    charity = {"Charity_Legal_Name": "Test Charity", "Town_City": "Bendigo"}
+    service = charity_to_support_service(charity, "2026-01-01")
+    assert service["stockStatus"] == "not confirmed"
+
+def test_conversion_partnership_status_defaults_none():
+    charity = {"Charity_Legal_Name": "Test Charity", "Town_City": "Bendigo"}
+    service = charity_to_support_service(charity, "2026-01-01")
+    assert service["partnershipStatus"] is None
+
+def test_conversion_coordinates_start_unresolved():
+    charity = {"Charity_Legal_Name": "Test Charity", "Town_City": "Bendigo"}
+    service = charity_to_support_service(charity, "2026-01-01")
+    assert service["latitude"] is None
+    assert service["longitude"] is None
+
+
+# ============================================================
+# Geocoding cap (mocked, no real network needed)
+# ============================================================
+
+def test_geocode_charities_respects_cap():
+    services = [
+        {"address": f"{i} Test Street, Bendigo, VIC, 3550"} for i in range(5)
+    ]
+    with patch("app.MAX_ADDRESSES_TO_GEOCODE_PER_REFRESH", 2):
+        with patch("app.geocode_address", return_value=(-36.75, 144.27)) as mock_geocode:
+            geocode_charities(services)
+            assert mock_geocode.call_count == 2
+
+def test_geocode_charities_skips_records_without_address():
+    services = [{"address": None}]
+    result = geocode_charities(services)
+    assert result[0].get("latitude") is None
+
+def test_geocode_charities_uses_cache_without_calling_geocoder():
+    services = [{"address": "1 Cached St, Bendigo, VIC, 3550"}]
+    app_module._address_cache["1 Cached St, Bendigo, VIC, 3550"] = (-36.75, 144.27)
+    with patch("app.geocode_address") as mock_geocode:
+        geocode_charities(services)
+        mock_geocode.assert_not_called()
 
 
 # ============================================================
@@ -191,307 +179,108 @@ def test_get_location_info_unknown_prefix():
 # ============================================================
 
 def test_missing_postcode_returns_400(client):
-    response = client.get("/api/wifi")
+    response = client.get("/api/charities")
     assert response.status_code == 400
 
 def test_invalid_postcode_returns_400(client):
-    response = client.get("/api/wifi?postcode=9999")
+    response = client.get("/api/charities?postcode=9999")
     assert response.status_code == 400
-
-def test_non_numeric_postcode_returns_400(client):
-    response = client.get("/api/wifi?postcode=abcd")
-    assert response.status_code == 400
-
-def test_postcode_with_whitespace_is_trimmed(client):
-    with patch("app.postcode_to_coords", return_value=(-36.999, 144.263)):
-        with patch("app.fetch_wifi_csv", return_value=([], "2026-01-01")):
-            with patch("app.fetch_public_spaces", return_value=[]):
-                response = client.get("/api/wifi?postcode=%203453")
-                assert response.status_code == 200
 
 
 # ============================================================
 # API: mocked full-flow behaviour (no real network needed)
 # ============================================================
 
-MOCK_WIFI_ROW = {
-    "Name": "BD-01-ArtGallery",
-    "Long Name": "BD-01-ArtGallery",
-    "Status": "UP",
-    "Latitude": "-36.757711",
-    "Longitude": "144.276886",
+MOCK_CHARITY = {
+    "Charity_Legal_Name": "Bendigo Food Relief Inc",
+    "ABN": "11111111111",
+    "Town_City": "Bendigo",
+    "State": "VIC",
+    "Postcode": "3550",
+    "Address_Line_1": "1 Test Street",
+    "Objects": "Provides emergency food relief to disadvantaged families",
 }
 
-MOCK_PUBLIC_FEATURE = {
-    "attributes": {"OBJECTID": "1", "name": "Test Library", "feature_type": "Library"},
-    "geometry": {"y": -36.76, "x": 144.28},
+UNRELATED_CHARITY = {
+    "Charity_Legal_Name": "Bendigo Ballet School",
+    "ABN": "22222222222",
+    "Town_City": "Bendigo",
+    "State": "VIC",
+    "Postcode": "3550",
+    "Objects": "Classical dance education",
 }
 
-def test_valid_postcode_returns_records(client):
+
+def test_valid_postcode_returns_only_relevant_charities(client):
     with patch("app.postcode_to_coords", return_value=(-36.757, 144.279)):
-        with patch("app.fetch_wifi_csv", return_value=([MOCK_WIFI_ROW], "2026-01-01")):
-            with patch("app.fetch_public_spaces", return_value=[MOCK_PUBLIC_FEATURE]):
-                response = client.get("/api/wifi?postcode=3550")
-                assert response.status_code == 200
-                data = response.json
-                assert "records" in data
-                assert "metadata" in data
-                assert len(data["records"]) == 2
+        with patch("app.fetch_acnc_last_updated", return_value="2026-01-01"):
+            with patch("app.fetch_charities_for_region", return_value=[MOCK_CHARITY, UNRELATED_CHARITY]):
+                with patch("app.geocode_address", return_value=(-36.76, 144.28)):
+                    response = client.get("/api/charities?postcode=3550")
+                    assert response.status_code == 200
+                    names = [r["name"] for r in response.json["records"]]
+                    assert "Bendigo Food Relief Inc" in names
+                    assert "Bendigo Ballet School" not in names
 
 def test_records_sorted_by_distance(client):
     with patch("app.postcode_to_coords", return_value=(-36.757, 144.279)):
-        with patch("app.fetch_wifi_csv", return_value=([MOCK_WIFI_ROW], "2026-01-01")):
-            with patch("app.fetch_public_spaces", return_value=[MOCK_PUBLIC_FEATURE]):
-                response = client.get("/api/wifi?postcode=3550")
-                records = response.json["records"]
-                distances = [r["distanceKm"] for r in records if r["distanceKm"] is not None]
-                assert distances == sorted(distances)
+        with patch("app.fetch_acnc_last_updated", return_value="2026-01-01"):
+            with patch("app.fetch_charities_for_region", return_value=[MOCK_CHARITY]):
+                with patch("app.geocode_address", return_value=(-36.76, 144.28)):
+                    response = client.get("/api/charities?postcode=3550")
+                    records = response.json["records"]
+                    distances = [r["distanceKm"] for r in records if r["distanceKm"] is not None]
+                    assert distances == sorted(distances)
 
-def test_records_within_search_radius(client):
-    far_feature = {
-        "attributes": {"OBJECTID": "2", "name": "Far Library", "feature_type": "Library"},
-        "geometry": {"y": -10.0, "x": 144.28},
-    }
+def test_source_failure_returns_503(client):
     with patch("app.postcode_to_coords", return_value=(-36.757, 144.279)):
-        with patch("app.fetch_wifi_csv", return_value=([MOCK_WIFI_ROW], "2026-01-01")):
-            with patch("app.fetch_public_spaces", return_value=[MOCK_PUBLIC_FEATURE, far_feature]):
-                response = client.get("/api/wifi?postcode=3550")
-                names = [r["name"] for r in response.json["records"]]
-                assert "Far Library" not in names
+        with patch("app.fetch_charities_for_region", side_effect=Exception("ACNC down")):
+            response = client.get("/api/charities?postcode=3550")
+            assert response.status_code == 503
 
-def test_fallback_triggers_when_nothing_within_radius(client):
-    far_feature = {
-        "attributes": {"OBJECTID": "3", "name": "Far Library", "feature_type": "Library"},
-        "geometry": {"y": -10.0, "x": 144.28},
-    }
+def test_eligibility_conditions_never_populated_end_to_end(client):
+    """Guards against ever silently starting to fabricate eligibility text."""
     with patch("app.postcode_to_coords", return_value=(-36.757, 144.279)):
-        with patch("app.fetch_wifi_csv", return_value=([], None)):
-            with patch("app.fetch_public_spaces", return_value=[far_feature]):
-                response = client.get("/api/wifi?postcode=3550")
-                data = response.json
-                assert len(data["records"]) == 1
-                assert any("nearest known locations" in lim for lim in data["metadata"]["limitations"])
+        with patch("app.fetch_acnc_last_updated", return_value="2026-01-01"):
+            with patch("app.fetch_charities_for_region", return_value=[MOCK_CHARITY]):
+                with patch("app.geocode_address", return_value=(-36.76, 144.28)):
+                    response = client.get("/api/charities?postcode=3550")
+                    for record in response.json["records"]:
+                        assert record["eligibilityConditions"] == []
+                    assert any(
+                        "Eligibility conditions are not published" in lim
+                        for lim in response.json["metadata"]["limitations"]
+                    )
 
-def test_partial_source_failure_still_returns_200(client):
+def test_metadata_includes_coverage_areas(client):
     with patch("app.postcode_to_coords", return_value=(-36.757, 144.279)):
-        with patch("app.fetch_wifi_csv", side_effect=Exception("VicFreeWiFi down")):
-            with patch("app.fetch_public_spaces", return_value=[MOCK_PUBLIC_FEATURE]):
-                response = client.get("/api/wifi?postcode=3550")
-                assert response.status_code == 200
-                limitations = response.json["metadata"]["limitations"]
-                assert any("VicFreeWiFi data unavailable" in lim for lim in limitations)
+        with patch("app.fetch_acnc_last_updated", return_value="2026-01-01"):
+            with patch("app.fetch_charities_for_region", return_value=[MOCK_CHARITY]):
+                with patch("app.geocode_address", return_value=(-36.76, 144.28)):
+                    response = client.get("/api/charities?postcode=3550")
+                    assert "Bendigo" in response.json["metadata"]["coverageAreas"]
 
-def test_partial_source_failure_other_direction(client):
+def test_five_minute_style_cache_avoids_repeat_source_fetch(client):
     with patch("app.postcode_to_coords", return_value=(-36.757, 144.279)):
-        with patch("app.fetch_wifi_csv", return_value=([MOCK_WIFI_ROW], "2026-01-01")):
-            with patch("app.fetch_public_spaces", side_effect=Exception("Vicmap down")):
-                response = client.get("/api/wifi?postcode=3550")
-                assert response.status_code == 200
-                limitations = response.json["metadata"]["limitations"]
-                assert any("Regional public space data unavailable" in lim for lim in limitations)
-
-def test_freshness_status_is_current_when_both_sources_succeed(client):
-    with patch("app.postcode_to_coords", return_value=(-36.757, 144.279)):
-        with patch("app.fetch_wifi_csv", return_value=([MOCK_WIFI_ROW], "2026-01-01")):
-            with patch("app.fetch_public_spaces", return_value=[MOCK_PUBLIC_FEATURE]):
-                response = client.get("/api/wifi?postcode=3550")
-                assert response.json["metadata"]["freshnessStatus"] == "current"
-
-def test_freshness_status_is_stale_when_wifi_source_fails(client):
-    with patch("app.postcode_to_coords", return_value=(-36.757, 144.279)):
-        with patch("app.fetch_wifi_csv", side_effect=Exception("VicFreeWiFi down")):
-            with patch("app.fetch_public_spaces", return_value=[MOCK_PUBLIC_FEATURE]):
-                response = client.get("/api/wifi?postcode=3550")
-                assert response.json["metadata"]["freshnessStatus"] == "stale"
-
-def test_freshness_status_is_stale_when_public_source_fails(client):
-    with patch("app.postcode_to_coords", return_value=(-36.757, 144.279)):
-        with patch("app.fetch_wifi_csv", return_value=([MOCK_WIFI_ROW], "2026-01-01")):
-            with patch("app.fetch_public_spaces", side_effect=Exception("Vicmap down")):
-                response = client.get("/api/wifi?postcode=3550")
-                assert response.json["metadata"]["freshnessStatus"] == "stale"
-
-def test_cached_partial_result_remains_stale(client):
-    with patch("app.postcode_to_coords", return_value=(-36.757, 144.279)):
-        with patch("app.fetch_wifi_csv", side_effect=Exception("VicFreeWiFi down")):
-            with patch("app.fetch_public_spaces", return_value=[MOCK_PUBLIC_FEATURE]):
-                first = client.get("/api/wifi?postcode=3550")
-                cached = client.get("/api/wifi?postcode=3550")
-
-                assert first.json["metadata"]["freshnessStatus"] == "stale"
-                assert cached.json["metadata"]["freshnessStatus"] == "stale"
-
-def test_metadata_includes_removed_record_ids(client):
-    with patch("app.postcode_to_coords", return_value=(-36.757, 144.279)):
-        with patch("app.fetch_wifi_csv", return_value=([MOCK_WIFI_ROW], "2026-01-01")):
-            with patch("app.fetch_public_spaces", return_value=[MOCK_PUBLIC_FEATURE]):
-                response = client.get("/api/wifi?postcode=3550")
-                assert "removedRecordIds" in response.json["metadata"]
-
-def test_all_records_have_verification_status(client):
-    with patch("app.postcode_to_coords", return_value=(-36.757, 144.279)):
-        with patch("app.fetch_wifi_csv", return_value=([MOCK_WIFI_ROW], "2026-01-01")):
-            with patch("app.fetch_public_spaces", return_value=[MOCK_PUBLIC_FEATURE]):
-                response = client.get("/api/wifi?postcode=3550")
-                for record in response.json["records"]:
-                    assert record["verificationStatus"] in ("confirmed", "likely")
-
-def test_all_records_have_stable_id_format(client):
-    with patch("app.postcode_to_coords", return_value=(-36.757, 144.279)):
-        with patch("app.fetch_wifi_csv", return_value=([MOCK_WIFI_ROW], "2026-01-01")):
-            with patch("app.fetch_public_spaces", return_value=[MOCK_PUBLIC_FEATURE]):
-                response = client.get("/api/wifi?postcode=3550")
-                for record in response.json["records"]:
-                    assert record["id"].startswith("vicfreewifi-") or record["id"].startswith("vicmap-")
-
-def test_five_minute_cache_avoids_repeat_source_fetch(client):
-    """Second call within the cache window should reuse cached records, not re-fetch."""
-    with patch("app.postcode_to_coords", return_value=(-36.757, 144.279)):
-        with patch("app.fetch_wifi_csv", return_value=([MOCK_WIFI_ROW], "2026-01-01")) as mock_wifi:
-            with patch("app.fetch_public_spaces", return_value=[MOCK_PUBLIC_FEATURE]) as mock_public:
-                client.get("/api/wifi?postcode=3550")
-                client.get("/api/wifi?postcode=3550")
-                assert mock_wifi.call_count == 1
-                assert mock_public.call_count == 1
+        with patch("app.fetch_acnc_last_updated", return_value="2026-01-01"):
+            with patch("app.fetch_charities_for_region", return_value=[MOCK_CHARITY]) as mock_fetch:
+                with patch("app.geocode_address", return_value=(-36.76, 144.28)):
+                    client.get("/api/charities?postcode=3550")
+                    client.get("/api/charities?postcode=3550")
+                    assert mock_fetch.call_count == 1
 
 
 # ============================================================
-# 503: total data-source failure (mocked, no network needed)
-# ============================================================
-
-def test_total_source_failure_returns_503(client):
-    with patch("app.postcode_to_coords", return_value=(-30.0, 140.0)):
-        with patch("app.fetch_wifi_csv", side_effect=Exception("VicFreeWiFi down")):
-            with patch("app.fetch_public_spaces", side_effect=Exception("Vicmap down")):
-                response = client.get("/api/wifi?postcode=3111")
-                assert response.status_code == 503
-                assert "unavailable" in response.json["error"].lower()
-
-def test_unexpected_processing_error_returns_500(client):
-    with patch("app.postcode_to_coords", return_value=(-36.757, 144.279)):
-        with patch("app.fetch_wifi_csv", return_value=([MOCK_WIFI_ROW], "2026-01-01")):
-            with patch("app.fetch_public_spaces", return_value=[MOCK_PUBLIC_FEATURE]):
-                with patch("app.haversine_km", side_effect=RuntimeError("unexpected")):
-                    response = client.get("/api/wifi?postcode=3550")
-
-                    assert response.status_code == 500
-                    assert response.json == {
-                        "error": "An unexpected error occurred. Please try again later."
-                    }
-
-
-# ============================================================
-# 429: rate limiting (mocked data sources, real limiter, no network needed)
-# ============================================================
-
-def test_rate_limit_triggers_after_30_requests(client):
-    with patch("app.postcode_to_coords", return_value=(-36.757, 144.279)):
-        with patch("app.fetch_wifi_csv", return_value=([], "2026-01-01")):
-            with patch("app.fetch_public_spaces", return_value=[]):
-                statuses = []
-                for _ in range(35):
-                    response = client.get("/api/wifi?postcode=3550")
-                    statuses.append(response.status_code)
-                assert 200 in statuses
-                assert 429 in statuses
-
-
-# ============================================================
-# Postcode-to-coordinates cache (mocked, no network needed)
-# ============================================================
-
-def test_postcode_cache_avoids_repeat_nominatim_calls():
-    mock_response = MagicMock()
-    mock_response.raise_for_status = MagicMock()
-    mock_response.json.return_value = [{"lat": "-36.999", "lon": "144.263"}]
-
-    with patch("app.http_requests.get", return_value=mock_response) as mock_get:
-        coords1 = app_module.postcode_to_coords("3453")
-        coords2 = app_module.postcode_to_coords("3453")
-        assert coords1 == coords2
-        assert mock_get.call_count == 1
-
-def test_postcode_cache_different_postcodes_each_trigger_a_call():
-    mock_response = MagicMock()
-    mock_response.raise_for_status = MagicMock()
-    mock_response.json.return_value = [{"lat": "-36.999", "lon": "144.263"}]
-
-    with patch("app.http_requests.get", return_value=mock_response) as mock_get:
-        app_module.postcode_to_coords("3453")
-        app_module.postcode_to_coords("3550")
-        assert mock_get.call_count == 2
-
-
-# ============================================================
-# API: real network calls to Nominatim + VicFreeWiFi + Vicmap
-# (run these once Nominatim rate limiting has cleared)
+# API: real network calls (run once Nominatim rate limiting has cleared)
 # ============================================================
 
 @pytest.mark.real_network
-def test_real_postcode_harcourt_returns_records(client):
-    response = client.get("/api/wifi?postcode=3453")
+def test_real_postcode_castlemaine_returns_records(client):
+    response = client.get("/api/charities?postcode=3450")
     assert response.status_code == 200
-    assert len(response.json["records"]) > 0
 
 @pytest.mark.real_network
-def test_real_postcode_bendigo_returns_confirmed_wifi(client):
-    response = client.get("/api/wifi?postcode=3550")
-    assert response.status_code == 200
-    records = response.json["records"]
-    assert any(r["verificationStatus"] == "confirmed" for r in records)
-
-@pytest.mark.real_network
-def test_real_records_sorted_by_distance(client):
-    response = client.get("/api/wifi?postcode=3453")
-    records = response.json["records"]
-    distances = [r["distanceKm"] for r in records if r["distanceKm"] is not None]
-    assert distances == sorted(distances)
-
-@pytest.mark.real_network
-def test_real_records_within_search_radius_or_fallback(client):
-    response = client.get("/api/wifi?postcode=3453")
-    records = response.json["records"]
-    limitations = response.json["metadata"]["limitations"]
-    used_fallback = any("nearest known locations" in lim for lim in limitations)
-    if not used_fallback:
-        for r in records:
-            assert r["distanceKm"] <= 30
-
-@pytest.mark.real_network
-def test_real_no_school_records_present(client):
-    response = client.get("/api/wifi?postcode=3453")
-    records = response.json["records"]
-    for r in records:
-        assert "school" not in (r["name"] or "").lower()
-
-@pytest.mark.real_network
-def test_real_all_records_have_valid_ids(client):
-    response = client.get("/api/wifi?postcode=3453")
-    records = response.json["records"]
-    for r in records:
-        assert r["id"].startswith("vicfreewifi-") or r["id"].startswith("vicmap-")
-
-@pytest.mark.real_network
-def test_real_metadata_has_removed_record_ids(client):
-    response = client.get("/api/wifi?postcode=3453")
-    assert "removedRecordIds" in response.json["metadata"]
-
-@pytest.mark.real_network
-def test_real_second_call_same_postcode_is_faster_due_to_cache(client):
-    start1 = time.time()
-    client.get("/api/wifi?postcode=3453")
-    duration1 = time.time() - start1
-
-    start2 = time.time()
-    client.get("/api/wifi?postcode=3453")
-    duration2 = time.time() - start2
-
-    assert duration2 < duration1
-
-@pytest.mark.real_network
-def test_real_ids_stable_across_repeat_calls(client):
-    response1 = client.get("/api/wifi?postcode=3453")
-    response2 = client.get("/api/wifi?postcode=3453")
-    ids1 = {r["id"] for r in response1.json["records"]}
-    ids2 = {r["id"] for r in response2.json["records"]}
-    assert ids1 == ids2
+def test_real_no_record_has_fabricated_eligibility(client):
+    response = client.get("/api/charities?postcode=3450")
+    for record in response.json["records"]:
+        assert record["eligibilityConditions"] == []
