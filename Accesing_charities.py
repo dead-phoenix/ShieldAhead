@@ -44,7 +44,6 @@ def search_charities(query, limit=20):
 # STEP 2 (OPTIONAL, often blocked): Geocode each charity's address to get
 # exact lat/long coordinates. Uses OpenStreetMap's free Nominatim geocoder.
 #
-# ⚠️ KNOWN ISSUE: Nominatim's free public server frequently returns 403
 # Forbidden for scripted/automated requests, even with a correct User-Agent.
 # This is their bot-detection, not a bug in this code — it happens to many
 # people, not just you. For a real production app you'd need either a

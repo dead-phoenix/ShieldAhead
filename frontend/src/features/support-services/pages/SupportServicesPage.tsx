@@ -12,7 +12,7 @@ import {
 import { useMemo, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { appRoutes } from '../../../app/config/product'
-import { getMockSupportServiceRepository } from '../../../data/mock/mockRepositories'
+import { getSupportServiceRepository } from '../../../data/supportServiceRepository'
 import { useRepositoryData } from '../../../data/useRepositoryData'
 import { EmptyState } from '../../../shared/components/EmptyState'
 import { LoadingState } from '../../../shared/components/LoadingState'
@@ -39,11 +39,25 @@ function AvailabilityIcon({ tone }: { tone: AvailabilityTone }) {
 export function SupportServicesPage() {
   const [searchParams] = useSearchParams()
   const fixture = searchParams.get('fixture')
-  const repository = getMockSupportServiceRepository(fixture)
+  const postcode = getHouseholdProfile()?.postcode ?? '3453'
+  // Was: getMockSupportServiceRepository(fixture) — always mock, regardless
+  // of VITE_DATA_SOURCE. This is the mode-aware version, same as wifi: it
+  // uses mock automatically if ?fixture= is set or VITE_DATA_SOURCE isn't
+  // "api", and calls the real backend otherwise.
+  //
+  // useMemo matters here, not just style: without it, a new repository (and
+  // therefore a new repository.list function) is created on every render.
+  // useRepositoryData re-fetches whenever that function reference changes,
+  // and fetching triggers a re-render — creating an infinite fetch loop.
+  // Mock data resolved fast enough that this was never visible; a real
+  // network call exposed it as a burst of dozens of requests per second.
+  const repository = useMemo(
+    () => getSupportServiceRepository(fixture, postcode),
+    [fixture, postcode],
+  )
   const { data, isLoading, error, retry } = useRepositoryData(repository.list)
   const [filter, setFilter] = useState<(typeof filters)[number]>('All services')
   const isOnline = useOnlineStatus()
-  const postcode = getHouseholdProfile()?.postcode ?? '3453'
   const offline = getOfflinePreferences()
   const canReadRecords = isOnline || offline.supportSaved
   const allServices = useMemo(
