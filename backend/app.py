@@ -2,6 +2,7 @@ from flask import Flask, jsonify, request
 from flask_cors import CORS
 import csv
 import io
+import json
 import math
 import time
 import hashlib
@@ -31,15 +32,9 @@ CACHE_TTL_SECONDS = 300  # 5 minutes
 # Postcode-to-coordinates cache lasts for the lifetime of this server process.
 _postcode_cache = {}
 
-# Separate cache for charities — kept apart from the wifi cache above so a
-# refresh of one never wipes/blocks the other. Charity data changes far less
-# often than wifi status, hence the longer TTL.
-_charity_cache = {
-    "data": None,
-    "timestamp": None,
-    "removed_ids": [],
-    "freshness_status": None,
-}
+# Charity results are cached per requested postcode so a Melbourne lookup
+# never reuses Bendigo records (or vice versa).
+_charity_cache = {}
 CHARITY_CACHE_TTL_SECONDS = 3600  # 1 hour
 # Geocoded charity street addresses, cached for the lifetime of this process
 # (same idea as _postcode_cache) so we don't re-hit Nominatim every refresh.
@@ -94,12 +89,7 @@ ACNC_DATASTORE_SEARCH_URL = "https://data.gov.au/data/api/3/action/datastore_sea
 ACNC_RESOURCE_SHOW_URL = "https://data.gov.au/data/api/3/action/resource_show"
 ACNC_RESOURCE_ID = "8fb32972-24e9-4c95-885e-7140be51be8a"
 
-# The Loddon Campaspe corridor towns this project actually covers.
-TARGET_TOWNS = [
-    "Bendigo", "Castlemaine", "Harcourt", "Kyneton", "Maldon", "Heathcote",
-    "Elphinstone", "Chewton", "Newstead", "Eaglehawk", "Kangaroo Flat",
-    "Golden Square",
-]
+ACNC_SEARCH_LIMIT = 200
 
 # Keyword -> user-facing service type label. A charity can match more than
 # one; this is inferred from free text, not a confirmed ACNC category field
@@ -132,7 +122,17 @@ VIC_POSTCODE_PATTERN = re.compile(r"^3\d{3}$")
 
 def is_valid_vic_postcode(postcode):
     """Check if postcode is a valid 4-digit Victorian postcode (3000-3999)."""
-    return bool(VIC_POSTCODE_PATTERN.match(postcode))
+    return bool(VIC_POSTCODE_PATTERN.match(normalise_postcode(postcode)))
+
+
+def normalise_postcode(value):
+    """Coerce ACNC/Nominatim postcode values to a 4-digit string when possible."""
+    if value is None:
+        return ""
+    text = str(value).strip()
+    if text.endswith(".0"):
+        text = text[:-2]
+    return text
 
 
 def postcode_to_coords(postcode):
@@ -196,23 +196,59 @@ def geocode_address(address):
     return None, None
 
 
-# Reverse-geocoded suburb/postcode lookups (coordinates -> place name), cached
-# for the lifetime of this process. Used to find the real suburb for a given
-# postcode's coordinates — e.g. to extend charity coverage to whatever
-# postcode a user actually enters, beyond the fixed TARGET_TOWNS list.
+def attach_charity_coordinates(records):
+    """Fill missing lat/lng from each charity's Victorian postcode when possible.
+
+    Postcode-level coordinates are fast enough for statewide nearby ranking
+    and avoid a Nominatim request per street address.
+    """
+    for record in records:
+        if record.get("latitude") is not None and record.get("longitude") is not None:
+            continue
+        record_postcode = normalise_postcode(record.get("postcode"))
+        if not is_valid_vic_postcode(record_postcode):
+            continue
+        lat, lon = postcode_to_coords(record_postcode)
+        if lat is not None and lon is not None:
+            record["latitude"] = lat
+            record["longitude"] = lon
+    return records
+
+
+# Reverse-geocoded locality lookups (coordinates -> place names), cached for
+# the lifetime of this process. Used to search ACNC by the suburb/city that
+# actually belongs to the user's postcode, anywhere in Victoria.
 _reverse_geocode_cache = {}
+_LGA_NAME_PATTERN = re.compile(r"\b(shire|city of|rural city|council)\b", re.I)
 
 
-def reverse_geocode_suburb(lat, lon):
-    """Look up the real suburb/postcode for a coordinate via Nominatim reverse geocoding.
+def _locality_names_from_address(address):
+    """Collect ACNC-usable place names, skipping local-government area labels."""
+    names = []
+    seen = set()
+    for key in ("suburb", "town", "village", "city"):
+        value = (address.get(key) or "").strip()
+        if not value or _LGA_NAME_PATTERN.search(value):
+            continue
+        folded = value.casefold()
+        if folded in seen:
+            continue
+        seen.add(folded)
+        names.append(value)
+    return names
+
+
+def reverse_geocode_locality(lat, lon):
+    """Look up suburb, postcode and searchable place names for a coordinate.
 
     Coordinates are rounded to ~100m before caching so nearby lookups reuse
-    one result instead of hitting Nominatim again.
+    one Nominatim result instead of hitting the service again.
     """
     key = (round(lat, 3), round(lon, 3))
     if key in _reverse_geocode_cache:
         return _reverse_geocode_cache[key]
 
+    empty = {"suburb": None, "postcode": None, "place_names": []}
     try:
         # Respect Nominatim's ~1 request/second usage policy for scripted callers.
         time.sleep(1)
@@ -229,23 +265,23 @@ def reverse_geocode_suburb(lat, lon):
             timeout=5,
         )
         resp.raise_for_status()
-        data = resp.json()
-        address = data.get("address", {})
-        suburb = (
-            address.get("suburb")
-            or address.get("town")
-            or address.get("village")
-            or address.get("city")
-            or address.get("municipality")
-        )
+        address = resp.json().get("address", {})
+        place_names = _locality_names_from_address(address)
+        suburb = place_names[0] if place_names else None
         postcode = address.get("postcode")
-        result = (suburb, postcode)
+        result = {"suburb": suburb, "postcode": postcode, "place_names": place_names}
         _reverse_geocode_cache[key] = result
         return result
     except Exception:
         pass
-    _reverse_geocode_cache[key] = (None, None)
-    return None, None
+    _reverse_geocode_cache[key] = empty
+    return empty
+
+
+def reverse_geocode_suburb(lat, lon):
+    """Compatibility wrapper: suburb name and postcode for a coordinate."""
+    result = reverse_geocode_locality(lat, lon)
+    return result["suburb"], result["postcode"]
 
 
 #  Distance
@@ -448,7 +484,7 @@ def fetch_acnc_last_updated():
         return None
 
 
-def fetch_charities_for_acnc(query, limit=100):
+def fetch_charities_for_acnc(query, limit=ACNC_SEARCH_LIMIT):
     """Query the ACNC Registered Charities datastore for a single search term."""
     params = {
         "resource_id": ACNC_RESOURCE_ID,
@@ -463,15 +499,68 @@ def fetch_charities_for_acnc(query, limit=100):
     return data.get("result", {}).get("records", [])
 
 
+def fetch_charities_by_filters(filters, limit=ACNC_SEARCH_LIMIT):
+    """Query ACNC with exact field filters (e.g. Postcode)."""
+    params = {
+        "resource_id": ACNC_RESOURCE_ID,
+        "filters": json.dumps(filters),
+        "limit": limit,
+    }
+    resp = http_requests.get(ACNC_DATASTORE_SEARCH_URL, params=params, headers=HEADERS_CKAN, timeout=15)
+    resp.raise_for_status()
+    data = resp.json()
+    if not data.get("success"):
+        raise RuntimeError("ACNC datastore_search request was not successful")
+    return data.get("result", {}).get("records", [])
+
+
 def charity_town_matches(charity, target_town):
-    """True if a charity's Town_City field matches the given town, case-insensitively."""
+    """True if a charity's Town_City matches or is a locality of the given town."""
     town = (charity.get("Town_City") or "").strip().upper()
-    return bool(town) and town == target_town.strip().upper()
+    target = (target_town or "").strip().upper()
+    if not town or not target:
+        return False
+    if town == target:
+        return True
+    # "North Melbourne" should count for a Melbourne search; ignore tiny tokens.
+    if len(target) >= 4 and target in town:
+        return True
+    if len(town) >= 4 and town in target:
+        return True
+    return False
 
 
-def is_relevant(charity):
-    """Keep only charities actually based in the Loddon Campaspe corridor towns we cover."""
-    return any(charity_town_matches(charity, target) for target in TARGET_TOWNS)
+def is_victorian_charity(charity):
+    """Keep charities located in Victoria, identified by State or postcode."""
+    state = (charity.get("State") or "").strip().upper().replace(".", "")
+    if state in {"VIC", "VICTORIA"}:
+        return True
+    return is_valid_vic_postcode(charity.get("Postcode"))
+
+
+def _charity_dedupe_key(charity):
+    abn = charity.get("ABN")
+    if abn:
+        return str(abn)
+    name_key = (charity.get("Charity_Legal_Name") or "").strip().lower()
+    town_key = (charity.get("Town_City") or "").strip().lower()
+    return f"{name_key}|{town_key}"
+
+
+def _add_charities(combined, seen, records, keep=None):
+    added = 0
+    for charity in records:
+        if keep and not keep(charity):
+            continue
+        if not is_victorian_charity(charity):
+            continue
+        key = _charity_dedupe_key(charity)
+        if not key or key in seen:
+            continue
+        seen.add(key)
+        combined.append(charity)
+        added += 1
+    return added
 
 
 def infer_service_types(charity):
@@ -550,92 +639,58 @@ def geocode_charities(records):
     return records
 
 
-def fetch_charities_for_region():
-    """Query ACNC once per target town and dedupe the combined results by ABN (or name+town)."""
+def fetch_charities_for_region(postcode, place_names=None):
+    """Query ACNC for Victorian charities near this postcode.
+
+    Combines an exact postcode match with suburb/city name searches from
+    reverse geocoding, so any Victorian postcode can return local results
+    rather than a fixed town list.
+    """
     seen = set()
     combined = []
     any_success = False
+    queries = []
 
-    for town in TARGET_TOWNS:
+    normalised = normalise_postcode(postcode)
+    if is_valid_vic_postcode(normalised):
+        queries.append(("postcode", normalised))
+
+    for name in place_names or []:
+        cleaned = (name or "").strip()
+        if cleaned:
+            queries.append(("place", cleaned))
+
+    if not queries:
+        queries.append(("postcode", normalised))
+
+    for kind, value in queries:
         try:
-            records = fetch_charities_for_acnc(town)
+            if kind == "postcode":
+                records = []
+                for postcode_value in (value, int(value) if value.isdigit() else None):
+                    if postcode_value is None:
+                        continue
+                    records = fetch_charities_by_filters({"Postcode": postcode_value})
+                    if records:
+                        break
+                _add_charities(combined, seen, records)
+            else:
+                records = fetch_charities_for_acnc(value)
+                _add_charities(
+                    combined,
+                    seen,
+                    records,
+                    keep=lambda charity, town=value: charity_town_matches(charity, town),
+                )
             any_success = True
         except Exception as e:
-            # Previously silent — log which town failed and why, so a total
-            # failure across every town is actually diagnosable.
-            app.logger.error(f"ACNC query failed for town '{town}': {e}")
-            continue  # one town failing shouldn't sink the whole region
-
-        for charity in records:
-            if not is_relevant(charity):
-                continue
-            abn = charity.get("ABN")
-            name_key = (charity.get("Charity_Legal_Name") or "").strip().lower()
-            town_key = (charity.get("Town_City") or "").strip().lower()
-            key = abn or f"{name_key}|{town_key}"
-            if not key or key in seen:
-                continue
-            seen.add(key)
-            combined.append(charity)
+            app.logger.error(f"ACNC query failed for {kind} '{value}': {e}")
+            continue
 
     if not any_success:
-        raise RuntimeError("ACNC datastore_search failed for every target town")
+        raise RuntimeError("ACNC datastore_search failed for every location query")
 
     return combined
-
-
-# Charities for a suburb outside the fixed TARGET_TOWNS list — extends
-# coverage to wherever a user's postcode actually is, rather than only the
-# 12 core Loddon Campaspe towns. Cached separately from _charity_cache so an
-# ad-hoc lookup never evicts or blocks the main region's cached data.
-_extra_town_cache = {}
-EXTRA_TOWN_CACHE_TTL_SECONDS = 3600  # 1 hour, same as the main charity cache
-MAX_ADDRESSES_TO_GEOCODE_FOR_EXTRA_TOWN = 8  # kept small: this runs inline on a live request
-
-
-def fetch_charities_for_extra_town(town):
-    """Fetch, filter, convert and geocode charities for one specific town on demand.
-
-    Returns already-converted SupportService-shaped records, cached per town
-    name for EXTRA_TOWN_CACHE_TTL_SECONDS. On a fetch failure, falls back to
-    a stale cached copy if one exists rather than returning nothing.
-    """
-    cache_key = town.strip().lower()
-    now = time.time()
-    cached = _extra_town_cache.get(cache_key)
-    if cached and (now - cached["timestamp"]) < EXTRA_TOWN_CACHE_TTL_SECONDS:
-        return cached["data"]
-
-    try:
-        raw_records = fetch_charities_for_acnc(town)
-    except Exception as e:
-        app.logger.error(f"ACNC query failed for extra town '{town}': {e}")
-        return cached["data"] if cached else []
-
-    relevant = [c for c in raw_records if charity_town_matches(c, town)]
-    last_updated = fetch_acnc_last_updated()
-    converted = [charity_to_support_service(c, last_updated) for c in relevant]
-
-    # Geocode only up to the small cap above, and only addresses not already
-    # resolved — keeps a first-ever lookup for a new suburb from adding much
-    # latency to the request that triggered it.
-    geocoded_count = 0
-    for record in converted:
-        if record.get("latitude") is not None:
-            continue
-        if geocoded_count >= MAX_ADDRESSES_TO_GEOCODE_FOR_EXTRA_TOWN:
-            break
-        address = record.get("address")
-        if not address:
-            continue
-        lat, lon = geocode_address(address)
-        if lat is not None and lon is not None:
-            record["latitude"] = lat
-            record["longitude"] = lon
-        geocoded_count += 1
-
-    _extra_town_cache[cache_key] = {"data": converted, "timestamp": now}
-    return converted
 
 
 #    API routes
@@ -774,7 +829,7 @@ def get_wifi():
 @app.route("/api/charities")
 @limiter.limit("20 per minute")
 def get_charities():
-    """Return nearby support services (ACNC-registered charities) filtered by postcode."""
+    """Return nearby Victorian support services (ACNC charities) for a postcode."""
     postcode = request.args.get("postcode", "").strip()
 
     if not postcode:
@@ -790,30 +845,37 @@ def get_charities():
 
     try:
         now = time.time()
+        cache_entry = _charity_cache.get(postcode, {
+            "data": None,
+            "timestamp": None,
+            "removed_ids": [],
+            "freshness_status": None,
+        })
         cache_fresh = (
-            _charity_cache["data"] is not None
-            and _charity_cache["timestamp"] is not None
-            and (now - _charity_cache["timestamp"]) < CHARITY_CACHE_TTL_SECONDS
+            cache_entry["data"] is not None
+            and cache_entry["timestamp"] is not None
+            and (now - cache_entry["timestamp"]) < CHARITY_CACHE_TTL_SECONDS
         )
+        locality = reverse_geocode_locality(user_lat, user_lng)
+        user_suburb = locality.get("suburb")
+        place_names = locality.get("place_names") or []
 
         if cache_fresh:
-            all_records = _charity_cache["data"]
+            all_records = cache_entry["data"]
             fetch_error = None
-            freshness_status = _charity_cache["freshness_status"] or "current"
+            freshness_status = cache_entry["freshness_status"] or "current"
         else:
-            previous_ids = {r["id"] for r in _charity_cache["data"]} if _charity_cache["data"] else set()
+            previous_ids = {r["id"] for r in cache_entry["data"]} if cache_entry["data"] else set()
 
             fetch_error = None
             all_records = []
             try:
                 last_updated = fetch_acnc_last_updated()
-                raw_charities = fetch_charities_for_region()
+                raw_charities = fetch_charities_for_region(postcode, place_names)
                 all_records = [charity_to_support_service(c, last_updated) for c in raw_charities]
-                all_records = geocode_charities(all_records)
+                all_records = attach_charity_coordinates(all_records)
             except Exception as e:
                 fetch_error = str(e)
-                # Previously silent — this is the actual reason ACNC fetching
-                # failed. Print it so it shows up in this terminal.
                 app.logger.error(f"Charity fetch failed: {fetch_error}")
 
             all_records = [r for r in all_records if r.get("id") and r.get("name")]
@@ -822,31 +884,22 @@ def get_charities():
             if all_records:
                 if not fetch_error and previous_ids:
                     new_ids = {r["id"] for r in all_records}
-                    _charity_cache["removed_ids"] = sorted(previous_ids - new_ids)
+                    cache_entry["removed_ids"] = sorted(previous_ids - new_ids)
                 else:
-                    _charity_cache["removed_ids"] = []
+                    cache_entry["removed_ids"] = []
 
-                _charity_cache["data"] = all_records
-                _charity_cache["timestamp"] = now
-                _charity_cache["freshness_status"] = freshness_status
+                cache_entry["data"] = all_records
+                cache_entry["timestamp"] = now
+                cache_entry["freshness_status"] = freshness_status
+                _charity_cache[postcode] = cache_entry
             elif fetch_error:
                 return jsonify({
                     "error": "The charity data source is currently unavailable. Please try again later.",
-                    "debugDetail": fetch_error,  # TEMP: remove once the real cause is found and fixed
+                    "debugDetail": fetch_error,
                 }), 503
 
-        # Extend coverage beyond the fixed TARGET_TOWNS list to wherever this
-        # postcode actually is, so a postcode outside the core region still
-        # gets genuinely local results instead of only a distant fallback.
-        user_suburb, _ = reverse_geocode_suburb(user_lat, user_lng)
-        if user_suburb and not any(user_suburb.strip().upper() == t.upper() for t in TARGET_TOWNS):
-            extra_records = fetch_charities_for_extra_town(user_suburb)
-            existing_ids = {r["id"] for r in all_records}
-            all_records = all_records + [r for r in extra_records if r["id"] not in existing_ids]
-
-        # Calculate distance for records that have confirmed coordinates
         for record in all_records:
-            if record["latitude"] is not None and record["longitude"] is not None:
+            if record.get("latitude") is not None and record.get("longitude") is not None:
                 dist = haversine_km(user_lat, user_lng, record["latitude"], record["longitude"])
                 record["distanceKm"] = round(dist, 1)
 
@@ -859,13 +912,9 @@ def get_charities():
         if within_radius:
             result_records = within_radius
         elif all_with_distance:
-            # Fallback: nothing within radius, show nearest results anyway
             result_records = all_with_distance[:FALLBACK_RESULT_COUNT]
             used_fallback = True
         else:
-            # No charity has confirmed coordinates yet (e.g. still being
-            # geocoded across refreshes) — show what we found for the region
-            # rather than an empty list.
             result_records = all_records
             used_fallback = True
 
@@ -873,7 +922,7 @@ def get_charities():
             "Eligibility conditions are not published in this open dataset — contact the organisation directly",
             "Service type is inferred from keyword matches, not a confirmed category field",
             "Availability/stock status is not confirmed for any listing",
-            "Addresses are geocoded via OpenStreetMap Nominatim and may be incomplete shortly after a cache refresh",
+            "Distance is based on postcode coordinates and may not reflect the exact street location",
         ]
         if used_fallback:
             limitations.append(
@@ -883,17 +932,20 @@ def get_charities():
         if fetch_error:
             limitations.append("ACNC charity data unavailable this refresh — showing the last successfully cached results")
 
+        coverage_areas = ["Victoria"]
+        if user_suburb:
+            coverage_areas.insert(0, user_suburb)
+        coverage_areas.append(postcode)
+
         return jsonify({
             "records": result_records,
             "metadata": {
                 "version": "1.0",
                 "generatedAt": datetime.now(timezone.utc).isoformat(),
                 "sourceName": "ACNC Registered Charities Register",
-                "coverageAreas": TARGET_TOWNS + (
-                    [user_suburb] if user_suburb and user_suburb not in TARGET_TOWNS else []
-                ),
+                "coverageAreas": coverage_areas,
                 "limitations": limitations,
-                "removedRecordIds": _charity_cache["removed_ids"],
+                "removedRecordIds": cache_entry["removed_ids"],
                 "freshnessStatus": freshness_status,
             },
         })

@@ -3,12 +3,14 @@ from unittest.mock import patch
 import app as app_module
 from app import (
     app,
-    is_relevant,
-    infer_service_type,
+    attach_charity_coordinates,
+    is_victorian_charity,
+    infer_service_types,
     stable_charity_id,
     build_charity_address,
     charity_to_support_service,
     geocode_charities,
+    _locality_names_from_address,
 )
 
 
@@ -22,27 +24,50 @@ def client():
 @pytest.fixture(autouse=True)
 def reset_caches():
     """Ensure each test starts with clean caches so tests don't interfere with each other."""
-    app_module._charity_cache["data"] = None
-    app_module._charity_cache["timestamp"] = None
-    app_module._charity_cache["removed_ids"] = []
-    app_module._charity_cache["freshness_status"] = None
+    app_module._charity_cache.clear()
     app_module._address_cache.clear()
     app_module._postcode_cache.clear()
+    app_module._reverse_geocode_cache.clear()
     app_module.limiter.reset()
-    yield
+    with patch(
+        "app.reverse_geocode_locality",
+        return_value={"suburb": None, "postcode": None, "place_names": []},
+    ):
+        yield
 
 
 # ============================================================
-# Relevance filtering (no network needed)
+# Victoria / locality filtering (no network needed)
 # ============================================================
 
-def test_food_relief_charity_is_relevant():
-    charity = {"Charity_Legal_Name": "Test Food Bank", "Objects": "Provides food relief to disadvantaged families"}
-    assert is_relevant(charity) is True
+def test_victorian_charity_is_kept():
+    charity = {"State": "VIC", "Postcode": "3000", "Town_City": "Melbourne"}
+    assert is_victorian_charity(charity) is True
 
-def test_unrelated_charity_is_not_relevant():
-    charity = {"Charity_Legal_Name": "Test Ballet School", "Objects": "Promotes classical dance education"}
-    assert is_relevant(charity) is False
+
+def test_victorian_charity_accepted_by_postcode_alone():
+    charity = {"State": "", "Postcode": "3453", "Town_City": "Harcourt"}
+    assert is_victorian_charity(charity) is True
+
+
+def test_nsw_charity_is_not_kept():
+    charity = {"State": "NSW", "Postcode": "2000", "Town_City": "Sydney"}
+    assert is_victorian_charity(charity) is False
+
+
+def test_lga_names_are_not_used_as_place_names():
+    names = _locality_names_from_address({
+        "suburb": "Carlton",
+        "city": "City of Melbourne",
+        "municipality": "Melbourne City Council",
+    })
+    assert names == ["Carlton"]
+
+
+def test_north_melbourne_matches_melbourne_search():
+    from app import charity_town_matches
+    assert charity_town_matches({"Town_City": "North Melbourne"}, "Melbourne") is True
+    assert charity_town_matches({"Town_City": "Sydney"}, "Melbourne") is False
 
 
 # ============================================================
@@ -51,21 +76,19 @@ def test_unrelated_charity_is_not_relevant():
 
 def test_food_keyword_infers_food_relief():
     charity = {"Charity_Legal_Name": "Community Food Relief Inc"}
-    assert infer_service_type(charity) == "Food relief"
+    assert "Food relief" in infer_service_types(charity)
 
 def test_homeless_keyword_infers_homelessness_support():
     charity = {"Charity_Legal_Name": "Test Org", "Objects": "Supports people experiencing homelessness"}
-    assert infer_service_type(charity) == "Homelessness support"
+    assert "Homelessness support" in infer_service_types(charity)
 
 def test_financial_keyword_infers_financial_counselling():
     charity = {"Charity_Legal_Name": "Test Org", "Objects": "Financial hardship counselling service"}
-    assert infer_service_type(charity) == "Financial counselling / hardship support"
+    assert "Financial counselling / hardship support" in infer_service_types(charity)
 
 def test_no_specific_keyword_falls_back_to_generic_label():
-    charity = {"Charity_Legal_Name": "Test Org", "Objects": "crisis support of general welfare nature"}
-    # "crisis" matches before falling through to the generic label
-    result = infer_service_type(charity)
-    assert result in ("Emergency relief", "Community support services")
+    charity = {"Charity_Legal_Name": "Test Org", "Objects": "general welfare nature"}
+    assert infer_service_types(charity) == ["Community support services"]
 
 
 # ============================================================
@@ -125,21 +148,21 @@ def test_conversion_falls_back_to_stable_id_without_abn():
     assert service["id"].startswith("acnc-")
     assert service["id"] != "acnc-None"
 
-def test_conversion_eligibility_is_always_empty():
+def test_conversion_eligibility_is_never_fabricated():
     """ACNC's open data has no eligibility field — must never be fabricated."""
     charity = {"Charity_Legal_Name": "Test Charity", "Town_City": "Bendigo"}
     service = charity_to_support_service(charity, "2026-01-01")
-    assert service["eligibilityConditions"] == []
+    assert service["eligibility"] is None
 
-def test_conversion_stock_status_defaults_not_confirmed():
+def test_conversion_availability_defaults_not_confirmed():
     charity = {"Charity_Legal_Name": "Test Charity", "Town_City": "Bendigo"}
     service = charity_to_support_service(charity, "2026-01-01")
-    assert service["stockStatus"] == "not confirmed"
+    assert service["availabilityStatus"] == "not-confirmed"
 
-def test_conversion_partnership_status_defaults_none():
+def test_conversion_partner_status_defaults_unknown():
     charity = {"Charity_Legal_Name": "Test Charity", "Town_City": "Bendigo"}
     service = charity_to_support_service(charity, "2026-01-01")
-    assert service["partnershipStatus"] is None
+    assert service["partnerStatus"] == "unknown"
 
 def test_conversion_coordinates_start_unresolved():
     charity = {"Charity_Legal_Name": "Test Charity", "Town_City": "Bendigo"}
@@ -169,9 +192,18 @@ def test_geocode_charities_skips_records_without_address():
 def test_geocode_charities_uses_cache_without_calling_geocoder():
     services = [{"address": "1 Cached St, Bendigo, VIC, 3550"}]
     app_module._address_cache["1 Cached St, Bendigo, VIC, 3550"] = (-36.75, 144.27)
-    with patch("app.geocode_address") as mock_geocode:
+    with patch("app.http_requests.get") as mock_get:
         geocode_charities(services)
-        mock_geocode.assert_not_called()
+        mock_get.assert_not_called()
+    assert services[0]["latitude"] == -36.75
+
+
+def test_attach_charity_coordinates_uses_postcode_lookup():
+    records = [{"postcode": "3000", "latitude": None, "longitude": None}]
+    with patch("app.postcode_to_coords", return_value=(-37.81, 144.96)):
+        attach_charity_coordinates(records)
+    assert records[0]["latitude"] == -37.81
+    assert records[0]["longitude"] == 144.96
 
 
 # ============================================================
@@ -201,36 +233,34 @@ MOCK_CHARITY = {
     "Objects": "Provides emergency food relief to disadvantaged families",
 }
 
-UNRELATED_CHARITY = {
-    "Charity_Legal_Name": "Bendigo Ballet School",
-    "ABN": "22222222222",
-    "Town_City": "Bendigo",
+MELBOURNE_CHARITY = {
+    "Charity_Legal_Name": "Melbourne Food Relief Inc",
+    "ABN": "33333333333",
+    "Town_City": "Melbourne",
     "State": "VIC",
-    "Postcode": "3550",
-    "Objects": "Classical dance education",
+    "Postcode": "3000",
+    "Address_Line_1": "1 Swanston Street",
+    "Objects": "Provides emergency food relief to disadvantaged families",
 }
 
 
-def test_valid_postcode_returns_only_relevant_charities(client):
+def test_valid_postcode_returns_fetched_charities(client):
     with patch("app.postcode_to_coords", return_value=(-36.757, 144.279)):
         with patch("app.fetch_acnc_last_updated", return_value="2026-01-01"):
-            with patch("app.fetch_charities_for_region", return_value=[MOCK_CHARITY, UNRELATED_CHARITY]):
-                with patch("app.geocode_address", return_value=(-36.76, 144.28)):
-                    response = client.get("/api/charities?postcode=3550")
-                    assert response.status_code == 200
-                    names = [r["name"] for r in response.json["records"]]
-                    assert "Bendigo Food Relief Inc" in names
-                    assert "Bendigo Ballet School" not in names
+            with patch("app.fetch_charities_for_region", return_value=[MOCK_CHARITY]):
+                response = client.get("/api/charities?postcode=3550")
+                assert response.status_code == 200
+                names = [r["name"] for r in response.json["records"]]
+                assert "Bendigo Food Relief Inc" in names
 
 def test_records_sorted_by_distance(client):
     with patch("app.postcode_to_coords", return_value=(-36.757, 144.279)):
         with patch("app.fetch_acnc_last_updated", return_value="2026-01-01"):
             with patch("app.fetch_charities_for_region", return_value=[MOCK_CHARITY]):
-                with patch("app.geocode_address", return_value=(-36.76, 144.28)):
-                    response = client.get("/api/charities?postcode=3550")
-                    records = response.json["records"]
-                    distances = [r["distanceKm"] for r in records if r["distanceKm"] is not None]
-                    assert distances == sorted(distances)
+                response = client.get("/api/charities?postcode=3550")
+                records = response.json["records"]
+                distances = [r["distanceKm"] for r in records if r["distanceKm"] is not None]
+                assert distances == sorted(distances)
 
 def test_source_failure_returns_503(client):
     with patch("app.postcode_to_coords", return_value=(-36.757, 144.279)):
@@ -238,36 +268,83 @@ def test_source_failure_returns_503(client):
             response = client.get("/api/charities?postcode=3550")
             assert response.status_code == 503
 
-def test_eligibility_conditions_never_populated_end_to_end(client):
+def test_eligibility_is_never_populated_end_to_end(client):
     """Guards against ever silently starting to fabricate eligibility text."""
     with patch("app.postcode_to_coords", return_value=(-36.757, 144.279)):
         with patch("app.fetch_acnc_last_updated", return_value="2026-01-01"):
             with patch("app.fetch_charities_for_region", return_value=[MOCK_CHARITY]):
-                with patch("app.geocode_address", return_value=(-36.76, 144.28)):
-                    response = client.get("/api/charities?postcode=3550")
-                    for record in response.json["records"]:
-                        assert record["eligibilityConditions"] == []
-                    assert any(
-                        "Eligibility conditions are not published" in lim
-                        for lim in response.json["metadata"]["limitations"]
-                    )
+                response = client.get("/api/charities?postcode=3550")
+                for record in response.json["records"]:
+                    assert record["eligibility"] is None
+                assert any(
+                    "Eligibility conditions are not published" in lim
+                    for lim in response.json["metadata"]["limitations"]
+                )
 
-def test_metadata_includes_coverage_areas(client):
+def test_metadata_includes_victoria_coverage(client):
     with patch("app.postcode_to_coords", return_value=(-36.757, 144.279)):
         with patch("app.fetch_acnc_last_updated", return_value="2026-01-01"):
             with patch("app.fetch_charities_for_region", return_value=[MOCK_CHARITY]):
-                with patch("app.geocode_address", return_value=(-36.76, 144.28)):
+                with patch(
+                    "app.reverse_geocode_locality",
+                    return_value={"suburb": "Bendigo", "postcode": "3550", "place_names": ["Bendigo"]},
+                ):
                     response = client.get("/api/charities?postcode=3550")
-                    assert "Bendigo" in response.json["metadata"]["coverageAreas"]
+                    coverage = response.json["metadata"]["coverageAreas"]
+                    assert "Victoria" in coverage
+                    assert "Bendigo" in coverage
+                    assert "3550" in coverage
 
-def test_five_minute_style_cache_avoids_repeat_source_fetch(client):
+def test_charity_cache_avoids_repeat_source_fetch_for_same_postcode(client):
     with patch("app.postcode_to_coords", return_value=(-36.757, 144.279)):
         with patch("app.fetch_acnc_last_updated", return_value="2026-01-01"):
             with patch("app.fetch_charities_for_region", return_value=[MOCK_CHARITY]) as mock_fetch:
-                with patch("app.geocode_address", return_value=(-36.76, 144.28)):
-                    client.get("/api/charities?postcode=3550")
-                    client.get("/api/charities?postcode=3550")
-                    assert mock_fetch.call_count == 1
+                client.get("/api/charities?postcode=3550")
+                client.get("/api/charities?postcode=3550")
+                assert mock_fetch.call_count == 1
+
+def test_melbourne_postcode_does_not_return_bendigo_charities(client):
+    coords = {
+        "3000": (-37.8136, 144.9631),
+        "3550": (-36.757, 144.279),
+    }
+
+    def fake_coords(postcode):
+        return coords.get(str(postcode), (None, None))
+
+    def fake_fetch(postcode, place_names=None):
+        if str(postcode) == "3000":
+            return [MELBOURNE_CHARITY]
+        return [MOCK_CHARITY]
+
+    with patch("app.postcode_to_coords", side_effect=fake_coords):
+        with patch("app.fetch_acnc_last_updated", return_value="2026-01-01"):
+            with patch("app.fetch_charities_for_region", side_effect=fake_fetch):
+                bendigo = client.get("/api/charities?postcode=3550")
+                melbourne = client.get("/api/charities?postcode=3000")
+
+    assert bendigo.status_code == 200
+    assert melbourne.status_code == 200
+    bendigo_names = [r["name"] for r in bendigo.json["records"]]
+    melbourne_names = [r["name"] for r in melbourne.json["records"]]
+    assert "Bendigo Food Relief Inc" in bendigo_names
+    assert "Melbourne Food Relief Inc" in melbourne_names
+    assert "Bendigo Food Relief Inc" not in melbourne_names
+    assert "Melbourne Food Relief Inc" not in bendigo_names
+
+def test_charity_cache_is_per_postcode(client):
+    def fake_fetch(postcode, place_names=None):
+        if str(postcode) == "3000":
+            return [MELBOURNE_CHARITY]
+        return [MOCK_CHARITY]
+
+    with patch("app.postcode_to_coords", return_value=(-36.757, 144.279)):
+        with patch("app.fetch_acnc_last_updated", return_value="2026-01-01"):
+            with patch("app.fetch_charities_for_region", side_effect=fake_fetch) as mock_fetch:
+                client.get("/api/charities?postcode=3550")
+                client.get("/api/charities?postcode=3000")
+                client.get("/api/charities?postcode=3550")
+                assert mock_fetch.call_count == 2
 
 
 # ============================================================
@@ -283,4 +360,4 @@ def test_real_postcode_castlemaine_returns_records(client):
 def test_real_no_record_has_fabricated_eligibility(client):
     response = client.get("/api/charities?postcode=3450")
     for record in response.json["records"]:
-        assert record["eligibilityConditions"] == []
+        assert record["eligibility"] is None
