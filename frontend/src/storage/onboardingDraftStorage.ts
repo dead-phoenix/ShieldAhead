@@ -1,4 +1,6 @@
 import { storageKeys } from '../app/config/product'
+import { preloadNearbyData } from '../data/preloadNearbyData'
+
 import type {
   ConsentState,
   HouseholdProfile,
@@ -59,7 +61,16 @@ export function getHouseholdProfile(): HouseholdProfile | null {
 }
 
 export function saveHouseholdProfile(profile: HouseholdProfile): boolean {
-  return writeStoredValue(storageKeys.householdProfile, profile)
+  const previousPostcode = getHouseholdProfile()?.postcode
+  const saved = writeStoredValue(storageKeys.householdProfile, profile)
+  console.log('[preload debug]', { previousPostcode, newPostcode: profile.postcode, saved })
+  if (saved && profile.postcode && profile.postcode !== previousPostcode) {
+    console.log('[preload debug] postcode changed, calling preloadNearbyData')
+    void preloadNearbyData(profile.postcode)
+  } else {
+    console.log('[preload debug] NOT calling preload')
+  }
+  return saved
 }
 
 export function getConsentState(): ConsentState | null {
