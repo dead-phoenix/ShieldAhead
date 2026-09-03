@@ -347,6 +347,37 @@ def test_charity_cache_is_per_postcode(client):
                 assert mock_fetch.call_count == 2
 
 
+def test_spa_serves_index_for_client_routes(tmp_path, monkeypatch, client):
+    dist = tmp_path / "dist"
+    dist.mkdir()
+    (dist / "index.html").write_text("<html>shieldahead</html>", encoding="utf-8")
+    monkeypatch.setattr("app.frontend_dist_path", lambda: dist)
+
+    response = client.get("/wifi")
+
+    assert response.status_code == 200
+    assert b"shieldahead" in response.data
+
+
+def test_spa_serves_built_assets(tmp_path, monkeypatch, client):
+    dist = tmp_path / "dist"
+    (dist / "assets").mkdir(parents=True)
+    (dist / "index.html").write_text("<html>shieldahead</html>", encoding="utf-8")
+    (dist / "assets" / "app.js").write_text("console.log('ok')", encoding="utf-8")
+    monkeypatch.setattr("app.frontend_dist_path", lambda: dist)
+
+    response = client.get("/assets/app.js")
+
+    assert response.status_code == 200
+    assert b"console.log" in response.data
+
+
+def test_api_wifi_is_not_captured_by_spa(client):
+    response = client.get("/api/wifi")
+    assert response.status_code == 400
+    assert response.is_json
+
+
 # ============================================================
 # VicFreeWiFi installer names
 # ============================================================

@@ -4,6 +4,7 @@ import type {
   SupportService,
 } from '../contracts'
 import type { SupportServiceRepository } from '../repositories'
+import { resolveApiUrl } from './resolveApiUrl'
 
 interface ApiSupportServiceRepositoryOptions {
   baseUrl: string
@@ -122,13 +123,7 @@ export function createApiSupportServiceRepository({
 }: ApiSupportServiceRepositoryOptions): SupportServiceRepository {
   return {
     async list() {
-      const normalizedBaseUrl = baseUrl.trim().replace(/\/$/, '')
-      if (!normalizedBaseUrl) {
-        throw new Error('VITE_API_BASE_URL is required when VITE_DATA_SOURCE=api.')
-      }
-
-      const url = new URL(`${normalizedBaseUrl}/api/charities`)
-      url.searchParams.set('postcode', postcode)
+      const url = resolveApiUrl(baseUrl, '/api/charities', postcode)
       const controller = new AbortController()
       const timeout = window.setTimeout(() => controller.abort(), timeoutMs)
 

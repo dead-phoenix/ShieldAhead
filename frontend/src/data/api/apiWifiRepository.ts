@@ -4,6 +4,7 @@ import type {
   WifiLocation,
 } from '../contracts'
 import type { WifiRepository } from '../repositories'
+import { resolveApiUrl } from './resolveApiUrl'
 
 interface ApiWifiRepositoryOptions {
   baseUrl: string
@@ -100,13 +101,7 @@ export function createApiWifiRepository({
 }: ApiWifiRepositoryOptions): WifiRepository {
   return {
     async list() {
-      const normalizedBaseUrl = baseUrl.trim().replace(/\/$/, '')
-      if (!normalizedBaseUrl) {
-        throw new Error('VITE_API_BASE_URL is required when VITE_DATA_SOURCE=api.')
-      }
-
-      const url = new URL(`${normalizedBaseUrl}/api/wifi`)
-      url.searchParams.set('postcode', postcode)
+      const url = resolveApiUrl(baseUrl, '/api/wifi', postcode)
       const controller = new AbortController()
       const timeout = window.setTimeout(() => controller.abort(), timeoutMs)
 

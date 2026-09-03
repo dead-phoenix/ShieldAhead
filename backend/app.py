@@ -1,15 +1,17 @@
-from flask import Flask, jsonify, request
+from flask import Flask, jsonify, request, send_from_directory
 from flask_cors import CORS
 import csv
 import io
 import json
 import math
+import os
 import time
 import hashlib
 import requests as http_requests
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 from datetime import datetime, timezone
+from pathlib import Path
 
 app = Flask(__name__)
 CORS(app)
@@ -1053,7 +1055,38 @@ def get_charities():
         return jsonify({"error": "An unexpected error occurred. Please try again later."}), 500
 
 
+def frontend_dist_path():
+    """Built Vite app, served from the same origin as the API."""
+    return Path(__file__).resolve().parent.parent / "frontend" / "dist"
+
+
+@app.route("/", defaults={"asset_path": ""})
+@app.route("/<path:asset_path>")
+def serve_frontend(asset_path):
+    """Serve the single-link website, keeping /api/* for JSON routes."""
+    if request.path.startswith("/api/"):
+        return jsonify({"error": "Not found"}), 404
+
+    dist = frontend_dist_path()
+    if not dist.is_dir():
+        return jsonify({
+            "error": (
+                "Frontend build is missing. For local split development, use the Vite "
+                "dev server. For a single-link app, run npm run build in frontend."
+            )
+        }), 404
+
+    if asset_path:
+        requested = dist / asset_path
+        if requested.is_file():
+            return send_from_directory(dist, asset_path)
+
+    return send_from_directory(dist, "index.html")
+
+
 #  Start server
 
 if __name__ == "__main__":
-    app.run(debug=True, port=5001)
+    port = int(os.environ.get("PORT", "5001"))
+    debug = os.environ.get("FLASK_DEBUG", "1") == "1"
+    app.run(debug=debug, host="0.0.0.0", port=port)

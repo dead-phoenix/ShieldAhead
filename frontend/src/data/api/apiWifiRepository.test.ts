@@ -85,9 +85,19 @@ describe('API Wi-Fi repository', () => {
     )
   })
 
-  it('requires an API base URL in API mode', async () => {
-    const repository = createApiWifiRepository({ baseUrl: '', postcode: '3453' })
+  it('calls the same-origin API when no base URL is configured', async () => {
+    const fetchMock = vi.fn<typeof fetch>()
+    fetchMock.mockResolvedValue(responseWith(apiPayload))
+    const repository = createApiWifiRepository({
+      baseUrl: '',
+      postcode: '3453',
+      fetcher: fetchMock as unknown as typeof fetch,
+    })
 
-    await expect(repository.list()).rejects.toThrow('VITE_API_BASE_URL')
+    await repository.list()
+
+    expect((fetchMock.mock.calls[0][0] as URL).toString()).toBe(
+      `${window.location.origin}/api/wifi?postcode=3453`,
+    )
   })
 })
