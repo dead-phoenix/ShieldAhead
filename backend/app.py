@@ -332,16 +332,118 @@ def get_location_info(name):
     return {"suburb": None, "postcode": None}
 
 
+_AP_PREFIX_PATTERN = re.compile(r"^(MEL|BD|BR)-[A-Za-z0-9]+-\s*", re.I)
+_TECH_PREFIX_PATTERN = re.compile(
+    r"^(MESH|HFC-I|HFC|FIBRE|FIBER|DSL\+?|POE|MBE)[\s\-]*",
+    re.I,
+)
+_STREET_WORD_REPLACEMENTS = (
+    (r"\bSt\b", "Street"),
+    (r"\bRd\b", "Road"),
+    (r"\bAve\b", "Avenue"),
+    (r"\bPde\b", "Parade"),
+    (r"\bTce\b", "Terrace"),
+    (r"\bCres\b", "Crescent"),
+    (r"\bDr\b", "Drive"),
+    (r"\bPl\b", "Place"),
+    (r"\bLn\b", "Lane"),
+    (r"\bBldg\b", "Building"),
+)
+_READABLE_ADDRESS_PATTERN = re.compile(
+    r"[\s,&]|Street|Road|Lane|Avenue|Parade|Terrace|Corner",
+    re.I,
+)
+
+
+def _strip_installer_prefix(value):
+    """Remove VicFreeWiFi site codes such as BR-81- or MEL-0083-."""
+    return _AP_PREFIX_PATTERN.sub("", (value or "").strip(), count=1).strip(" -")
+
+
+def _split_camel_case(text):
+    """Turn installer CamelCase (CnrParkerWendouree) into spaced words."""
+    if re.search(r"[\s,&]", text):
+        return text
+    text = re.sub(r"([a-z])([A-Z])", r"\1 \2", text)
+    text = re.sub(r"([A-Z]+)([A-Z][a-z])", r"\1 \2", text)
+    text = re.sub(r"([A-Za-z])(\d)", r"\1 \2", text)
+    text = re.sub(r"(\d)([A-Za-z])", r"\1 \2", text)
+    return text
+
+
+def _expand_street_words(text):
+    for pattern, replacement in _STREET_WORD_REPLACEMENTS:
+        text = re.sub(pattern, replacement, text)
+    return text
+
+
+def _format_corner_label(text):
+    tokens = text.split()
+    compact = []
+    skip_next_as_street = False
+    for index, token in enumerate(tokens):
+        if skip_next_as_street:
+            skip_next_as_street = False
+            continue
+        if token == "S" and compact and index + 1 < len(tokens):
+            compact[-1] = f"{compact[-1]} Street"
+            continue
+        compact.append(token)
+
+    if len(compact) >= 2:
+        if len(compact) == 3 and compact[1] == "Street":
+            return f"Corner of {compact[0]} Street and {compact[2]}"
+        if len(compact) == 2:
+            return f"Corner of {compact[0]} and {compact[1]}"
+        mid = len(compact) // 2
+        return f"Corner of {' '.join(compact[:mid])} and {' '.join(compact[mid:])}"
+    if compact:
+        return f"Corner of {compact[0]}"
+    return "Street corner hotspot"
+
+
+def humanize_vicfreewifi_name(long_name, short_name=""):
+    """Turn VicFreeWiFi installer codes into a readable hotspot label."""
+    raw = _strip_installer_prefix(long_name) or _strip_installer_prefix(short_name)
+    if not raw:
+        fallback = (short_name or long_name or "").strip()
+        return fallback or None
+
+    if _READABLE_ADDRESS_PATTERN.search(raw) and not _TECH_PREFIX_PATTERN.match(raw):
+        return re.sub(r"\s+", " ", raw).strip(" -")
+
+    raw = re.sub(r"_RAP$", "", raw, flags=re.I).replace("_", " ")
+    raw = _TECH_PREFIX_PATTERN.sub("", raw).strip(" -")
+
+    is_corner = bool(re.match(r"^Cnr", raw, re.I))
+    if is_corner:
+        raw = re.sub(r"^Cnr\s*", "", raw, flags=re.I)
+
+    raw = _expand_street_words(_split_camel_case(raw))
+    raw = re.sub(r"\s+", " ", raw).strip()
+
+    if is_corner:
+        return _format_corner_label(raw)
+    if raw and len(raw.split()) == 1:
+        return f"{raw} outdoor hotspot"
+    return raw or (short_name or long_name).strip()
+
+
 def csv_to_wifi_locations(rows, last_modified):
     """Convert VicFreeWiFi CSV rows to WifiLocation format."""
     active = [r for r in rows if r.get("Status", "").upper() == "UP"]
     results = []
 
     for row in active:
-        name = row.get("Long Name", row.get("Name", ""))
+        long_name = row.get("Long Name", row.get("Name", ""))
         short_name = row.get("Name", "")
-        parts = name.split("-", 2)
-        display_name = parts[2].strip() if len(parts) >= 3 else name
+        display_name = humanize_vicfreewifi_name(long_name, short_name)
+        stripped_long_name = _strip_installer_prefix(long_name)
+        has_real_address = bool(
+            stripped_long_name
+            and _READABLE_ADDRESS_PATTERN.search(stripped_long_name)
+            and not _TECH_PREFIX_PATTERN.match(stripped_long_name)
+        )
         location = get_location_info(short_name)
 
         lat = float(row["Latitude"]) if row.get("Latitude") else None
@@ -350,14 +452,17 @@ def csv_to_wifi_locations(rows, last_modified):
         results.append({
             "id": f"vicfreewifi-{short_name}" if short_name else None,
             "name": display_name or None,
-            "address": name or None,
+            "address": stripped_long_name if has_real_address else None,
             "suburb": location["suburb"],
             "postcode": location["postcode"],
             "latitude": lat,
             "longitude": lng,
             "distanceKm": None,
             "openingHours": None,
-            "accessConditions": [],
+            "accessConditions": [
+                "Outdoor public VicFreeWiFi access point — look for the network named VicFreeWiFi",
+                "Named after a nearby street or building, not that venue's private Wi-Fi",
+            ],
             "verificationStatus": "confirmed",
             "dataUpdatedAt": last_modified or datetime.now(timezone.utc).isoformat(),
         })

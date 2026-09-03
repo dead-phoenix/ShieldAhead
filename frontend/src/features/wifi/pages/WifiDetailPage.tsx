@@ -12,6 +12,7 @@ import { StatusBanner } from '../../../shared/components/StatusBanner'
 import { useOnlineStatus } from '../../../shared/hooks/useOnlineStatus'
 import { formatSavedDate } from '../../../shared/utils/formatDate'
 import { clearUsualWifiSpot, getHouseholdProfile, getOfflinePreferences, getUsualWifiSpot, saveUsualWifiSpot } from '../../../storage/onboardingDraftStorage'
+import { wifiAreaLabel, wifiMapsUrl } from '../utils/wifiMapsUrl'
 import { WifiVerificationBadge } from '../components/WifiVerificationBadge'
 
 export function WifiDetailPage() {
@@ -51,10 +52,8 @@ export function WifiDetailPage() {
     setMessage('Saved as your usual spot. It will appear first in the list.')
   }
 
-  const locationLabel = location.address
-    ? `${location.address}, ${location.suburb} VIC ${location.postcode}`
-    : `${location.suburb} VIC ${location.postcode}`
-  const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(locationLabel)}`
+  const locationLabel = wifiAreaLabel(location)
+  const mapsUrl = wifiMapsUrl(location)
   return (
     <section className="detail-page" aria-labelledby="wifi-detail-title">
       <PageBackLink to={appRoutes.wifi}>Back to Wi-Fi list</PageBackLink>
@@ -63,7 +62,7 @@ export function WifiDetailPage() {
       <div className={`notice-card${location.verificationStatus ? ` notice-card--${location.verificationStatus}` : ''}`}>
         {location.verificationStatus === 'confirmed' ? <ShieldCheck aria-hidden="true" size={22} /> : <Info aria-hidden="true" size={22} />}
         <p>{location.verificationStatus === 'confirmed'
-          ? 'This location appears in the official VicFreeWiFi listing. Opening hours and access conditions may still change.'
+          ? "This is an outdoor VicFreeWiFi street hotspot. Open in maps to see the exact pin. Look for the network named VicFreeWiFi — it is not that building's private Wi-Fi."
           : location.verificationStatus === 'likely'
             ? 'This facility is likely to offer Wi-Fi, but availability is not officially confirmed. Check with staff before travelling.'
             : 'Wi-Fi availability is not confirmed. Check before travelling.'}</p>

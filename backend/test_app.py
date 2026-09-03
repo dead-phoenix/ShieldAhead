@@ -348,6 +348,58 @@ def test_charity_cache_is_per_postcode(client):
 
 
 # ============================================================
+# VicFreeWiFi installer names
+# ============================================================
+
+def test_humanizes_ballarat_installer_codes():
+    from app import humanize_vicfreewifi_name
+
+    assert humanize_vicfreewifi_name("BR-81- MESHWendouree") == "Wendouree outdoor hotspot"
+    assert humanize_vicfreewifi_name("BR-21-CnrParkerWendouree") == "Corner of Parker and Wendouree"
+    assert humanize_vicfreewifi_name("BR-22-143Wendouree") == "143 Wendouree"
+    assert humanize_vicfreewifi_name("BR-51-CnrArmstrongSDana") == "Corner of Armstrong Street and Dana"
+    assert humanize_vicfreewifi_name("BR-66-MairSt") == "Mair Street"
+    assert humanize_vicfreewifi_name("BR-19-SaxonHouse_RAP") == "Saxon House"
+    assert humanize_vicfreewifi_name("BR-36-CnrLyonsSturt") == "Corner of Lyons and Sturt"
+
+
+def test_keeps_melbourne_street_addresses():
+    from app import humanize_vicfreewifi_name
+
+    assert humanize_vicfreewifi_name("MEL-0083-179 Collins Street") == "179 Collins Street"
+
+
+def test_vicfreewifi_rows_do_not_use_installer_codes_as_addresses():
+    from app import csv_to_wifi_locations
+
+    records = csv_to_wifi_locations([
+        {
+            "Name": "BR-81-MESHWendouree",
+            "Long Name": "BR-81- MESHWendouree",
+            "Latitude": "-37.548",
+            "Longitude": "143.831",
+            "Status": "UP",
+        },
+        {
+            "Name": "MEL-0083",
+            "Long Name": "MEL-0083-179 Collins Street",
+            "Latitude": "-37.814",
+            "Longitude": "144.973",
+            "Status": "UP",
+        },
+    ], "2019-04-25")
+
+    ballarat = records[0]
+    assert ballarat["name"] == "Wendouree outdoor hotspot"
+    assert ballarat["address"] is None
+    assert "VicFreeWiFi" in ballarat["accessConditions"][0]
+
+    melbourne = records[1]
+    assert melbourne["name"] == "179 Collins Street"
+    assert melbourne["address"] == "179 Collins Street"
+
+
+# ============================================================
 # API: real network calls (run once Nominatim rate limiting has cleared)
 # ============================================================
 

@@ -11,7 +11,8 @@ import { StatusBanner } from '../../../shared/components/StatusBanner'
 import { useOnlineStatus } from '../../../shared/hooks/useOnlineStatus'
 import { formatSavedDate } from '../../../shared/utils/formatDate'
 import { clearUsualWifiSpot, getHouseholdProfile, getOfflinePreferences, getUsualWifiSpot } from '../../../storage/onboardingDraftStorage'
-import { sortWifiLocations } from '../utils/sortWifiLocations'
+import { selectWifiLocationsForList } from '../utils/sortWifiLocations'
+import { wifiAreaLabel, wifiMapsUrl } from '../utils/wifiMapsUrl'
 import { WifiVerificationBadge } from '../components/WifiVerificationBadge'
 
 export function WifiListPage() {
@@ -33,7 +34,7 @@ export function WifiListPage() {
   )
   const activeUsualSpot = removedUsualSpot ? null : usualSpot
   const locations = useMemo(
-    () => sortWifiLocations(data?.records ?? [], activeUsualSpot),
+    () => selectWifiLocationsForList(data?.records ?? [], activeUsualSpot),
     [activeUsualSpot, data?.records],
   )
 
@@ -44,9 +45,7 @@ export function WifiListPage() {
   const fixtureQuery = fixture ? `?fixture=${encodeURIComponent(fixture)}` : ''
 
   function locationLabel(location: (typeof locations)[number]) {
-    return location.address
-      ? `${location.address}, ${location.suburb} VIC ${location.postcode}`
-      : `${location.suburb} VIC ${location.postcode}`
+    return wifiAreaLabel(location)
   }
 
   return (
@@ -72,7 +71,7 @@ export function WifiListPage() {
               </div>
               <div className="record-row__actions">
                 <Link className="button button--primary button--compact" to={`${appRoutes.wifiDetail(location.id)}${fixtureQuery}`}>View details <ArrowRight aria-hidden="true" size={16} weight="bold" /></Link>
-                {isOnline ? <a className="button button--quiet button--compact" href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(locationLabel(location))}`} target="_blank" rel="noreferrer"><NavigationArrow aria-hidden="true" size={16} /> Open in maps</a> : <button className="button button--quiet button--compact" type="button" disabled>Open in maps</button>}
+                {isOnline ? <a className="button button--quiet button--compact" href={wifiMapsUrl(location)} target="_blank" rel="noreferrer"><NavigationArrow aria-hidden="true" size={16} /> Open in maps</a> : <button className="button button--quiet button--compact" type="button" disabled>Open in maps</button>}
               </div>
             </article>
           ))}
