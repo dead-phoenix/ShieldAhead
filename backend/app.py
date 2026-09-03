@@ -29,15 +29,10 @@ _cache = {
     "freshness_status": None,
 }
 CACHE_TTL_SECONDS = 300  # 5 minutes
-# Postcode-to-coordinates cache lasts for the lifetime of this server process.
 _postcode_cache = {}
 
-# Charity results are cached per requested postcode so a Melbourne lookup
-# never reuses Bendigo records (or vice versa).
 _charity_cache = {}
 CHARITY_CACHE_TTL_SECONDS = 3600  # 1 hour
-# Geocoded charity street addresses, cached for the lifetime of this process
-# (same idea as _postcode_cache) so we don't re-hit Nominatim every refresh.
 _address_cache = {}
 
 #  Config
@@ -83,20 +78,20 @@ EXCLUDED_FACILITY_TYPES = [
 
 #  Charities (ACNC) config
 
-# ACNC Registered Charities Register, published on data.gov.au. This is the
-# real, verified resource id for that dataset's datastore.
 ACNC_DATASTORE_SEARCH_URL = "https://data.gov.au/data/api/3/action/datastore_search"
 ACNC_RESOURCE_SHOW_URL = "https://data.gov.au/data/api/3/action/resource_show"
 ACNC_RESOURCE_ID = "8fb32972-24e9-4c95-885e-7140be51be8a"
 
 ACNC_SEARCH_LIMIT = 200
 
-# Keyword -> user-facing service type label. A charity can match more than
-# one; this is inferred from free text, not a confirmed ACNC category field
-# (that limitation is surfaced to the frontend in metadata.limitations).
+# Keyword -> user-facing service type label, matched against the charity's
+# combined text (name, address, website, etc.) — used only where ACNC has no
+# confirmed field for that category, since its open data has no single
+# "type of service" column.
 SERVICE_TYPE_RULES = [
     ("food", "Food relief"),
     ("emergency relief", "Emergency relief"),
+    ("emergency", "Emergency relief"),
     ("financial counsel", "Financial counselling / hardship support"),
     ("hardship", "Financial counselling / hardship support"),
     ("family violence", "Family violence support"),
@@ -109,6 +104,19 @@ SERVICE_TYPE_RULES = [
     ("aged care", "Aged care support"),
     ("disability", "Disability support"),
     ("community support", "Community support services"),
+]
+
+# ACNC field -> user-facing service type label. These are real, ACNC-confirmed
+# purpose/beneficiary flags the charity registered with ("Y" or null) — not
+# guessed from free text like the keyword rules above. Checked first, since a
+# confirmed flag is more trustworthy than a name matching a keyword.
+SERVICE_TYPE_FIELD_RULES = [
+    ("Financially_Disadvantaged", "Financial counselling / hardship support"),
+    ("People_at_risk_of_homelessness", "Homelessness support"),
+    ("Victims_of_Disasters", "Emergency relief"),
+    ("Aged_Persons", "Aged care support"),
+    ("People_with_Disabilities", "Disability support"),
+    ("Youth", "Youth services"),
 ]
 
 MAX_ADDRESSES_TO_GEOCODE_PER_REFRESH = 40
@@ -171,7 +179,6 @@ def geocode_address(address):
         return _address_cache[address]
 
     try:
-        # Nominatim's usage policy asks for ~1 request/second from scripted callers.
         time.sleep(1)
         resp = http_requests.get(
             "https://nominatim.openstreetmap.org/search",
@@ -197,11 +204,7 @@ def geocode_address(address):
 
 
 def attach_charity_coordinates(records):
-    """Fill missing lat/lng from each charity's Victorian postcode when possible.
-
-    Postcode-level coordinates are fast enough for statewide nearby ranking
-    and avoid a Nominatim request per street address.
-    """
+    """Fill missing lat/lng from each charity's Victorian postcode when possible."""
     for record in records:
         if record.get("latitude") is not None and record.get("longitude") is not None:
             continue
@@ -215,9 +218,6 @@ def attach_charity_coordinates(records):
     return records
 
 
-# Reverse-geocoded locality lookups (coordinates -> place names), cached for
-# the lifetime of this process. Used to search ACNC by the suburb/city that
-# actually belongs to the user's postcode, anywhere in Victoria.
 _reverse_geocode_cache = {}
 _LGA_NAME_PATTERN = re.compile(r"\b(shire|city of|rural city|council)\b", re.I)
 
@@ -239,18 +239,13 @@ def _locality_names_from_address(address):
 
 
 def reverse_geocode_locality(lat, lon):
-    """Look up suburb, postcode and searchable place names for a coordinate.
-
-    Coordinates are rounded to ~100m before caching so nearby lookups reuse
-    one Nominatim result instead of hitting the service again.
-    """
+    """Look up suburb, postcode and searchable place names for a coordinate."""
     key = (round(lat, 3), round(lon, 3))
     if key in _reverse_geocode_cache:
         return _reverse_geocode_cache[key]
 
     empty = {"suburb": None, "postcode": None, "place_names": []}
     try:
-        # Respect Nominatim's ~1 request/second usage policy for scripted callers.
         time.sleep(1)
         resp = http_requests.get(
             "https://nominatim.openstreetmap.org/reverse",
@@ -522,7 +517,6 @@ def charity_town_matches(charity, target_town):
         return False
     if town == target:
         return True
-    # "North Melbourne" should count for a Melbourne search; ignore tiny tokens.
     if len(target) >= 4 and target in town:
         return True
     if len(town) >= 4 and town in target:
@@ -564,12 +558,24 @@ def _add_charities(combined, seen, records, keep=None):
 
 
 def infer_service_types(charity):
-    """Infer service categories from free text — ACNC doesn't publish a confirmed category field."""
-    combined_text = " ".join(str(v) for v in charity.values() if v).lower()
+    """Infer service categories for a charity.
+
+    Prefers ACNC's own confirmed purpose/beneficiary flags where one exists
+    for the category; falls back to keyword matches against the charity's
+    combined text where ACNC has no dedicated flag (e.g. there's no "food
+    relief" flag, only free text to go on).
+    """
     matched = []
+
+    for field, label in SERVICE_TYPE_FIELD_RULES:
+        if str(charity.get(field) or "").strip().upper() == "Y" and label not in matched:
+            matched.append(label)
+
+    combined_text = " ".join(str(v) for v in charity.values() if v).lower()
     for keyword, label in SERVICE_TYPE_RULES:
         if keyword in combined_text and label not in matched:
             matched.append(label)
+
     return matched or ["Community support services"]
 
 
@@ -625,7 +631,7 @@ def geocode_charities(records):
     geocoded_this_refresh = 0
     for record in records:
         if record.get("latitude") is not None:
-            continue  # already geocoded in a previous refresh
+            continue
         if geocoded_this_refresh >= MAX_ADDRESSES_TO_GEOCODE_PER_REFRESH:
             break
         address = record.get("address")
@@ -640,12 +646,7 @@ def geocode_charities(records):
 
 
 def fetch_charities_for_region(postcode, place_names=None):
-    """Query ACNC for Victorian charities near this postcode.
-
-    Combines an exact postcode match with suburb/city name searches from
-    reverse geocoding, so any Victorian postcode can return local results
-    rather than a fixed town list.
-    """
+    """Query ACNC for Victorian charities near this postcode."""
     seen = set()
     combined = []
     any_success = False
@@ -726,10 +727,8 @@ def get_wifi():
             public_error = None
             freshness_status = _cache["freshness_status"] or "current"
         else:
-            # Remember the previous snapshot's IDs before overwriting
             previous_ids = {r["id"] for r in _cache["data"]} if _cache["data"] else set()
 
-            # Source 1: VicFreeWiFi (confirmed wifi)
             wifi_records = []
             wifi_error = None
             try:
@@ -738,7 +737,6 @@ def get_wifi():
             except Exception as e:
                 wifi_error = str(e)
 
-            # Source 2: Regional public spaces (likely wifi)
             public_records = []
             public_error = None
             try:
@@ -773,22 +771,18 @@ def get_wifi():
                 dist = haversine_km(user_lat, user_lng, record["latitude"], record["longitude"])
                 record["distanceKm"] = round(dist, 1)
 
-        # Keep only records with a known distance, sorted nearest-first
         all_with_distance = [r for r in all_records if r.get("distanceKm") is not None]
         all_with_distance.sort(key=lambda r: r["distanceKm"])
 
-        # Filter to search radius
         within_radius = [r for r in all_with_distance if r["distanceKm"] <= SEARCH_RADIUS_KM]
 
         used_fallback = False
         if within_radius:
             all_records = within_radius
         else:
-            # Fallback: nothing within radius, show nearest results anyway
             all_records = all_with_distance[:FALLBACK_RESULT_COUNT]
             used_fallback = True
 
-        # Build limitations
         limitations = [
             "VicFreeWiFi covers pilot areas only",
             "Regional public spaces are inferred to have wifi based on facility type",
@@ -803,7 +797,6 @@ def get_wifi():
         if public_error:
             limitations.append("Regional public space data unavailable: showing confirmed VicFreeWiFi only")
 
-        # Build coverage areas
         coverage = ["Central Melbourne", "Central Bendigo", "Central Ballarat"]
         if not public_error:
             coverage.append("Regional Victoria (libraries and community centres)")
@@ -920,7 +913,7 @@ def get_charities():
 
         limitations = [
             "Eligibility conditions are not published in this open dataset — contact the organisation directly",
-            "Service type is inferred from keyword matches, not a confirmed category field",
+            "Service type is inferred from ACNC's own confirmed purpose/beneficiary flags where available, otherwise from keyword matches — not a single confirmed category field",
             "Availability/stock status is not confirmed for any listing",
             "Distance is based on postcode coordinates and may not reflect the exact street location",
         ]
