@@ -66,6 +66,10 @@ export interface DatasetMetadata {
   limitations: string[]
   freshnessStatus?: 'current' | 'stale'
   removedRecordIds?: string[]
+  /** Added locally by the offline repository; never required from the API. */
+  dataOrigin?: 'network' | 'cache' | 'mock'
+  cachedAt?: string
+  refreshError?: string
 }
 
 export interface DatasetResult<T> {

@@ -71,7 +71,7 @@ describe('Epic 2 Wi-Fi states', () => {
 
   it('lets the user remove a usual spot from its details', async () => {
     window.localStorage.setItem(storageKeys.usualWifiSpot, 'example-castlemaine')
-    renderDetail('/wifi/example-castlemaine')
+    renderDetail('/wifi/example-castlemaine?fixture=default')
 
     const removeButton = await screen.findByRole('button', {
       name: 'Remove as usual spot',

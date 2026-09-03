@@ -1,5 +1,7 @@
 import { createApiWifiRepository } from './api/apiWifiRepository'
 import { getMockWifiRepository } from './mock/mockRepositories'
+import { createOfflineAwareRepository } from './offline/offlineAwareRepository'
+import { isOfflineDatasetSelected } from './offline/offlineDatasetStore'
 import type { WifiRepository } from './repositories'
 
 export type WifiDataSourceMode = 'api' | 'mock'
@@ -13,16 +15,25 @@ export function getWifiRepository(
   fixture: string | null,
   postcode: string,
 ): WifiRepository {
-  if (getWifiDataSourceMode(fixture) === 'mock') {
-    return getMockWifiRepository(fixture)
-  }
+  const mode = getWifiDataSourceMode(fixture)
+  if (fixture) return getMockWifiRepository(fixture)
 
   const configuredTimeout = Number(import.meta.env.VITE_API_TIMEOUT_MS)
-  return createApiWifiRepository({
-    baseUrl: import.meta.env.VITE_API_BASE_URL ?? '',
+  const onlineRepository = mode === 'mock'
+    ? getMockWifiRepository(null)
+    : createApiWifiRepository({
+        baseUrl: import.meta.env.VITE_API_BASE_URL ?? '',
+        postcode,
+        timeoutMs: Number.isFinite(configuredTimeout) && configuredTimeout > 0
+          ? configuredTimeout
+          : 20_000,
+      })
+
+  return createOfflineAwareRepository({
+    kind: 'wifi',
     postcode,
-    timeoutMs: Number.isFinite(configuredTimeout) && configuredTimeout > 0
-      ? configuredTimeout
-      : 20_000,
+    source: mode,
+    onlineRepository,
+    shouldSave: () => isOfflineDatasetSelected('wifi'),
   })
 }

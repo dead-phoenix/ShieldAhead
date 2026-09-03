@@ -1,5 +1,6 @@
 import { storageKeys } from '../app/config/product'
 import { preloadNearbyData } from '../data/preloadNearbyData'
+import { clearAllOfflineDatasets } from '../data/offline/offlineDatasetStore'
 
 import type {
   ConsentState,
@@ -63,12 +64,8 @@ export function getHouseholdProfile(): HouseholdProfile | null {
 export function saveHouseholdProfile(profile: HouseholdProfile): boolean {
   const previousPostcode = getHouseholdProfile()?.postcode
   const saved = writeStoredValue(storageKeys.householdProfile, profile)
-  console.log('[preload debug]', { previousPostcode, newPostcode: profile.postcode, saved })
   if (saved && profile.postcode && profile.postcode !== previousPostcode) {
-    console.log('[preload debug] postcode changed, calling preloadNearbyData')
     void preloadNearbyData(profile.postcode)
-  } else {
-    console.log('[preload debug] NOT calling preload')
   }
   return saved
 }
@@ -122,9 +119,8 @@ export function saveConsentChoices(
 export function getOfflinePreferences(): OfflinePreferences {
   return (
     readStoredValue<OfflinePreferences>(storageKeys.offlinePreferences) ?? {
-      wifiSaved: true,
-      supportSaved: true,
-      lastUpdatedAt: '2026-08-27T09:42:00.000Z',
+      wifiSaved: false,
+      supportSaved: false,
     }
   )
 }
@@ -155,5 +151,6 @@ export function clearProfileAndChoices(removeOfflineInformation: boolean): void 
       wifiSaved: false,
       supportSaved: false,
     })
+    void clearAllOfflineDatasets()
   }
 }

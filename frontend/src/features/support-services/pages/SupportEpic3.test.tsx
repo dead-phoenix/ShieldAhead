@@ -31,7 +31,7 @@ describe('Epic 3 support-service states', () => {
       'href',
       '/settings/edit-profile',
     )
-    expect(screen.queryByText('No example services match this filter. Try another category.')).not.toBeInTheDocument()
+    expect(screen.queryByText('No services match this filter. Try another category.')).not.toBeInTheDocument()
   })
 
   it('uses plain list fallbacks when published fields are missing', async () => {
@@ -56,15 +56,15 @@ describe('Epic 3 support-service states', () => {
   it('renders normal, low and closed partner updates distinctly', async () => {
     renderList('/support?fixture=partner-states')
 
-    expect(await screen.findByText('Normal availability — example partner update')).toBeVisible()
-    expect(screen.getByText('Low availability — example partner update')).toBeVisible()
-    expect(screen.getByText('Closed — example partner update')).toBeVisible()
+    expect(await screen.findByText('Normal availability — partner update')).toBeVisible()
+    expect(screen.getByText('Low availability — partner update')).toBeVisible()
+    expect(screen.getByText('Closed — partner update')).toBeVisible()
   })
 
   it('keeps partner status consistent on the detail page', async () => {
     renderDetail('/support/example-partner-low?fixture=partner-states')
 
-    expect(await screen.findByText('Low availability — example partner update')).toBeVisible()
+    expect(await screen.findByText('Low availability — partner update')).toBeVisible()
     expect(screen.getByText(/Call ahead before travelling/)).toBeVisible()
   })
 
@@ -72,7 +72,7 @@ describe('Epic 3 support-service states', () => {
     renderList('/support?fixture=stale')
 
     expect(await screen.findByText('This saved support information may be out of date')).toBeVisible()
-    expect(screen.getByText('Normal availability — old example update')).toBeVisible()
+    expect(screen.getByText('Normal availability — older update')).toBeVisible()
   })
 
   it('supports long names, referral requirements and visit limits', async () => {
@@ -83,8 +83,18 @@ describe('Epic 3 support-service states', () => {
     expect(screen.getByText(/once every four weeks/i)).toBeVisible()
   })
 
+  it('explains when a direct detail URL no longer matches the current dataset', async () => {
+    renderDetail('/support/acnc-removed-record?fixture=default')
+
+    expect(await screen.findByRole('heading', { name: 'This service could not be found' })).toBeVisible()
+    expect(screen.getByRole('link', { name: 'View nearby services' })).toHaveAttribute(
+      'href',
+      '/support?fixture=default',
+    )
+  })
+
   it('keeps filtered-empty feedback separate from dataset-empty feedback', async () => {
-    renderList('/support')
+    renderList('/support?fixture=default')
     const emergencyFilter = await screen.findByRole('button', { name: 'Emergency' })
     fireEvent.click(emergencyFilter)
 
