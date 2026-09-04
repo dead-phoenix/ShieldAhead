@@ -15,10 +15,15 @@ describe('home landing page', () => {
   it('introduces ShieldAhead, then offers support and Wi-Fi destinations', () => {
     renderHome()
 
-    expect(screen.getByRole('heading', { name: 'About ShieldAhead' })).toBeVisible()
-    expect(screen.getByText(/get ready before disaster strikes/i)).toBeVisible()
+    expect(screen.getByRole('heading', { name: /Getting your household ready/i })).toBeVisible()
+    expect(screen.getByText('before')).toBeVisible()
+    expect(screen.getByRole('link', { name: 'Find what’s near you' })).toHaveAttribute('href', '/location')
+    expect(screen.getByRole('link', { name: 'See how it works' })).toHaveAttribute('href', '#how-it-works')
+    expect(screen.getByText('Prevention, not crisis response')).toBeVisible()
+    expect(screen.getByText('Works even offline')).toBeVisible()
+    expect(screen.getByText('Private by default, on your device')).toBeVisible()
+    expect(screen.getByText('All of VIC')).toBeVisible()
     expect(screen.queryByText(/Loddon Campaspe/i)).not.toBeInTheDocument()
-    expect(screen.queryByText(/postcode/i)).not.toBeInTheDocument()
     expect(screen.getByText(/Here’s what you can do/i)).toBeVisible()
     expect(screen.getByText(/listed for your area/i)).toBeVisible()
     expect(screen.getByText(/Wi-Fi places in your area/i)).toBeVisible()

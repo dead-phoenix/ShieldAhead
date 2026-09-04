@@ -16,6 +16,7 @@ export const appRoutes = {
   setupReview: '/setup/review',
   consentChoices: '/setup/choices',
   setupComplete: '/setup/complete',
+  location: '/location',
   wifi: '/wifi',
   wifiDetail: (id: string) => `/wifi/${id}`,
   support: '/support',
@@ -33,4 +34,5 @@ export const storageKeys = {
   consent: 'shieldahead.consent.v1',
   offlinePreferences: 'shieldahead.offline-preferences.v1',
   usualWifiSpot: 'shieldahead.usual-wifi-spot.v1',
+  searchLocation: 'shieldahead.search-location.v1',
 } as const

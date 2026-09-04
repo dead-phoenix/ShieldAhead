@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'react'
 import { BrowserRouter, Navigate, Outlet, Route, Routes } from 'react-router-dom'
 import { useLocation } from 'react-router-dom'
 import { HomePage } from '../features/home/pages/HomePage'
+import { ChooseLocationPage } from '../features/location/pages/ChooseLocationPage'
 import { HouseholdBasicsPage } from '../features/onboarding/pages/HouseholdBasicsPage'
 import { HouseholdNeedsPage } from '../features/onboarding/pages/HouseholdNeedsPage'
 import { ConsentChoicesPage } from '../features/onboarding/pages/ConsentChoicesPage'
@@ -9,7 +10,6 @@ import { DataPrivacyPage } from '../features/onboarding/pages/DataPrivacyPage'
 import { SetupCompletePage } from '../features/onboarding/pages/SetupCompletePage'
 import { SetupReviewPage } from '../features/onboarding/pages/SetupReviewPage'
 import { SetupWelcomePage } from '../features/onboarding/pages/SetupWelcomePage'
-import { LoginToContinuePage } from '../features/onboarding/pages/LoginToContinuePage'
 import { DeleteProfilePage } from '../features/settings/pages/DeleteProfilePage'
 import { EditProfilePage } from '../features/settings/pages/EditProfilePage'
 import { ConsentSettingsPage } from '../features/settings/pages/ConsentSettingsPage'
@@ -20,7 +20,7 @@ import { SupportServicesPage } from '../features/support-services/pages/SupportS
 import { WifiDetailPage } from '../features/wifi/pages/WifiDetailPage'
 import { WifiListPage } from '../features/wifi/pages/WifiListPage'
 import { AppShell } from '../shared/layout/AppShell'
-import { hasCompletedSetup } from '../storage/onboardingDraftStorage'
+import { getSearchPostcode } from '../storage/searchLocationStorage'
 import { appRoutes } from './config/product'
 
 function RouteFocusManager() {
@@ -41,8 +41,11 @@ function RouteFocusManager() {
   return null
 }
 
-function RequireCompletedSetup() {
-  return hasCompletedSetup() ? <Outlet /> : <LoginToContinuePage />
+function RequireSearchLocation() {
+  const location = useLocation()
+  if (getSearchPostcode()) return <Outlet />
+  const next = `${location.pathname}${location.search}`
+  return <Navigate replace to={`${appRoutes.location}?next=${encodeURIComponent(next)}`} />
 }
 
 export function AppRouter() {
@@ -62,17 +65,18 @@ export function AppRouter() {
           <Route path={appRoutes.setupReview} element={<SetupReviewPage />} />
           <Route path={appRoutes.consentChoices} element={<ConsentChoicesPage />} />
           <Route path={appRoutes.setupComplete} element={<SetupCompletePage />} />
-          <Route element={<RequireCompletedSetup />}>
+          <Route path={appRoutes.location} element={<ChooseLocationPage />} />
+          <Route element={<RequireSearchLocation />}>
             <Route path={appRoutes.wifi} element={<WifiListPage />} />
             <Route path="/wifi/:id" element={<WifiDetailPage />} />
             <Route path={appRoutes.support} element={<SupportServicesPage />} />
             <Route path="/support/:id" element={<SupportServiceDetailPage />} />
-            <Route path={appRoutes.settings} element={<SettingsPage />} />
-            <Route path={appRoutes.editProfile} element={<EditProfilePage />} />
-            <Route path={appRoutes.consentSettings} element={<ConsentSettingsPage />} />
-            <Route path={appRoutes.offlineInformation} element={<OfflineInformationPage />} />
-            <Route path={appRoutes.deleteProfile} element={<DeleteProfilePage />} />
           </Route>
+          <Route path={appRoutes.settings} element={<SettingsPage />} />
+          <Route path={appRoutes.editProfile} element={<EditProfilePage />} />
+          <Route path={appRoutes.consentSettings} element={<ConsentSettingsPage />} />
+          <Route path={appRoutes.offlineInformation} element={<OfflineInformationPage />} />
+          <Route path={appRoutes.deleteProfile} element={<DeleteProfilePage />} />
           <Route path="*" element={<Navigate replace to={appRoutes.home} />} />
         </Route>
       </Routes>

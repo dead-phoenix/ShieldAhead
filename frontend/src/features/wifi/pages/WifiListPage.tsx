@@ -9,13 +9,14 @@ import { EmptyState } from '../../../shared/components/EmptyState'
 import { StatusBanner } from '../../../shared/components/StatusBanner'
 import { useOnlineStatus } from '../../../shared/hooks/useOnlineStatus'
 import { formatSavedDate } from '../../../shared/utils/formatDate'
-import { clearUsualWifiSpot, getHouseholdProfile, getOfflinePreferences, getUsualWifiSpot } from '../../../storage/onboardingDraftStorage'
+import { getSearchPostcode } from '../../../storage/searchLocationStorage'
+import { clearUsualWifiSpot, getOfflinePreferences, getUsualWifiSpot } from '../../../storage/onboardingDraftStorage'
 import { selectWifiLocationsForList } from '../utils/sortWifiLocations'
 import { wifiAreaLabel, wifiMapsUrl } from '../utils/wifiMapsUrl'
 import { WifiVerificationBadge } from '../components/WifiVerificationBadge'
 
 export function WifiListPage() {
-  const postcode = getHouseholdProfile()?.postcode ?? ''
+  const postcode = getSearchPostcode()
   const repository = useMemo(
     () => getWifiRepository(postcode),
     [postcode],
@@ -47,7 +48,15 @@ export function WifiListPage() {
   return (
     <section className="content-page" aria-labelledby="wifi-title">
       <div className="connectivity-strip"><CloudSlash aria-hidden="true" size={21} /><span><strong>{isOnline ? (data?.metadata.cachedAt ? 'Saved for offline use' : offline.wifiSaved ? 'Preparing offline copy' : 'Online — not saved for offline use') : isSavedCopy ? 'You are offline — showing saved copy' : 'You are offline'}</strong><small>{canReadRecords ? `Showing ${isSavedCopy ? 'saved' : 'current'} information near ${postcode}. ${data?.metadata.cachedAt ? `Saved on this device: ${formatSavedDate(data.metadata.cachedAt)}.` : ''}` : noOfflineCopy ? 'No Wi-Fi information is saved for this postcode.' : 'Loading Wi-Fi information…'}</small></span></div>
-      <div className="page-heading"><div><h1 id="wifi-title">Nearby free Wi-Fi</h1><p>Check conditions before travelling.</p></div></div>
+      <div className="page-heading">
+        <div>
+          <h1 id="wifi-title">Nearby free Wi-Fi</h1>
+          <p>Check conditions before travelling.</p>
+        </div>
+        <Link className="button button--text" to={`${appRoutes.location}?next=${encodeURIComponent(appRoutes.wifi)}`}>
+          Change location
+        </Link>
+      </div>
       {isLoading ? <LoadingState /> : null}
       {error && !noOfflineCopy ? <div className="error-state" role="alert"><p>{error}</p><button className="button button--quiet" type="button" onClick={retry}>Try again</button></div> : null}
       {noOfflineCopy ? <EmptyState title="No saved Wi-Fi information available offline" action={<Link className="button button--primary" to={appRoutes.offlineInformation}>Choose offline information</Link>}><p>Connect to the internet and download Wi-Fi information before the next disruption.</p></EmptyState> : null}

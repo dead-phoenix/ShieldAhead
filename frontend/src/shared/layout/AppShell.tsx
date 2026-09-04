@@ -8,6 +8,7 @@ import {
 import { Link, NavLink, Outlet, useLocation } from 'react-router-dom'
 import { appRoutes, productConfig } from '../../app/config/product'
 import { hasCompletedSetup } from '../../storage/onboardingDraftStorage'
+import { GetTheAppButton } from '../components/GetTheAppButton'
 
 const primaryNavigation = [
   { to: appRoutes.home, label: 'Home', end: true, icon: House },
@@ -18,9 +19,8 @@ const primaryNavigation = [
 
 export function AppShell() {
   const { pathname } = useLocation()
-  const isHome = pathname === appRoutes.home
   const isSetupFlow = pathname.startsWith(appRoutes.setup)
-  const showAuthActions = isHome && !hasCompletedSetup()
+  const showAuthActions = !isSetupFlow && !hasCompletedSetup()
 
   return (
     <div className={`app-shell${isSetupFlow ? ' app-shell--flow' : ''}`}>
@@ -36,10 +36,15 @@ export function AppShell() {
             <small>{productConfig.status}</small>
           </span>
         </NavLink>
-        {showAuthActions ? (
-          <nav className="header-auth" aria-label="Account">
-            <Link className="header-auth__login" to={appRoutes.setup}>Log in</Link>
-            <Link className="header-auth__signup" to={appRoutes.setup}>Sign up</Link>
+        {!isSetupFlow ? (
+          <nav className="header-auth" aria-label="Site actions">
+            <GetTheAppButton />
+            {showAuthActions ? (
+              <>
+                <Link className="header-auth__login" to={appRoutes.setup}>Log in</Link>
+                <Link className="header-auth__signup" to={appRoutes.setup}>Sign up</Link>
+              </>
+            ) : null}
           </nav>
         ) : null}
       </header>

@@ -177,7 +177,9 @@ svg {
 
 .header-auth {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
+  justify-content: flex-end;
   gap: 12px;
   margin-left: auto;
 }
@@ -294,6 +296,73 @@ svg {
 .flow-page {
   width: min(100%, 25rem);
   padding-block: 0.25rem 1.5rem;
+}
+
+.location-page {
+  display: grid;
+  gap: 1rem;
+  width: min(100%, 25rem);
+  padding-block: 0.25rem 1.5rem;
+}
+
+.location-page .button--primary {
+  width: 100%;
+}
+
+.location-or {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  gap: 0.75rem;
+  align-items: center;
+  margin: 0.35rem 0;
+  color: var(--color-text-muted);
+  font-size: 0.9375rem;
+  text-transform: lowercase;
+}
+
+.location-or::before,
+.location-or::after {
+  height: 1px;
+  background: var(--color-border);
+  content: '';
+}
+
+.location-search {
+  display: grid;
+  gap: 0.45rem;
+}
+
+.location-search label {
+  color: var(--color-ink);
+  font-size: 0.9375rem;
+  font-weight: 700;
+}
+
+.location-search__row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 0.6rem;
+}
+
+.location-search input {
+  width: 100%;
+  min-height: 3rem;
+  padding: 0.65rem 0.8rem;
+  border: 1px solid #d9d5c7;
+  border-radius: 8px;
+  background: #ffffff;
+  color: var(--color-ink);
+}
+
+.location-search .button {
+  min-width: 6.5rem;
+  border-radius: 8px;
+}
+
+.location-privacy {
+  margin: 0.15rem 0 0;
+  color: var(--color-text-muted);
+  font-size: 0.875rem;
 }
 
 .welcome-page,
@@ -821,7 +890,7 @@ input[type='checkbox'] {
 .landing-page {
   display: grid;
   gap: 2.75rem;
-  width: min(100%, 42.5rem);
+  width: min(100%, 46rem);
   color: #3a3e4a;
   font-size: 1.0625rem;
   line-height: 1.65;
@@ -869,24 +938,121 @@ input[type='checkbox'] {
 
 .landing-about {
   display: grid;
-  gap: 1rem;
+  gap: 1.15rem;
   min-width: 0;
 }
 
 .landing-about h1 {
-  font-size: clamp(2rem, 6vw, 2.375rem);
-  line-height: 1.2;
+  max-width: none;
+  font-size: clamp(2rem, 6vw, 2.625rem);
+  line-height: 1.18;
+}
+
+.landing-about__accent {
+  color: #3f6b63;
 }
 
 .landing-about__copy {
-  max-width: 31.25rem;
+  max-width: 34rem;
   margin: 0;
   color: #3a3e4a;
+}
+
+.landing-about__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.landing-about__actions .button {
+  min-width: 10.5rem;
+}
+
+.landing-stats {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1rem;
+  margin: 0.35rem 0 0;
+  padding: 1.15rem 0;
+  border-top: 1px solid #e4e1d6;
+  border-bottom: 1px solid #e4e1d6;
+}
+
+.landing-stats div {
+  display: grid;
+  gap: 0.2rem;
+  min-width: 0;
+}
+
+.landing-stats dt {
+  order: 2;
+  color: #5c6070;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+.landing-stats dd {
+  order: 1;
+  margin: 0;
+  color: #3f6b63;
+  font-family: var(--font-display);
+  font-size: clamp(1.65rem, 4vw, 2.125rem);
+  font-weight: 500;
+  letter-spacing: -0.03em;
+  line-height: 1.1;
+}
+
+.landing-values {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.75rem;
+  margin: 0.15rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.landing-value {
+  display: grid;
+  gap: 0.65rem;
+  min-width: 0;
+  padding: 0.95rem 0.9rem 1rem;
+  border: 1px solid #e4e1d6;
+  border-top-width: 3px;
+  border-radius: 10px;
+  background: #ffffff;
+  color: #3f6b63;
+}
+
+.landing-value--accent {
+  border-top-color: #3f6b63;
+}
+
+.landing-value--sand {
+  border-top-color: #8a7b5c;
+  color: #8a7b5c;
+}
+
+.landing-value--ink {
+  border-top-color: #1b2438;
+  color: #1b2438;
+}
+
+.landing-value p {
+  margin: 0;
+  color: #1b2438;
+}
+
+.landing-value strong {
+  font-size: 0.9375rem;
+  font-weight: 700;
+  line-height: 1.35;
 }
 
 .landing-features {
   display: grid;
   gap: 0.85rem;
+  scroll-margin-top: 5.5rem;
 }
 
 .landing-features__intro {
@@ -964,6 +1130,60 @@ input[type='checkbox'] {
   min-width: 0;
   padding-top: 1.1rem;
   border-top: 1px solid #e4e1d6;
+}
+
+.landing-install {
+  display: flex;
+  justify-content: center;
+  padding-top: 0.5rem;
+}
+
+.get-app-footer {
+  width: min(100%, 22rem);
+}
+
+.install-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  display: grid;
+  place-items: center;
+  padding: 1.25rem;
+  background: rgba(27, 36, 56, 0.42);
+}
+
+.install-modal__panel {
+  position: relative;
+  width: min(100%, 22rem);
+  padding: 1.35rem 1.25rem 1.25rem;
+  border: 1px solid var(--color-border);
+  border-radius: 14px;
+  background: var(--color-card-bg);
+  color: var(--color-text-secondary);
+}
+
+.install-modal__panel h2 {
+  padding-right: 2.5rem;
+}
+
+.install-modal__panel p {
+  display: flex;
+  gap: 0.45rem;
+  align-items: flex-start;
+  margin-top: 0.75rem;
+}
+
+.install-modal__close {
+  position: absolute;
+  top: 0.65rem;
+  right: 0.65rem;
+  min-height: 2.5rem;
+  padding: 0.35rem 0.6rem;
+  border: 0;
+  background: transparent;
+  color: var(--color-ink);
+  font-size: 0.875rem;
+  font-weight: 700;
 }
 
 .offline-status-card {
@@ -1914,6 +2134,11 @@ input[type='checkbox'] {
 
   .home-actions {
     grid-template-columns: 1fr 1fr;
+  }
+
+  .landing-stats,
+  .landing-values {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 
   .landing-features__card {

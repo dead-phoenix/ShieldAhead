@@ -12,14 +12,14 @@ import { getSupportServiceRepository } from '../../../data/supportServiceReposit
 import { getWifiRepository } from '../../../data/wifiRepository'
 import { PageBackLink } from '../../../shared/components/PageBackLink'
 import { formatSavedDate } from '../../../shared/utils/formatDate'
+import { getSearchPostcode } from '../../../storage/searchLocationStorage'
 import {
-  getHouseholdProfile,
   getOfflinePreferences,
   saveOfflinePreferences,
 } from '../../../storage/onboardingDraftStorage'
 
 export function OfflineInformationPage() {
-  const postcode = getHouseholdProfile()?.postcode ?? ''
+  const postcode = getSearchPostcode()
   const [preferences, setPreferences] = useState(getOfflinePreferences)
   const [message, setMessage] = useState('')
   const [busyKind, setBusyKind] = useState<OfflineDatasetKind | 'all' | null>(null)

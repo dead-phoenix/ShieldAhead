@@ -1,5 +1,57 @@
+import { readFileSync, writeFileSync } from 'node:fs'
+import { fileURLToPath } from 'node:url'
 import react from '@vitejs/plugin-react'
 import { defineConfig, type Plugin } from 'vite'
+
+function writeCoverageCount(fileUrl: URL, count: number) {
+  const filePath = fileURLToPath(fileUrl)
+  const next = `${JSON.stringify({ count }, null, 2)}\n`
+  let previous = ''
+  try {
+    previous = readFileSync(filePath, 'utf8')
+  } catch {
+    previous = ''
+  }
+  if (previous !== next) writeFileSync(filePath, next)
+}
+
+function coverageJsonSnapshot(): Plugin {
+  const skip = Boolean(process.env.VITEST) || process.argv.some((arg) => arg.includes('vitest'))
+
+  async function refreshFromPipeline() {
+    if (skip) return
+    try {
+      const response = await fetch('http://127.0.0.1:5001/api/stats', {
+        signal: AbortSignal.timeout(2500),
+      })
+      if (!response.ok) return
+      const stats = (await response.json()) as {
+        wifiLocations?: number
+        supportServices?: number
+      }
+      writeCoverageCount(
+        new URL('./src/data/coverage/wifi.json', import.meta.url),
+        Number(stats.wifiLocations) || 0,
+      )
+      writeCoverageCount(
+        new URL('./src/data/coverage/charities.json', import.meta.url),
+        Number(stats.supportServices) || 0,
+      )
+    } catch {
+      // Keep the last snapshot when the API is offline during build or dev startup.
+    }
+  }
+
+  return {
+    name: 'coverage-json-snapshot',
+    buildStart() {
+      return refreshFromPipeline()
+    },
+    configureServer() {
+      void refreshFromPipeline()
+    },
+  }
+}
 
 function shieldAheadServiceWorker(): Plugin {
   return {
@@ -11,9 +63,12 @@ function shieldAheadServiceWorker(): Plugin {
         '/index.html',
         '/manifest.webmanifest',
         '/favicon.svg',
+        '/icon-192.png',
+        '/icon-512.png',
+        '/apple-touch-icon.png',
         ...Object.keys(bundle).map((fileName) => `/${fileName}`),
       ]
-      const source = `const CACHE_NAME = 'shieldahead-shell-v3'
+      const source = `const CACHE_NAME = 'shieldahead-shell-v4'
 const PRECACHE_FILES = ${JSON.stringify(precacheFiles)}
 
 self.addEventListener('install', (event) => {
@@ -47,5 +102,5 @@ self.addEventListener('fetch', (event) => {
 
 // https://vite.dev/config/
 export default defineConfig({
-  plugins: [react(), shieldAheadServiceWorker()],
+  plugins: [react(), coverageJsonSnapshot(), shieldAheadServiceWorker()],
 })

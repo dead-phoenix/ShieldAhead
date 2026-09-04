@@ -10,7 +10,7 @@ import { PageBackLink } from '../../../shared/components/PageBackLink'
 import { StatusBanner } from '../../../shared/components/StatusBanner'
 import { useOnlineStatus } from '../../../shared/hooks/useOnlineStatus'
 import { formatSavedDate } from '../../../shared/utils/formatDate'
-import { getHouseholdProfile } from '../../../storage/onboardingDraftStorage'
+import { getSearchPostcode } from '../../../storage/searchLocationStorage'
 import {
   formatServiceAddress,
   formatServiceDistance,
@@ -20,7 +20,7 @@ import { SupportDatasetDisclosure } from '../components/SupportDatasetDisclosure
 
 export function SupportServiceDetailPage() {
   const { id } = useParams()
-  const postcode = getHouseholdProfile()?.postcode ?? ''
+  const postcode = getSearchPostcode()
   const repository = useMemo(
     () => getSupportServiceRepository(postcode),
     [postcode],

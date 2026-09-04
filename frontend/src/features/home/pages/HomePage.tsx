@@ -1,22 +1,76 @@
-import { ArrowRight, HandHeart, WifiHigh } from '@phosphor-icons/react'
+import { useEffect, useState } from 'react'
+import { ArrowRight, CloudSlash, HandHeart, LockKey, ShieldCheck, WifiHigh } from '@phosphor-icons/react'
 import { Link } from 'react-router-dom'
-import { appRoutes, productConfig } from '../../../app/config/product'
+import { appRoutes } from '../../../app/config/product'
+import {
+  bundledCoverageStats,
+  loadCoverageStats,
+} from '../../../data/coverage/coverageStats'
+import { GetTheAppButton } from '../../../shared/components/GetTheAppButton'
+
+function formatCount(value: number): string {
+  return value.toLocaleString('en-AU')
+}
 
 export function HomePage() {
+  const [stats, setStats] = useState(bundledCoverageStats)
+
+  useEffect(() => {
+    void loadCoverageStats().then(setStats)
+  }, [])
+
   return (
     <div className="landing-page">
       <section className="landing-about" aria-labelledby="about-title">
-        <h1 id="about-title">About {productConfig.name}</h1>
+        <h1 id="about-title">
+          Getting your household ready,
+          <br />
+          <span className="landing-about__accent">before</span> you need to be
+        </h1>
         <p className="landing-about__copy">
-          ShieldAhead helps households in Victoria get ready before disaster strikes — not after.
-          We’re not a crisis directory. We’re here earlier — helping you prepare, quietly and
-          privately, on your own terms. ShieldAhead brings together essential relief, emergency
-          information and local Wi-Fi in one place — all stored securely on your device, so it
-          works even when the network doesn’t.
+          ShieldAhead helps Victorian households prepare quietly and privately — local support,
+          emergency information and free Wi-Fi, saved on your device so it still works when the
+          network does not.
         </p>
+        <div className="landing-about__actions">
+          <Link className="button button--primary" to={appRoutes.location}>
+            Find what’s near you
+          </Link>
+          <a className="button button--accent-outline" href="#how-it-works">
+            See how it works
+          </a>
+        </div>
+        <dl className="landing-stats">
+          <div>
+            <dt>Wi-Fi locations</dt>
+            <dd>{formatCount(stats.wifiLocations)}</dd>
+          </div>
+          <div>
+            <dt>Support services</dt>
+            <dd>{formatCount(stats.supportServices)}</dd>
+          </div>
+          <div>
+            <dt>Coverage</dt>
+            <dd>{stats.coverage}</dd>
+          </div>
+        </dl>
+        <ul className="landing-values">
+          <li className="landing-value landing-value--accent">
+            <ShieldCheck aria-hidden="true" size={22} weight="regular" />
+            <p><strong>Prevention, not crisis response</strong></p>
+          </li>
+          <li className="landing-value landing-value--sand">
+            <CloudSlash aria-hidden="true" size={22} weight="regular" />
+            <p><strong>Works even offline</strong></p>
+          </li>
+          <li className="landing-value landing-value--ink">
+            <LockKey aria-hidden="true" size={22} weight="regular" />
+            <p><strong>Private by default, on your device</strong></p>
+          </li>
+        </ul>
       </section>
 
-      <section className="landing-features" aria-label="Find nearby information">
+      <section className="landing-features" id="how-it-works" aria-label="Find nearby information">
         <p className="landing-features__intro">Here’s what you can do</p>
         <div className="landing-features__card">
           <article className="landing-feature">
@@ -48,9 +102,13 @@ export function HomePage() {
         <p>
           The Crisis Pack will be a private, on-device checklist for later iterations: household
           contacts, medication notes, and a short list of things to take if you need to leave.
-          It is not available in this version, and it will not contact emergency services.
+          It is not available in this version.
         </p>
       </section>
+
+      <div className="landing-install">
+        <GetTheAppButton variant="footer" />
+      </div>
     </div>
   )
 }

@@ -11,21 +11,32 @@ describe('first-run routing', () => {
   it('shows the home page to a new visitor, with log in and sign up', async () => {
     render(<AppRouter />)
 
-    expect(await screen.findByRole('heading', { name: 'About ShieldAhead' })).toBeVisible()
+    expect(await screen.findByRole('heading', { name: /Getting your household ready/i })).toBeVisible()
     expect(window.location.pathname).toBe('/')
     expect(screen.getByRole('link', { name: 'Log in' })).toHaveAttribute('href', '/setup')
     expect(screen.getByRole('link', { name: 'Sign up' })).toHaveAttribute('href', '/setup')
   })
 
-  it('asks an unsigned visitor to log in instead of opening support', async () => {
+  it('asks for a search area before opening support', async () => {
     window.history.replaceState({}, '', '/support')
 
     render(<AppRouter />)
 
-    expect(await screen.findByRole('heading', { name: 'Log in to continue' })).toBeVisible()
+    expect(await screen.findByRole('heading', { name: 'Find places near you' })).toBeVisible()
+    expect(window.location.pathname).toBe('/location')
+  })
+
+  it('opens support after a search area is saved', async () => {
+    window.localStorage.setItem(storageKeys.searchLocation, JSON.stringify({
+      postcode: '3453',
+      label: 'Harcourt 3453',
+    }))
+    window.history.replaceState({}, '', '/support')
+
+    render(<AppRouter />)
+
+    expect(await screen.findByRole('heading', { name: 'Nearby support services' })).toBeVisible()
     expect(window.location.pathname).toBe('/support')
-    expect(screen.getByRole('link', { name: 'Back to home' })).toHaveAttribute('href', '/')
-    expect(screen.getByRole('link', { name: 'Sign up' })).toHaveAttribute('href', '/setup')
   })
 
   it('shows home to a returning user with a saved profile and consent', async () => {
@@ -38,7 +49,7 @@ describe('first-run routing', () => {
 
     render(<AppRouter />)
 
-    expect(await screen.findByRole('heading', { name: 'About ShieldAhead' })).toBeVisible()
+    expect(await screen.findByRole('heading', { name: /Getting your household ready/i })).toBeVisible()
     expect(window.location.pathname).toBe('/')
     expect(screen.queryByRole('link', { name: 'Sign up' })).not.toBeInTheDocument()
   })

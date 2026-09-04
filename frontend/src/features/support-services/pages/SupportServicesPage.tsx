@@ -19,7 +19,8 @@ import { LoadingState } from '../../../shared/components/LoadingState'
 import { StatusBanner } from '../../../shared/components/StatusBanner'
 import { useOnlineStatus } from '../../../shared/hooks/useOnlineStatus'
 import { formatSavedDate } from '../../../shared/utils/formatDate'
-import { getHouseholdProfile, getOfflinePreferences } from '../../../storage/onboardingDraftStorage'
+import { getSearchPostcode } from '../../../storage/searchLocationStorage'
+import { getOfflinePreferences } from '../../../storage/onboardingDraftStorage'
 import {
   formatServiceAddress,
   getAvailabilityPresentation,
@@ -37,7 +38,7 @@ function AvailabilityIcon({ tone }: { tone: AvailabilityTone }) {
 }
 
 export function SupportServicesPage() {
-  const postcode = getHouseholdProfile()?.postcode ?? ''
+  const postcode = getSearchPostcode()
   const repository = useMemo(
     () => getSupportServiceRepository(postcode),
     [postcode],
@@ -64,7 +65,15 @@ export function SupportServicesPage() {
   return (
     <section className="content-page" aria-labelledby="support-title">
       <div className="connectivity-strip"><CloudSlash aria-hidden="true" size={21} /><span><strong>{isOnline ? (data?.metadata.cachedAt ? 'Saved for offline use' : offline.supportSaved ? 'Preparing offline copy' : 'Online — not saved for offline use') : isSavedCopy ? 'You are offline — showing saved copy' : 'You are offline'}</strong><small>{canReadRecords ? `Showing ${isSavedCopy ? 'saved' : 'current'} information near ${postcode}. ${data?.metadata.cachedAt ? `Saved on this device: ${formatSavedDate(data.metadata.cachedAt)}.` : ''}` : noOfflineCopy ? 'No Support information is saved for this postcode.' : 'Loading Support information…'}</small></span></div>
-      <div className="page-heading"><div><h1 id="support-title">Nearby support services</h1><p>Find assistance closest to you.</p></div></div>
+      <div className="page-heading">
+        <div>
+          <h1 id="support-title">Nearby support services</h1>
+          <p>Find assistance closest to you.</p>
+        </div>
+        <Link className="button button--text" to={`${appRoutes.location}?next=${encodeURIComponent(appRoutes.support)}`}>
+          Change location
+        </Link>
+      </div>
       {data && allServices.length > 0 ? <div className="filter-row" aria-label="Filter support services">
         {filters.map((item) => <button aria-pressed={filter === item} className={filter === item ? 'filter-chip is-active' : 'filter-chip'} key={item} type="button" onClick={() => setFilter(item)}>{item}</button>)}
       </div> : null}

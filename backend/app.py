@@ -1,4 +1,4 @@
-from flask import Flask, jsonify, request
+from flask import Flask, jsonify, request, send_from_directory
 from flask_cors import CORS
 import csv
 import io
@@ -6,10 +6,13 @@ import math
 import os
 import time
 import hashlib
+import threading
 import requests as http_requests
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 from datetime import datetime, timezone
+from pathlib import Path
+import sys
 from sqlalchemy import create_engine, text
 
 app = Flask(__name__)
@@ -29,8 +32,34 @@ CORS(app)
 # DATABASE_URL isn't set, and the existing in-memory caches take over
 # exactly as before.
 
-DATABASE_URL = os.environ.get("DATABASE_URL")
-_engine = create_engine(DATABASE_URL, pool_pre_ping=True) if DATABASE_URL else None
+def _load_database_url():
+    url = os.environ.get("DATABASE_URL", "").strip()
+    # Tests must not read the linked Neon project — they use in-memory caches only.
+    if not url and "pytest" not in sys.modules:
+        for candidate in (
+            Path(__file__).resolve().parent / ".env",
+            Path(__file__).resolve().parent.parent / ".env.local",
+            Path(__file__).resolve().parent.parent / ".env",
+        ):
+            if not candidate.is_file():
+                continue
+            for line in candidate.read_text(encoding="utf-8").splitlines():
+                if line.startswith("DATABASE_URL="):
+                    url = line.split("=", 1)[1].strip().strip('"').strip("'")
+                    break
+            if url:
+                break
+    if url.startswith("postgres://"):
+        url = "postgresql://" + url[len("postgres://"):]
+    return url or None
+
+
+DATABASE_URL = _load_database_url()
+_engine = create_engine(
+    DATABASE_URL,
+    pool_pre_ping=True,
+    connect_args={"connect_timeout": 5},
+) if DATABASE_URL else None
 
 SCHEMA_STATEMENTS = [
     """
@@ -91,6 +120,8 @@ SCHEMA_STATEMENTS = [
 
 
 def db_available():
+    if app.config.get("TESTING"):
+        return False
     return _engine is not None
 
 
@@ -303,56 +334,60 @@ def save_charities_to_db(records):
     if not db_available() or not records:
         return
     try:
+        rows = []
+        for r in records:
+            if not r.get("id"):
+                continue
+            rows.append({
+                "id": r.get("id"),
+                "name": r.get("name"),
+                "service_types": r.get("serviceTypes") or [],
+                "address": r.get("address"),
+                "suburb": r.get("suburb"),
+                "postcode": r.get("postcode"),
+                "latitude": r.get("latitude"),
+                "longitude": r.get("longitude"),
+                "phone": r.get("phone"),
+                "website": r.get("website"),
+                "eligibility": r.get("eligibility"),
+                "partner_status": r.get("partnerStatus"),
+                "availability_status": r.get("availabilityStatus"),
+                "availability_updated_at": r.get("availabilityUpdatedAt"),
+                "availability_freshness": r.get("availabilityFreshness"),
+                "data_updated_at": r.get("dataUpdatedAt"),
+            })
+        if not rows:
+            return
         with _engine.begin() as conn:
-            for r in records:
-                if not r.get("id"):
-                    continue
-                conn.execute(
-                    text("""
-                        INSERT INTO charities
-                            (id, name, service_types, address, suburb, postcode, latitude, longitude,
-                             phone, website, eligibility, partner_status, availability_status,
-                             availability_updated_at, availability_freshness, data_updated_at)
-                        VALUES
-                            (:id, :name, :service_types, :address, :suburb, :postcode, :latitude, :longitude,
-                             :phone, :website, :eligibility, :partner_status, :availability_status,
-                             :availability_updated_at, :availability_freshness, :data_updated_at)
-                        ON CONFLICT (id) DO UPDATE SET
-                            name = EXCLUDED.name,
-                            service_types = EXCLUDED.service_types,
-                            address = EXCLUDED.address,
-                            suburb = EXCLUDED.suburb,
-                            postcode = EXCLUDED.postcode,
-                            latitude = EXCLUDED.latitude,
-                            longitude = EXCLUDED.longitude,
-                            phone = EXCLUDED.phone,
-                            website = EXCLUDED.website,
-                            eligibility = EXCLUDED.eligibility,
-                            partner_status = EXCLUDED.partner_status,
-                            availability_status = EXCLUDED.availability_status,
-                            availability_updated_at = EXCLUDED.availability_updated_at,
-                            availability_freshness = EXCLUDED.availability_freshness,
-                            data_updated_at = EXCLUDED.data_updated_at
-                    """),
-                    {
-                        "id": r.get("id"),
-                        "name": r.get("name"),
-                        "service_types": r.get("serviceTypes") or [],
-                        "address": r.get("address"),
-                        "suburb": r.get("suburb"),
-                        "postcode": r.get("postcode"),
-                        "latitude": r.get("latitude"),
-                        "longitude": r.get("longitude"),
-                        "phone": r.get("phone"),
-                        "website": r.get("website"),
-                        "eligibility": r.get("eligibility"),
-                        "partner_status": r.get("partnerStatus"),
-                        "availability_status": r.get("availabilityStatus"),
-                        "availability_updated_at": r.get("availabilityUpdatedAt"),
-                        "availability_freshness": r.get("availabilityFreshness"),
-                        "data_updated_at": r.get("dataUpdatedAt"),
-                    },
-                )
+            conn.execute(
+                text("""
+                    INSERT INTO charities
+                        (id, name, service_types, address, suburb, postcode, latitude, longitude,
+                         phone, website, eligibility, partner_status, availability_status,
+                         availability_updated_at, availability_freshness, data_updated_at)
+                    VALUES
+                        (:id, :name, :service_types, :address, :suburb, :postcode, :latitude, :longitude,
+                         :phone, :website, :eligibility, :partner_status, :availability_status,
+                         :availability_updated_at, :availability_freshness, :data_updated_at)
+                    ON CONFLICT (id) DO UPDATE SET
+                        name = EXCLUDED.name,
+                        service_types = EXCLUDED.service_types,
+                        address = EXCLUDED.address,
+                        suburb = EXCLUDED.suburb,
+                        postcode = EXCLUDED.postcode,
+                        latitude = EXCLUDED.latitude,
+                        longitude = EXCLUDED.longitude,
+                        phone = EXCLUDED.phone,
+                        website = EXCLUDED.website,
+                        eligibility = EXCLUDED.eligibility,
+                        partner_status = EXCLUDED.partner_status,
+                        availability_status = EXCLUDED.availability_status,
+                        availability_updated_at = EXCLUDED.availability_updated_at,
+                        availability_freshness = EXCLUDED.availability_freshness,
+                        data_updated_at = EXCLUDED.data_updated_at
+                """),
+                rows,
+            )
     except Exception as e:
         app.logger.error(f"Postgres write failed for charities: {e}")
 
@@ -374,19 +409,14 @@ CACHE_TTL_SECONDS = 300  # 5 minutes
 # Postcode-to-coordinates cache lasts for the lifetime of this server process.
 _postcode_cache = {}
 
-# Separate cache for charities — kept apart from the wifi cache above so a
-# refresh of one never wipes/blocks the other. Charity data changes far less
-# often than wifi status, hence the longer TTL.
-_charity_cache = {
-    "data": None,
-    "timestamp": None,
-    "removed_ids": [],
-    "freshness_status": None,
-}
+# Separate per-postcode cache for charities — kept apart from the wifi cache
+# so a refresh of one never wipes/blocks the other.
+_charity_cache = {}
 CHARITY_CACHE_TTL_SECONDS = 3600  # 1 hour
 # Geocoded charity street addresses, cached for the lifetime of this process
 # (same idea as _postcode_cache) so we don't re-hit Nominatim every refresh.
 _address_cache = {}
+_reverse_geocode_cache = {}
 
 #  Config
 
@@ -478,6 +508,26 @@ def is_valid_vic_postcode(postcode):
     return bool(VIC_POSTCODE_PATTERN.match(postcode))
 
 
+def _zippopotam_vic_centroid(postcode):
+    """Fallback postcode centroid from Zippopotam, averaging Victorian places only."""
+    resp = http_requests.get(
+        f"https://api.zippopotam.us/AU/{postcode}",
+        headers={"User-Agent": "CrisisSupportApp/1.0 (student-project)"},
+        timeout=5,
+    )
+    resp.raise_for_status()
+    payload = resp.json()
+    places = [
+        place for place in payload.get("places") or []
+        if str(place.get("state abbreviation") or "").upper() == "VIC"
+    ]
+    if not places:
+        return None, None
+    latitude = sum(float(place["latitude"]) for place in places) / len(places)
+    longitude = sum(float(place["longitude"]) for place in places) / len(places)
+    return latitude, longitude
+
+
 def postcode_to_coords(postcode):
     """Convert an Australian postcode to (lat, lng) using Nominatim, with a local cache."""
     if postcode in _postcode_cache:
@@ -503,7 +553,85 @@ def postcode_to_coords(postcode):
             return coords
     except Exception:
         pass
+
+    try:
+        coords = _zippopotam_vic_centroid(postcode)
+        if coords[0] is not None and coords[1] is not None:
+            _postcode_cache[postcode] = coords
+            return coords
+    except Exception:
+        pass
     return None, None
+
+
+LGA_NAME_MARKERS = ("city of", "council", "shire of", "rural city")
+
+
+def _locality_names_from_address(address):
+    """Suburb/town names from a geocoder address, skipping local-government titles."""
+    if not isinstance(address, dict):
+        return []
+    names = []
+    for key in ("suburb", "town", "village", "hamlet", "city", "municipality"):
+        value = str(address.get(key) or "").strip()
+        if not value:
+            continue
+        lowered = value.lower()
+        if any(marker in lowered for marker in LGA_NAME_MARKERS):
+            continue
+        if value not in names:
+            names.append(value)
+    return names
+
+
+def reverse_geocode_locality(latitude, longitude):
+    """Turn coordinates into suburb/postcode/place names for charity search."""
+    cache_key = (round(float(latitude), 4), round(float(longitude), 4))
+    if cache_key in _reverse_geocode_cache:
+        return _reverse_geocode_cache[cache_key]
+
+    empty = {"suburb": None, "postcode": None, "place_names": []}
+    try:
+        resp = http_requests.get(
+            "https://nominatim.openstreetmap.org/reverse",
+            params={
+                "lat": latitude,
+                "lon": longitude,
+                "format": "json",
+                "addressdetails": 1,
+                "zoom": 16,
+            },
+            headers={"User-Agent": "CrisisSupportApp/1.0 (student-project)"},
+            timeout=5,
+        )
+        resp.raise_for_status()
+        address = (resp.json() or {}).get("address") or {}
+        place_names = _locality_names_from_address(address)
+        result = {
+            "suburb": place_names[0] if place_names else None,
+            "postcode": str(address.get("postcode") or "").strip() or None,
+            "place_names": place_names,
+        }
+        _reverse_geocode_cache[cache_key] = result
+        return result
+    except Exception:
+        _reverse_geocode_cache[cache_key] = empty
+        return empty
+
+
+def attach_charity_coordinates(records):
+    """Fill missing charity coordinates from the postcode centroid — fast enough for a live request."""
+    for record in records:
+        if record.get("latitude") is not None and record.get("longitude") is not None:
+            continue
+        postcode = str(record.get("postcode") or "").strip()
+        if not postcode:
+            continue
+        latitude, longitude = postcode_to_coords(postcode)
+        if latitude is not None and longitude is not None:
+            record["latitude"] = latitude
+            record["longitude"] = longitude
+    return records
 
 
 def geocode_address(address):
@@ -584,6 +712,54 @@ def fetch_wifi_csv():
     return list(reader), last_modified
 
 
+_INSTALLER_TOKEN = re.compile(r"([A-Z]?[a-z]+|[A-Z]+(?![a-z])|\d+)")
+
+
+def humanize_vicfreewifi_name(raw):
+    """Turn VicFreeWiFi installer codes into a short public name."""
+    text = (raw or "").strip()
+    if not text:
+        return text
+
+    parts = [part for part in text.split("-") if part != ""]
+    if len(parts) >= 3 and re.fullmatch(r"[A-Za-z]+", parts[0] or "") and re.fullmatch(r"\d+", parts[1] or ""):
+        rest = "-".join(parts[2:]).strip()
+    else:
+        rest = text
+
+    if re.search(r"\s", rest) and not rest.lower().startswith("cnr"):
+        return rest.strip()
+
+    compact = rest.replace(" ", "")
+    is_mesh = compact.upper().startswith("MESH")
+    is_cnr = compact.startswith("Cnr")
+    token = compact[4:] if is_mesh else compact[3:] if is_cnr else compact
+    token = token.replace("_RAP", "").replace("_", " ")
+
+    words = []
+    for piece in token.split():
+        words.extend(_INSTALLER_TOKEN.findall(piece) or [piece])
+
+    expanded = []
+    for word in words:
+        if word in {"St", "ST"}:
+            expanded.append("Street")
+        elif word == "S" and expanded:
+            expanded.append("Street")
+        else:
+            expanded.append(word)
+
+    if is_mesh:
+        return f"{' '.join(expanded)} outdoor hotspot".strip()
+    if is_cnr and expanded:
+        if len(expanded) >= 3 and expanded[1] == "Street":
+            return f"Corner of {expanded[0]} Street and {' '.join(expanded[2:])}"
+        if len(expanded) >= 2:
+            return f"Corner of {expanded[0]} and {' '.join(expanded[1:])}"
+        return f"Corner of {expanded[0]}"
+    return " ".join(expanded) if expanded else rest.strip()
+
+
 def get_location_info(name):
     """Determine suburb and postcode from the hotspot name prefix."""
     for prefix, info in LOCATION_MAP.items():
@@ -600,9 +776,9 @@ def csv_to_wifi_locations(rows, last_modified):
     for row in active:
         name = row.get("Long Name", row.get("Name", ""))
         short_name = row.get("Name", "")
-        parts = name.split("-", 2)
-        display_name = parts[2].strip() if len(parts) >= 3 else name
+        display_name = humanize_vicfreewifi_name(name)
         location = get_location_info(short_name)
+        looks_like_street = bool(re.search(r"\d", display_name) and " " in display_name)
 
         lat = float(row["Latitude"]) if row.get("Latitude") else None
         lng = float(row["Longitude"]) if row.get("Longitude") else None
@@ -610,14 +786,14 @@ def csv_to_wifi_locations(rows, last_modified):
         results.append({
             "id": f"vicfreewifi-{short_name}" if short_name else None,
             "name": display_name or None,
-            "address": name or None,
+            "address": display_name if looks_like_street else None,
             "suburb": location["suburb"],
             "postcode": location["postcode"],
             "latitude": lat,
             "longitude": lng,
             "distanceKm": None,
             "openingHours": None,
-            "accessConditions": [],
+            "accessConditions": ["VicFreeWiFi access point"],
             "verificationStatus": "confirmed",
             "dataUpdatedAt": last_modified or datetime.now(timezone.utc).isoformat(),
         })
@@ -756,8 +932,38 @@ def fetch_charities_for_acnc(query, limit=100):
 
 def charity_town_matches(charity, target_town):
     """True if a charity's Town_City field matches the given town, case-insensitively."""
-    town = (charity.get("Town_City") or "").strip().upper()
-    return bool(town) and town == target_town.strip().upper()
+    town = (charity.get("Town_City") or "").strip()
+    target = (target_town or "").strip()
+    if not town or not target:
+        return False
+    town_u = town.upper()
+    target_u = target.upper()
+    if town_u == target_u:
+        return True
+    return target_u in town_u.split() or town_u.endswith(" " + target_u)
+
+
+def is_victorian_charity(charity):
+    state = str(charity.get("State") or "").strip().upper()
+    postcode = str(charity.get("Postcode") or "").strip()
+    return state in {"VIC", "VICTORIA"} or is_valid_vic_postcode(postcode)
+
+
+SUPPORT_FLAG_NEEDLES = (
+    "homeless", "poverty", "disadvantage", "emergency", "relief",
+    "family_violence", "domestic", "financial", "food", "housing",
+)
+
+
+def is_relevant_support_charity(charity):
+    """Keep organisations that actually look like support services, not every ACNC record in town."""
+    if infer_service_types(charity) != ["Community support services"]:
+        return True
+    for key, value in charity.items():
+        key_l = str(key).lower()
+        if str(value).strip().upper() in {"Y", "YES"} and any(needle in key_l for needle in SUPPORT_FLAG_NEEDLES):
+            return True
+    return False
 
 
 def is_relevant(charity):
@@ -841,36 +1047,28 @@ def geocode_charities(records):
     return records
 
 
-def fetch_charities_for_region():
-    """Query ACNC once per target town and dedupe the combined results by ABN (or name+town)."""
+def fetch_charities_for_region(postcode, place_names=None):
+    """Query ACNC for one search postcode and keep Victorian records in that area."""
+    wanted_postcode = str(postcode).strip()
+    records = fetch_charities_for_acnc(wanted_postcode)
+
     seen = set()
     combined = []
-    any_success = False
-
-    for town in TARGET_TOWNS:
-        try:
-            records = fetch_charities_for_acnc(town)
-            any_success = True
-        except Exception as e:
-            # Previously silent — log which town failed and why, so a total
-            # failure across every town is actually diagnosable.
-            app.logger.error(f"ACNC query failed for town '{town}': {e}")
-            continue  # one town failing shouldn't sink the whole region
-
-        for charity in records:
-            if not is_relevant(charity):
-                continue
-            abn = charity.get("ABN")
-            name_key = (charity.get("Charity_Legal_Name") or "").strip().lower()
-            town_key = (charity.get("Town_City") or "").strip().lower()
-            key = abn or f"{name_key}|{town_key}"
-            if not key or key in seen:
-                continue
-            seen.add(key)
-            combined.append(charity)
-
-    if not any_success:
-        raise RuntimeError("ACNC datastore_search failed for every target town")
+    for charity in records:
+        if not is_victorian_charity(charity):
+            continue
+        charity_postcode = str(charity.get("Postcode") or "").strip()
+        town_ok = any(charity_town_matches(charity, name) for name in (place_names or []))
+        if charity_postcode != wanted_postcode and not town_ok:
+            continue
+        abn = charity.get("ABN")
+        name_key = (charity.get("Charity_Legal_Name") or "").strip().lower()
+        town_key = (charity.get("Town_City") or "").strip().lower()
+        key = abn or f"{name_key}|{town_key}"
+        if not key or key in seen:
+            continue
+        seen.add(key)
+        combined.append(charity)
 
     return combined
 
@@ -1110,6 +1308,19 @@ def get_wifi():
         return jsonify({"error": "An unexpected error occurred. Please try again later."}), 500
 
 
+def _charity_cache_entry(postcode):
+    return _charity_cache.get(str(postcode).strip())
+
+
+def _store_charity_cache(postcode, records, timestamp, freshness_status, removed_ids):
+    _charity_cache[str(postcode).strip()] = {
+        "data": records,
+        "timestamp": timestamp,
+        "freshness_status": freshness_status,
+        "removed_ids": removed_ids,
+    }
+
+
 @app.route("/api/charities")
 @limiter.limit("20 per minute")
 def get_charities():
@@ -1122,98 +1333,98 @@ def get_charities():
     if not is_valid_vic_postcode(postcode):
         return jsonify({"error": f"Invalid Victorian postcode: {postcode}"}), 400
 
-    log_postcode_request(postcode, "charities")
+    threading.Thread(
+        target=log_postcode_request,
+        args=(postcode, "charities"),
+        daemon=True,
+    ).start()
 
     user_lat, user_lng = postcode_to_coords(postcode)
 
     if user_lat is None or user_lng is None:
         return jsonify({"error": f"Could not locate postcode: {postcode}"}), 400
 
+    locality = reverse_geocode_locality(user_lat, user_lng)
+    place_names = locality.get("place_names") or []
+
     try:
         now = time.time()
+        cached = _charity_cache_entry(postcode)
         cache_fresh = (
-            _charity_cache["data"] is not None
-            and _charity_cache["timestamp"] is not None
-            and (now - _charity_cache["timestamp"]) < CHARITY_CACHE_TTL_SECONDS
+            cached is not None
+            and cached.get("timestamp") is not None
+            and (now - cached["timestamp"]) < CHARITY_CACHE_TTL_SECONDS
         )
 
+        fetch_error = None
         if cache_fresh:
-            all_records = _charity_cache["data"]
-            fetch_error = None
-            freshness_status = _charity_cache["freshness_status"] or "current"
+            all_records = cached["data"]
+            freshness_status = cached.get("freshness_status") or "current"
+            removed_ids = cached.get("removed_ids") or []
         else:
-            # In-memory cache is empty or stale — check Mongo before paying
-            # for a fresh round of ACNC queries across every target town.
-            db_meta = load_cache_meta("charities")
+            db_meta = load_cache_meta(f"postcode:{postcode}")
             db_fresh = (
                 db_meta is not None
                 and (now - db_meta.get("timestamp", 0)) < CHARITY_CACHE_TTL_SECONDS
             )
 
             if db_fresh:
-                all_records = load_charities_from_db()
-                fetch_error = None
+                all_records = load_charities_from_db_by_postcode(postcode)
                 freshness_status = db_meta.get("freshnessStatus") or "current"
-                _charity_cache["data"] = all_records
-                _charity_cache["timestamp"] = db_meta["timestamp"]
-                _charity_cache["freshness_status"] = freshness_status
-                _charity_cache["removed_ids"] = db_meta.get("removedIds", [])
+                removed_ids = db_meta.get("removedIds") or []
+                _store_charity_cache(postcode, all_records, db_meta["timestamp"], freshness_status, removed_ids)
             else:
-                previous_ids = {r["id"] for r in _charity_cache["data"]} if _charity_cache["data"] else set()
-
-                fetch_error = None
+                previous_ids = {r["id"] for r in cached["data"]} if cached and cached.get("data") else set()
                 all_records = []
                 try:
                     last_updated = fetch_acnc_last_updated()
-                    raw_charities = fetch_charities_for_region()
+                    raw_charities = fetch_charities_for_region(postcode, place_names)
+                    raw_charities = [
+                        charity for charity in raw_charities
+                        if is_victorian_charity(charity) and is_relevant_support_charity(charity)
+                    ]
                     all_records = [charity_to_support_service(c, last_updated) for c in raw_charities]
-                    all_records = geocode_charities(all_records)
+                    attach_charity_coordinates(all_records)
                 except Exception as e:
                     fetch_error = str(e)
-                    # Previously silent — this is the actual reason ACNC fetching
-                    # failed. Print it so it shows up in this terminal.
                     app.logger.error(f"Charity fetch failed: {fetch_error}")
 
                 all_records = [r for r in all_records if r.get("id") and r.get("name")]
                 freshness_status = "current" if not fetch_error else "stale"
+                removed_ids = []
 
                 if all_records:
                     if not fetch_error and previous_ids:
                         new_ids = {r["id"] for r in all_records}
-                        _charity_cache["removed_ids"] = sorted(previous_ids - new_ids)
-                    else:
-                        _charity_cache["removed_ids"] = []
+                        removed_ids = sorted(previous_ids - new_ids)
+                    _store_charity_cache(postcode, all_records, now, freshness_status, removed_ids)
+                    persist_postcode = postcode
+                    persist_records = list(all_records)
+                    persist_now = now
+                    persist_freshness = freshness_status
+                    persist_removed = list(removed_ids)
 
-                    _charity_cache["data"] = all_records
-                    _charity_cache["timestamp"] = now
-                    _charity_cache["freshness_status"] = freshness_status
-                    save_charities_to_db(all_records)
-                    save_cache_meta("charities", now, freshness_status, _charity_cache["removed_ids"])
+                    def _persist():
+                        save_charities_to_db(persist_records)
+                        save_cache_meta(
+                            f"postcode:{persist_postcode}",
+                            persist_now,
+                            persist_freshness,
+                            persist_removed,
+                        )
+
+                    threading.Thread(target=_persist, daemon=True).start()
                 elif fetch_error:
                     return jsonify({
                         "error": "The charity data source is currently unavailable. Please try again later."
                     }), 503
 
-        # Extend coverage beyond the fixed TARGET_TOWNS list to wherever this
-        # postcode actually is, so a postcode outside the core region still
-        # gets genuinely local results instead of only a distant fallback.
-        extra_records = fetch_charities_for_extra_postcode(postcode)
-        app.logger.info(f"Extra-postcode lookup for {postcode!r} found {len(extra_records)} charities")
-        existing_ids = {r["id"] for r in all_records}
-        all_records = all_records + [r for r in extra_records if r["id"] not in existing_ids]
-
-        # Calculate distance for records that have confirmed coordinates
         for record in all_records:
-            if record["latitude"] is not None and record["longitude"] is not None:
+            if record.get("latitude") is not None and record.get("longitude") is not None:
                 dist = haversine_km(user_lat, user_lng, record["latitude"], record["longitude"])
                 record["distanceKm"] = round(dist, 1)
 
         all_with_distance = [r for r in all_records if r.get("distanceKm") is not None]
-        # Records without a confirmed distance yet (e.g. still waiting on a
-        # geocode lookup) must NOT be dropped — a real matching charity
-        # should never silently disappear just because we don't yet know
-        # exactly how far away it is. It's shown without a distance instead
-        # (the frontend already renders this as "Distance not confirmed").
         all_without_distance = [r for r in all_records if r.get("distanceKm") is None]
         all_with_distance.sort(key=lambda r: r["distanceKm"])
 
@@ -1223,13 +1434,9 @@ def get_charities():
         if within_radius:
             result_records = within_radius + all_without_distance
         elif all_with_distance:
-            # Fallback: nothing within radius, show nearest results anyway
             result_records = all_with_distance[:FALLBACK_RESULT_COUNT] + all_without_distance
             used_fallback = True
         else:
-            # No charity has confirmed coordinates yet (e.g. still being
-            # geocoded across refreshes) — show what we found for the region
-            # rather than an empty list.
             result_records = all_records
             used_fallback = True
 
@@ -1237,7 +1444,7 @@ def get_charities():
             "Eligibility conditions are not published in this open dataset — contact the organisation directly",
             "Service type is inferred from keyword matches, not a confirmed category field",
             "Availability/stock status is not confirmed for any listing",
-            "Addresses are geocoded via OpenStreetMap Nominatim and may be incomplete shortly after a cache refresh",
+            "Distance uses the postcode area when a street location has not been confirmed",
         ]
         if used_fallback:
             limitations.append(
@@ -1247,17 +1454,24 @@ def get_charities():
         if fetch_error:
             limitations.append("ACNC charity data unavailable this refresh — showing the last successfully cached results")
 
+        coverage = ["Victoria"]
+        if locality.get("suburb"):
+            coverage.append(locality["suburb"])
+        if locality.get("postcode"):
+            coverage.append(str(locality["postcode"]))
+        for name in place_names:
+            if name not in coverage:
+                coverage.append(name)
+
         return jsonify({
             "records": result_records,
             "metadata": {
                 "version": "1.0",
                 "generatedAt": datetime.now(timezone.utc).isoformat(),
                 "sourceName": "ACNC Registered Charities Register",
-                "coverageAreas": TARGET_TOWNS + (
-                    [f"postcode {postcode}"] if extra_records else []
-                ),
+                "coverageAreas": coverage,
                 "limitations": limitations,
-                "removedRecordIds": _charity_cache["removed_ids"],
+                "removedRecordIds": removed_ids,
                 "freshnessStatus": freshness_status,
             },
         })
@@ -1267,7 +1481,61 @@ def get_charities():
         return jsonify({"error": "An unexpected error occurred. Please try again later."}), 500
 
 
+def _count_wifi_pipeline_entries():
+    if _cache.get("data"):
+        return len(_cache["data"])
+    if not db_available():
+        return 0
+    try:
+        with _engine.connect() as conn:
+            return conn.execute(text("SELECT COUNT(*) FROM wifi_locations")).scalar() or 0
+    except Exception as e:
+        app.logger.error(f"Postgres count failed for wifi_locations: {e}")
+        return 0
+
+
+def _count_charity_pipeline_entries():
+    if db_available():
+        try:
+            with _engine.connect() as conn:
+                counted = conn.execute(text("SELECT COUNT(*) FROM charities")).scalar() or 0
+                if counted:
+                    return counted
+        except Exception as e:
+            app.logger.error(f"Postgres count failed for charities: {e}")
+    return sum(len(entry.get("data") or []) for entry in _charity_cache.values())
+
+
+@app.route("/api/stats")
+def get_coverage_stats():
+    """Homepage coverage counts from the live wifi and charity pipelines."""
+    return jsonify({
+        "wifiLocations": _count_wifi_pipeline_entries(),
+        "supportServices": _count_charity_pipeline_entries(),
+        "coverage": "All of VIC",
+    })
+
+
+def frontend_dist_path():
+    return Path(__file__).resolve().parent.parent / "frontend" / "dist"
+
+
+@app.route("/", defaults={"path": ""})
+@app.route("/<path:path>")
+def spa(path):
+    dist = frontend_dist_path()
+    if not dist.is_dir():
+        return jsonify({"error": "Not found"}), 404
+    file_path = dist / path
+    if path and file_path.is_file():
+        return send_from_directory(dist, path)
+    index = dist / "index.html"
+    if index.is_file():
+        return send_from_directory(dist, "index.html")
+    return jsonify({"error": "Not found"}), 404
+
+
 #  Start server
 
 if __name__ == "__main__":
-    app.run(debug=True, port=5001)
+    app.run(debug=True, port=5001, threaded=True)

@@ -10,13 +10,14 @@ import { PageBackLink } from '../../../shared/components/PageBackLink'
 import { StatusBanner } from '../../../shared/components/StatusBanner'
 import { useOnlineStatus } from '../../../shared/hooks/useOnlineStatus'
 import { formatSavedDate } from '../../../shared/utils/formatDate'
-import { clearUsualWifiSpot, getHouseholdProfile, getUsualWifiSpot, saveUsualWifiSpot } from '../../../storage/onboardingDraftStorage'
+import { getSearchPostcode } from '../../../storage/searchLocationStorage'
+import { clearUsualWifiSpot, getUsualWifiSpot, saveUsualWifiSpot } from '../../../storage/onboardingDraftStorage'
 import { wifiAreaLabel, wifiMapsUrl } from '../utils/wifiMapsUrl'
 import { WifiVerificationBadge } from '../components/WifiVerificationBadge'
 
 export function WifiDetailPage() {
   const { id } = useParams()
-  const postcode = getHouseholdProfile()?.postcode ?? ''
+  const postcode = getSearchPostcode()
   const repository = useMemo(
     () => getWifiRepository(postcode),
     [postcode],

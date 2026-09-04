@@ -458,6 +458,33 @@ def test_spa_serves_built_assets(tmp_path, monkeypatch, client):
     assert b"console.log" in response.data
 
 
+def test_api_stats_is_not_captured_by_spa(client):
+    response = client.get("/api/stats")
+    assert response.status_code == 200
+    assert response.is_json
+
+
+def test_coverage_stats_count_in_memory_pipeline_entries(client):
+    previous_wifi = app_module._cache.get("data")
+    app_module._cache["data"] = [{"id": "wifi-1"}, {"id": "wifi-2"}, {"id": "wifi-3"}]
+    app_module._charity_cache["3000"] = {
+        "data": [{"id": "charity-1"}, {"id": "charity-2"}],
+        "timestamp": 1,
+        "freshness_status": "current",
+        "removed_ids": [],
+    }
+    try:
+        response = client.get("/api/stats")
+    finally:
+        app_module._cache["data"] = previous_wifi
+
+    assert response.status_code == 200
+    payload = response.json
+    assert payload["wifiLocations"] == 3
+    assert payload["supportServices"] == 2
+    assert payload["coverage"] == "All of VIC"
+
+
 def test_api_wifi_is_not_captured_by_spa(client):
     response = client.get("/api/wifi")
     assert response.status_code == 400
