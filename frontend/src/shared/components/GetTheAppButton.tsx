@@ -57,8 +57,13 @@ export function GetTheAppButton({ variant = 'header' }: GetTheAppButtonProps) {
             aria-labelledby={titleId}
             onClick={(event) => event.stopPropagation()}
           >
-            <button className="install-modal__close" type="button" onClick={() => setHelpMode(null)}>
-              Close
+            <button
+              className="install-modal__close"
+              type="button"
+              aria-label="Close"
+              onClick={() => setHelpMode(null)}
+            >
+              <X aria-hidden="true" size={18} weight="bold" />
             </button>
             <h2 id={titleId}>Add ShieldAhead to your home screen</h2>
             {helpMode === 'ios' ? (

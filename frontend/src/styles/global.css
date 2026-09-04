@@ -1177,13 +1177,15 @@ input[type='checkbox'] {
   position: absolute;
   top: 0.65rem;
   right: 0.65rem;
+  display: inline-flex;
   min-height: 2.5rem;
-  padding: 0.35rem 0.6rem;
+  min-width: 2.5rem;
+  align-items: center;
+  justify-content: center;
+  padding: 0.35rem;
   border: 0;
   background: transparent;
   color: var(--color-ink);
-  font-size: 0.875rem;
-  font-weight: 700;
 }
 
 .offline-status-card {
