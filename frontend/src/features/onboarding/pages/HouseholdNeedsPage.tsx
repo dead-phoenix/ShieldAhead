@@ -72,7 +72,7 @@ export function HouseholdNeedsPage() {
         </div>
         <div className="field">
           <label htmlFor="postcode">Postcode <strong>Required</strong></label>
-          <input aria-describedby={postcodeError ? 'postcode-error' : 'postcode-help'} aria-invalid={Boolean(postcodeError)} id="postcode" name="postcode" inputMode="numeric" autoComplete="postal-code" maxLength={4} defaultValue={currentProfile.postcode ?? '3453'} required />
+          <input aria-describedby={postcodeError ? 'postcode-error' : 'postcode-help'} aria-invalid={Boolean(postcodeError)} id="postcode" name="postcode" inputMode="numeric" autoComplete="postal-code" maxLength={4} defaultValue={currentProfile.postcode ?? ''} required />
           {postcodeError ? <p className="field-error" id="postcode-error" role="alert">{postcodeError}</p> : <p className="field-help" id="postcode-help">Used to organise nearby public information. Exact location is not needed.</p>}
         </div>
         {storageError ? <p className="field-error" role="alert">{storageError}</p> : null}

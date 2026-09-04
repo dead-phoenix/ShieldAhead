@@ -1,11 +1,21 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import { storageKeys } from '../../../app/config/product'
+import { getMockWifiRepository } from '../../../data/mock/mockRepositories'
 import { WifiDetailPage } from './WifiDetailPage'
 import { WifiListPage } from './WifiListPage'
 
-function renderList(path: string) {
+const repositoryMocks = vi.hoisted(() => ({
+  getWifiRepository: vi.fn(),
+}))
+
+vi.mock('../../../data/wifiRepository', () => ({
+  getWifiRepository: repositoryMocks.getWifiRepository,
+}))
+
+function renderList(path: string, fixture: Parameters<typeof getMockWifiRepository>[0]) {
+  repositoryMocks.getWifiRepository.mockReturnValue(getMockWifiRepository(fixture))
   return render(
     <MemoryRouter initialEntries={[path]}>
       <WifiListPage />
@@ -13,7 +23,8 @@ function renderList(path: string) {
   )
 }
 
-function renderDetail(path: string) {
+function renderDetail(path: string, fixture: Parameters<typeof getMockWifiRepository>[0]) {
+  repositoryMocks.getWifiRepository.mockReturnValue(getMockWifiRepository(fixture))
   return render(
     <MemoryRouter initialEntries={[path]}>
       <Routes>
@@ -25,7 +36,7 @@ function renderDetail(path: string) {
 
 describe('Epic 2 Wi-Fi states', () => {
   it('explains unverified coverage and points to a library fallback', async () => {
-    renderList('/wifi?fixture=no-coverage')
+    renderList('/wifi', 'no-coverage')
 
     expect(await screen.findByRole('heading', { name: 'No verified Wi-Fi coverage for this area' })).toBeVisible()
     expect(screen.getByText(/local library is a general place/i)).toBeVisible()
@@ -33,7 +44,7 @@ describe('Epic 2 Wi-Fi states', () => {
   })
 
   it('shows an actionable stale-data warning', async () => {
-    renderList('/wifi?fixture=stale')
+    renderList('/wifi', 'stale')
 
     expect(await screen.findByText('This saved Wi-Fi information may be out of date')).toBeVisible()
     expect(screen.getByRole('link', { name: 'update saved information' })).toHaveAttribute(
@@ -43,7 +54,7 @@ describe('Epic 2 Wi-Fi states', () => {
   })
 
   it('uses plain fallbacks instead of rendering missing fields', async () => {
-    renderList('/wifi?fixture=missing-fields')
+    renderList('/wifi', 'missing-fields')
 
     expect(await screen.findByText(/Distance not confirmed/)).toBeVisible()
     expect(screen.getByText('Opening hours not confirmed')).toBeVisible()
@@ -51,7 +62,7 @@ describe('Epic 2 Wi-Fi states', () => {
   })
 
   it('explains every missing field on the Wi-Fi detail page', async () => {
-    renderDetail('/wifi/example-limited-record?fixture=missing-fields')
+    renderDetail('/wifi/example-limited-record', 'missing-fields')
 
     expect(await screen.findByText('Distance from your postcode is not confirmed')).toBeVisible()
     expect(screen.getByText(/Street address not confirmed/)).toBeVisible()
@@ -61,7 +72,7 @@ describe('Epic 2 Wi-Fi states', () => {
 
   it('clears a usual spot that was removed during refresh', async () => {
     window.localStorage.setItem(storageKeys.usualWifiSpot, 'example-harcourt')
-    renderList('/wifi?fixture=removed-usual')
+    renderList('/wifi', 'removed-usual')
 
     expect(await screen.findByText('Your usual spot is no longer listed')).toBeVisible()
     await waitFor(() => {
@@ -71,7 +82,7 @@ describe('Epic 2 Wi-Fi states', () => {
 
   it('lets the user remove a usual spot from its details', async () => {
     window.localStorage.setItem(storageKeys.usualWifiSpot, 'example-castlemaine')
-    renderDetail('/wifi/example-castlemaine?fixture=default')
+    renderDetail('/wifi/example-castlemaine', 'default')
 
     const removeButton = await screen.findByRole('button', {
       name: 'Remove as usual spot',

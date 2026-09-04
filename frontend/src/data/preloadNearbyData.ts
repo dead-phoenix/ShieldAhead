@@ -13,8 +13,8 @@ import { getWifiRepository } from './wifiRepository'
  * when opened, exactly as it did before this existed.
  */
 export function preloadNearbyData(postcode: string): void {
-  const wifiRepository = getWifiRepository(null, postcode)
-  const supportRepository = getSupportServiceRepository(null, postcode)
+  const wifiRepository = getWifiRepository(postcode)
+  const supportRepository = getSupportServiceRepository(postcode)
 
   wifiRepository.list().catch(() => {})
   supportRepository.list().catch(() => {})

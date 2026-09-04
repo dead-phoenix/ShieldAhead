@@ -10,7 +10,7 @@ export function HomePage() {
   const isOnline = useOnlineStatus()
   const profile = getHouseholdProfile()
   const offline = getOfflinePreferences()
-  const postcode = profile?.postcode ?? '3453'
+  const postcode = profile?.postcode ?? ''
   const { summaries, isLoading } = useOfflineDatasetSummaries(postcode)
   const selectedSections = [offline.wifiSaved && 'Wi-Fi', offline.supportSaved && 'Support'].filter(Boolean)
   const savedSections = [offline.wifiSaved && summaries.wifi && 'Wi-Fi', offline.supportSaved && summaries.support && 'Support'].filter(Boolean)
@@ -66,7 +66,7 @@ export function HomePage() {
 
       <section className="saved-profile" aria-labelledby="saved-profile-title">
         <div className="section-heading"><div><h2 id="saved-profile-title">Saved on this device</h2><p>Private profile information is never shown as public data.</p></div><Link to={appRoutes.settings}>Manage</Link></div>
-        <div className="profile-summary-row"><MapPin aria-hidden="true" size={24} weight="duotone" /><span><small>Primary area</small><strong>{postcode === '3453' ? 'Harcourt 3453' : `Postcode ${postcode}`}</strong></span><Link aria-label="Edit profile" to={profile ? appRoutes.settings : appRoutes.setup}><PencilSimple aria-hidden="true" size={20} /></Link></div>
+        <div className="profile-summary-row"><MapPin aria-hidden="true" size={24} weight="duotone" /><span><small>Primary area</small><strong>Postcode {postcode}</strong></span><Link aria-label="Edit profile" to={profile ? appRoutes.settings : appRoutes.setup}><PencilSimple aria-hidden="true" size={20} /></Link></div>
       </section>
     </div>
   )

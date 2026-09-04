@@ -10,13 +10,12 @@ import {
   XCircle,
 } from '@phosphor-icons/react'
 import { useMemo, useState } from 'react'
-import { Link, useSearchParams } from 'react-router-dom'
+import { Link } from 'react-router-dom'
 import { appRoutes } from '../../../app/config/product'
 import { getSupportServiceRepository } from '../../../data/supportServiceRepository'
 import { useRepositoryData } from '../../../data/useRepositoryData'
 import { EmptyState } from '../../../shared/components/EmptyState'
 import { LoadingState } from '../../../shared/components/LoadingState'
-import { PrototypeBadge } from '../../../shared/components/PrototypeBadge'
 import { StatusBanner } from '../../../shared/components/StatusBanner'
 import { useOnlineStatus } from '../../../shared/hooks/useOnlineStatus'
 import { formatSavedDate } from '../../../shared/utils/formatDate'
@@ -38,24 +37,10 @@ function AvailabilityIcon({ tone }: { tone: AvailabilityTone }) {
 }
 
 export function SupportServicesPage() {
-  const [searchParams] = useSearchParams()
-  const fixture = searchParams.get('fixture')
-  const isFixture = Boolean(fixture)
-  const postcode = getHouseholdProfile()?.postcode ?? '3453'
-  // Was: getMockSupportServiceRepository(fixture) — always mock, regardless
-  // of VITE_DATA_SOURCE. This is the mode-aware version, same as wifi: it
-  // uses mock automatically if ?fixture= is set or VITE_DATA_SOURCE isn't
-  // "api", and calls the real backend otherwise.
-  //
-  // useMemo matters here, not just style: without it, a new repository (and
-  // therefore a new repository.list function) is created on every render.
-  // useRepositoryData re-fetches whenever that function reference changes,
-  // and fetching triggers a re-render — creating an infinite fetch loop.
-  // Mock data resolved fast enough that this was never visible; a real
-  // network call exposed it as a burst of dozens of requests per second.
+  const postcode = getHouseholdProfile()?.postcode ?? ''
   const repository = useMemo(
-    () => getSupportServiceRepository(fixture, postcode),
-    [fixture, postcode],
+    () => getSupportServiceRepository(postcode),
+    [postcode],
   )
   const { data, isLoading, error, retry } = useRepositoryData(repository.list)
   const [filter, setFilter] = useState<(typeof filters)[number]>('All services')
@@ -76,12 +61,10 @@ export function SupportServicesPage() {
       ),
     )
   }, [allServices, filter])
-  const fixtureQuery = fixture ? `?fixture=${encodeURIComponent(fixture)}` : ''
-
   return (
     <section className="content-page" aria-labelledby="support-title">
-      <div className="connectivity-strip"><CloudSlash aria-hidden="true" size={21} /><span><strong>{isOnline ? (data?.metadata.cachedAt ? 'Saved for offline use' : offline.supportSaved ? 'Preparing offline copy' : 'Online — not saved for offline use') : isSavedCopy ? 'You are offline — showing saved copy' : 'You are offline'}</strong><small>{canReadRecords ? `Showing ${isSavedCopy ? 'saved' : isFixture ? 'test fixture' : 'current'} information near ${postcode}. ${data?.metadata.cachedAt ? `Saved on this device: ${formatSavedDate(data.metadata.cachedAt)}.` : ''}` : noOfflineCopy ? 'No Support information is saved for this postcode.' : 'Loading Support information…'}</small></span></div>
-      <div className="page-heading"><div><h1 id="support-title">Nearby support services</h1><p>Find assistance closest to you.</p></div>{isFixture ? <PrototypeBadge /> : null}</div>
+      <div className="connectivity-strip"><CloudSlash aria-hidden="true" size={21} /><span><strong>{isOnline ? (data?.metadata.cachedAt ? 'Saved for offline use' : offline.supportSaved ? 'Preparing offline copy' : 'Online — not saved for offline use') : isSavedCopy ? 'You are offline — showing saved copy' : 'You are offline'}</strong><small>{canReadRecords ? `Showing ${isSavedCopy ? 'saved' : 'current'} information near ${postcode}. ${data?.metadata.cachedAt ? `Saved on this device: ${formatSavedDate(data.metadata.cachedAt)}.` : ''}` : noOfflineCopy ? 'No Support information is saved for this postcode.' : 'Loading Support information…'}</small></span></div>
+      <div className="page-heading"><div><h1 id="support-title">Nearby support services</h1><p>Find assistance closest to you.</p></div></div>
       {data && allServices.length > 0 ? <div className="filter-row" aria-label="Filter support services">
         {filters.map((item) => <button aria-pressed={filter === item} className={filter === item ? 'filter-chip is-active' : 'filter-chip'} key={item} type="button" onClick={() => setFilter(item)}>{item}</button>)}
       </div> : null}
@@ -104,7 +87,7 @@ export function SupportServicesPage() {
                   <AvailabilityIcon tone={availability.tone} />
                   <span><strong>{availability.title}</strong><small>{availability.detail}</small></span>
                 </div>
-                <Link className="service-card__link" to={`${appRoutes.supportDetail(service.id)}${fixtureQuery}`}>View service details <ArrowRight aria-hidden="true" size={19} weight="bold" /></Link>
+                <Link className="service-card__link" to={appRoutes.supportDetail(service.id)}>View service details <ArrowRight aria-hidden="true" size={19} weight="bold" /></Link>
               </article>
             )
           })}

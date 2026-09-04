@@ -102,7 +102,7 @@ export function createApiWifiRepository({
     async list() {
       const normalizedBaseUrl = baseUrl.trim().replace(/\/$/, '')
       if (!normalizedBaseUrl) {
-        throw new Error('VITE_API_BASE_URL is required when VITE_DATA_SOURCE=api.')
+        throw new Error('VITE_API_BASE_URL is required to load Wi-Fi information.')
       }
 
       const url = new URL(`${normalizedBaseUrl}/api/wifi`)

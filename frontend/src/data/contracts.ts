@@ -67,7 +67,7 @@ export interface DatasetMetadata {
   freshnessStatus?: 'current' | 'stale'
   removedRecordIds?: string[]
   /** Added locally by the offline repository; never required from the API. */
-  dataOrigin?: 'network' | 'cache' | 'mock'
+  dataOrigin?: 'network' | 'cache'
   cachedAt?: string
   refreshError?: string
 }

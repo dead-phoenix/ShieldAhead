@@ -39,7 +39,6 @@ describe('offline-aware repository', () => {
     const online = createOfflineAwareRepository<WifiLocation>({
       kind: 'wifi',
       postcode: '3453',
-      source: 'api',
       onlineRepository,
       shouldSave: () => true,
       isOnline: () => true,
@@ -49,7 +48,6 @@ describe('offline-aware repository', () => {
     const offline = createOfflineAwareRepository<WifiLocation>({
       kind: 'wifi',
       postcode: '3453',
-      source: 'api',
       onlineRepository,
       shouldSave: () => true,
       isOnline: () => false,
@@ -67,7 +65,6 @@ describe('offline-aware repository', () => {
     await createOfflineAwareRepository<WifiLocation>({
       kind: 'wifi',
       postcode: '3453',
-      source: 'api',
       onlineRepository: successfulRepository,
       shouldSave: () => true,
       isOnline: () => true,
@@ -77,7 +74,6 @@ describe('offline-aware repository', () => {
     const result = await createOfflineAwareRepository<WifiLocation>({
       kind: 'wifi',
       postcode: '3453',
-      source: 'api',
       onlineRepository: failingRepository,
       shouldSave: () => true,
       isOnline: () => true,
@@ -93,7 +89,6 @@ describe('offline-aware repository', () => {
     await createOfflineAwareRepository<WifiLocation>({
       kind: 'wifi',
       postcode: '3453',
-      source: 'api',
       onlineRepository,
       shouldSave: () => true,
       isOnline: () => true,
@@ -102,7 +97,6 @@ describe('offline-aware repository', () => {
     const repository = createOfflineAwareRepository<WifiLocation>({
       kind: 'wifi',
       postcode: '3453',
-      source: 'api',
       onlineRepository,
       shouldSave: () => false,
       isOnline: () => false,
@@ -115,7 +109,6 @@ describe('offline-aware repository', () => {
     const repository = createOfflineAwareRepository<WifiLocation>({
       kind: 'wifi',
       postcode: '3453',
-      source: 'api',
       onlineRepository: { list: vi.fn().mockResolvedValue(dataset) },
       shouldSave: () => true,
       isOnline: () => true,
