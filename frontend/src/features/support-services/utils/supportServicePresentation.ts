@@ -28,7 +28,7 @@ export function getAvailabilityPresentation(
 
   if (service.availabilityFreshness === 'stale') {
     return {
-      title: `${statusLabel(service)} — old example update`,
+      title: `${statusLabel(service)} — older update`,
       detail: `Last updated ${updated}. Reconnect or check directly before travelling.`,
       tone: 'stale',
     }
@@ -36,7 +36,7 @@ export function getAvailabilityPresentation(
 
   if (service.availabilityStatus === 'normal') {
     return {
-      title: 'Normal availability — example partner update',
+      title: 'Normal availability — partner update',
       detail: `Saved update: ${updated}. This status is not verified.`,
       tone: 'normal',
     }
@@ -44,7 +44,7 @@ export function getAvailabilityPresentation(
 
   if (service.availabilityStatus === 'low') {
     return {
-      title: 'Low availability — example partner update',
+      title: 'Low availability — partner update',
       detail: service.phone
         ? `Saved update: ${updated}. Call ahead before travelling.`
         : `Saved update: ${updated}. Check directly before travelling.`,
@@ -54,7 +54,7 @@ export function getAvailabilityPresentation(
 
   if (service.availabilityStatus === 'closed') {
     return {
-      title: 'Closed — example partner update',
+      title: 'Closed — partner update',
       detail: `Saved update: ${updated}. Do not travel without checking for a newer update.`,
       tone: 'closed',
     }
@@ -71,9 +71,16 @@ export function getAvailabilityPresentation(
 
 export function formatServiceAddress(service: SupportService): string {
   if (service.address) {
-    return `${service.address}, ${service.suburb} VIC ${service.postcode}`
+    const address = service.address.trim()
+    const normalizedAddress = address.toLocaleLowerCase('en-AU')
+    const alreadyIncludesLocality = normalizedAddress.includes(service.suburb.toLocaleLowerCase('en-AU'))
+      || (Boolean(service.postcode) && normalizedAddress.includes(service.postcode))
+    return alreadyIncludesLocality
+      ? address
+      : [address, service.suburb, 'VIC', service.postcode].filter(Boolean).join(' ')
   }
-  return `Street address not confirmed. Listed for ${service.suburb} VIC ${service.postcode}.`
+  const listedArea = [service.suburb, 'VIC', service.postcode].filter(Boolean).join(' ')
+  return `Street address not confirmed. Listed for ${listedArea}.`
 }
 
 export function formatServiceDistance(service: SupportService, postcode: string): string {

@@ -20,7 +20,7 @@ export function SettingsPage() {
             <div className="profile-card__heading"><UserCircle aria-hidden="true" size={28} weight="duotone" /><h2 id="household-summary-title">Household summary</h2></div>
             <dl className="profile-grid">
               <div><dt>Name</dt><dd>{profile.name || 'Not provided'}</dd></div>
-              <div><dt>Postcode</dt><dd>{profile.postcode === '3453' ? 'Harcourt 3453' : profile.postcode}</dd></div>
+              <div><dt>Postcode</dt><dd>{profile.postcode}</dd></div>
               <div><dt>Household</dt><dd>{profile.householdSize ?? 'Not provided'}</dd></div>
               <div><dt>Children</dt><dd>{profile.childrenUnder15 ?? 'Not provided'}</dd></div>
               <div><dt>Health</dt><dd>{profile.healthNeeds?.join(', ') || 'Not provided'}</dd></div>
@@ -36,7 +36,7 @@ export function SettingsPage() {
           <section className="danger-link-section"><h2>Delete your information</h2><p>This permanently removes your private profile and choices from this device.</p><Link className="button button--danger-outline" to={appRoutes.deleteProfile}><Trash aria-hidden="true" size={19} /> Delete profile and choices</Link></section>
         </>
       ) : (
-        <div className="empty-profile"><UserCircle aria-hidden="true" size={48} weight="duotone" /><h2>No household profile saved</h2><p>You can still use example public information without creating an account.</p><Link className="button button--primary" to={appRoutes.setup}>Set up this device</Link></div>
+        <div className="empty-profile"><UserCircle aria-hidden="true" size={48} weight="duotone" /><h2>No household profile saved</h2><p>Add a postcode to find nearby public information. No account is required.</p><Link className="button button--primary" to={appRoutes.setup}>Set up this device</Link></div>
       )}
     </section>
   )

@@ -51,6 +51,7 @@ FEATURE_SERVER_QUERY_URL = (
 HEADERS_CKAN = {
     "User-Agent": "CrisisSupportApp/1.0 (student-project)"
 }
+POSTCODE_LOOKUP_URL = "https://api.zippopotam.us/au/{postcode}"
 
 SEARCH_RADIUS_KM = 30
 FALLBACK_RESULT_COUNT = 10
@@ -145,8 +146,43 @@ def normalise_postcode(value):
     return text
 
 
+def fetch_postcode_coords_fallback(postcode):
+    """Return a Victorian postcode centroid from Zippopotam/GeoNames.
+
+    Nominatim can reject requests from shared cloud hosts. This independent
+    fallback keeps postcode-based searching available without pretending the
+    returned centroid is an exact household or street location.
+    """
+    resp = http_requests.get(
+        POSTCODE_LOOKUP_URL.format(postcode=postcode),
+        headers={"Accept": "application/json", "User-Agent": "ShieldAhead/1.0 (student-project)"},
+        timeout=5,
+    )
+    resp.raise_for_status()
+    payload = resp.json()
+    if payload.get("country abbreviation") != "AU":
+        return None, None
+
+    coordinates = []
+    for place in payload.get("places", []):
+        if place.get("state abbreviation") != "VIC":
+            continue
+        try:
+            coordinates.append((float(place["latitude"]), float(place["longitude"])))
+        except (KeyError, TypeError, ValueError):
+            continue
+
+    if not coordinates:
+        return None, None
+
+    latitude = sum(item[0] for item in coordinates) / len(coordinates)
+    longitude = sum(item[1] for item in coordinates) / len(coordinates)
+    return latitude, longitude
+
+
 def postcode_to_coords(postcode):
-    """Convert an Australian postcode to (lat, lng) using Nominatim, with a local cache."""
+    """Convert a Victorian postcode to a centroid, with a local cache."""
+    postcode = normalise_postcode(postcode)
     if postcode in _postcode_cache:
         return _postcode_cache[postcode]
 
@@ -166,6 +202,14 @@ def postcode_to_coords(postcode):
         results = resp.json()
         if results:
             coords = (float(results[0]["lat"]), float(results[0]["lon"]))
+            _postcode_cache[postcode] = coords
+            return coords
+    except Exception:
+        pass
+
+    try:
+        coords = fetch_postcode_coords_fallback(postcode)
+        if coords[0] is not None and coords[1] is not None:
             _postcode_cache[postcode] = coords
             return coords
     except Exception:
@@ -686,6 +730,22 @@ def infer_service_types(charity):
     return matched or ["Community support services"]
 
 
+def is_relevant_support_charity(charity):
+    """Keep records with at least one explicit support-service signal.
+
+    The ACNC register contains many organisations that are charities but are
+    not places where a person can seek practical support. A confirmed ACNC
+    purpose/beneficiary flag or one of our documented service keywords is
+    required before a record is presented as a support service.
+    """
+    for field, _label in SERVICE_TYPE_FIELD_RULES:
+        if str(charity.get(field) or "").strip().upper() == "Y":
+            return True
+
+    combined_text = " ".join(str(value) for value in charity.values() if value).lower()
+    return any(keyword in combined_text for keyword, _label in SERVICE_TYPE_RULES)
+
+
 def stable_charity_id(name, town):
     """Deterministic fallback id for the rare charity record with no ABN."""
     basis = f"{name}|{town}".strip().lower()
@@ -972,6 +1032,10 @@ def get_charities():
             try:
                 last_updated = fetch_acnc_last_updated()
                 raw_charities = fetch_charities_for_region(postcode, place_names)
+                raw_charities = [
+                    charity for charity in raw_charities
+                    if is_relevant_support_charity(charity)
+                ]
                 all_records = [charity_to_support_service(c, last_updated) for c in raw_charities]
                 all_records = attach_charity_coordinates(all_records)
             except Exception as e:
@@ -1020,6 +1084,7 @@ def get_charities():
 
         limitations = [
             "Eligibility conditions are not published in this open dataset — contact the organisation directly",
+            "Listings are filtered using ACNC purpose/beneficiary flags and service keywords; inclusion does not confirm that walk-in assistance is currently offered",
             "Service type is inferred from ACNC's own confirmed purpose/beneficiary flags where available, otherwise from keyword matches — not a single confirmed category field",
             "Availability/stock status is not confirmed for any listing",
             "Distance is based on postcode coordinates and may not reflect the exact street location",

@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react'
-import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
+import { BrowserRouter, Navigate, Outlet, Route, Routes } from 'react-router-dom'
 import { useLocation } from 'react-router-dom'
 import { HomePage } from '../features/home/pages/HomePage'
 import { HouseholdBasicsPage } from '../features/onboarding/pages/HouseholdBasicsPage'
@@ -19,6 +19,7 @@ import { SupportServicesPage } from '../features/support-services/pages/SupportS
 import { WifiDetailPage } from '../features/wifi/pages/WifiDetailPage'
 import { WifiListPage } from '../features/wifi/pages/WifiListPage'
 import { AppShell } from '../shared/layout/AppShell'
+import { getConsentState, getHouseholdProfile } from '../storage/onboardingDraftStorage'
 import { appRoutes } from './config/product'
 
 function RouteFocusManager() {
@@ -39,13 +40,17 @@ function RouteFocusManager() {
   return null
 }
 
+function RequireCompletedSetup() {
+  const hasCompletedSetup = Boolean(getHouseholdProfile() && getConsentState())
+  return hasCompletedSetup ? <Outlet /> : <Navigate replace to={appRoutes.setup} />
+}
+
 export function AppRouter() {
   return (
     <BrowserRouter>
       <RouteFocusManager />
       <Routes>
         <Route element={<AppShell />}>
-          <Route index element={<HomePage />} />
           <Route path={appRoutes.setup} element={<SetupWelcomePage />} />
           <Route path={appRoutes.setupPrivacy} element={<DataPrivacyPage />} />
           <Route
@@ -56,16 +61,19 @@ export function AppRouter() {
           <Route path={appRoutes.setupReview} element={<SetupReviewPage />} />
           <Route path={appRoutes.consentChoices} element={<ConsentChoicesPage />} />
           <Route path={appRoutes.setupComplete} element={<SetupCompletePage />} />
-          <Route path={appRoutes.wifi} element={<WifiListPage />} />
-          <Route path="/wifi/:id" element={<WifiDetailPage />} />
-          <Route path={appRoutes.support} element={<SupportServicesPage />} />
-          <Route path="/support/:id" element={<SupportServiceDetailPage />} />
-          <Route path={appRoutes.settings} element={<SettingsPage />} />
-          <Route path={appRoutes.editProfile} element={<EditProfilePage />} />
-          <Route path={appRoutes.consentSettings} element={<ConsentSettingsPage />} />
-          <Route path={appRoutes.offlineInformation} element={<OfflineInformationPage />} />
-          <Route path={appRoutes.deleteProfile} element={<DeleteProfilePage />} />
-          <Route path="*" element={<Navigate replace to={appRoutes.home} />} />
+          <Route element={<RequireCompletedSetup />}>
+            <Route index element={<HomePage />} />
+            <Route path={appRoutes.wifi} element={<WifiListPage />} />
+            <Route path="/wifi/:id" element={<WifiDetailPage />} />
+            <Route path={appRoutes.support} element={<SupportServicesPage />} />
+            <Route path="/support/:id" element={<SupportServiceDetailPage />} />
+            <Route path={appRoutes.settings} element={<SettingsPage />} />
+            <Route path={appRoutes.editProfile} element={<EditProfilePage />} />
+            <Route path={appRoutes.consentSettings} element={<ConsentSettingsPage />} />
+            <Route path={appRoutes.offlineInformation} element={<OfflineInformationPage />} />
+            <Route path={appRoutes.deleteProfile} element={<DeleteProfilePage />} />
+            <Route path="*" element={<Navigate replace to={appRoutes.home} />} />
+          </Route>
         </Route>
       </Routes>
     </BrowserRouter>

@@ -1,6 +1,6 @@
 export const productConfig = {
   name: 'ShieldAhead',
-  status: 'Offline support prototype',
+  status: 'Offline support app',
   description:
     'Prepare local Wi-Fi and support information before your connection is disrupted.',
   locale: 'en-AU',

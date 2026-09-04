@@ -28,6 +28,20 @@ function optionalString(value: unknown): string | undefined {
   return typeof value === 'string' && value.trim() ? value.trim() : undefined
 }
 
+function optionalHttpUrl(value: unknown): string | undefined {
+  const candidate = optionalString(value)
+  if (!candidate) return undefined
+
+  try {
+    const parsed = new URL(/^https?:\/\//i.test(candidate) ? candidate : `https://${candidate}`)
+    return parsed.protocol === 'http:' || parsed.protocol === 'https:'
+      ? parsed.href
+      : undefined
+  } catch {
+    return undefined
+  }
+}
+
 function optionalNumber(value: unknown): number | undefined {
   return typeof value === 'number' && Number.isFinite(value) ? value : undefined
 }
@@ -74,7 +88,7 @@ function normalizeSupportService(value: unknown): SupportService {
     longitude: optionalNumber(value.longitude),
     distanceKm: optionalNumber(value.distanceKm),
     phone: optionalString(value.phone),
-    website: optionalString(value.website),
+    website: optionalHttpUrl(value.website),
     eligibility: optionalString(value.eligibility),
     partnerStatus,
     availabilityStatus,
@@ -133,9 +147,32 @@ export function createApiSupportServiceRepository({
           signal: controller.signal,
         })
         if (!response.ok) {
-          throw new Error(`Support service API request failed with status ${response.status}.`)
+          if (response.status === 400) {
+            throw new Error('We could not use this postcode. Check your saved postcode and try again.')
+          }
+          if (response.status === 429) {
+            throw new Error('Too many support searches were made. Wait a moment and try again.')
+          }
+          if (response.status === 503) {
+            throw new Error('Support information is temporarily unavailable. Try again shortly.')
+          }
+          throw new Error('Support information could not be loaded. Try again.')
         }
         return normalizeSupportServiceDataset(await response.json())
+      } catch (reason) {
+        if (reason instanceof DOMException && reason.name === 'AbortError') {
+          throw new Error(
+            'Support information took too long to load. Check your connection and try again.',
+            { cause: reason },
+          )
+        }
+        if (reason instanceof TypeError) {
+          throw new Error(
+            'Support information could not be reached. Check your connection and try again.',
+            { cause: reason },
+          )
+        }
+        throw reason
       } finally {
         window.clearTimeout(timeout)
       }

@@ -2,7 +2,7 @@ export function resolveApiUrl(baseUrl: string, path: string, postcode: string): 
   const configuredOrigin = baseUrl.trim().replace(/\/$/, '')
   const origin = configuredOrigin || (typeof window === 'undefined' ? '' : window.location.origin)
   if (!origin) {
-    throw new Error('VITE_API_BASE_URL is required when VITE_DATA_SOURCE=api.')
+    throw new Error('VITE_API_BASE_URL is required to load API information.')
   }
 
   const url = new URL(path, `${origin}/`)

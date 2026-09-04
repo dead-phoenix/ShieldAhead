@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import type { SupportService } from '../../../data/contracts'
 import {
+  formatServiceAddress,
   getAvailabilityPresentation,
   sortSupportServices,
 } from './supportServicePresentation'
@@ -27,9 +28,9 @@ describe('support service presentation', () => {
   })
 
   it.each([
-    ['normal', 'Normal availability — example partner update', 'normal'],
-    ['low', 'Low availability — example partner update', 'low'],
-    ['closed', 'Closed — example partner update', 'closed'],
+    ['normal', 'Normal availability — partner update', 'normal'],
+    ['low', 'Low availability — partner update', 'low'],
+    ['closed', 'Closed — partner update', 'closed'],
     ['not-confirmed', 'Availability not confirmed', 'not-confirmed'],
   ] as const)('maps %s availability to clear copy and tone', (status, title, tone) => {
     const result = getAvailabilityPresentation({
@@ -50,7 +51,21 @@ describe('support service presentation', () => {
       availabilityUpdatedAt: '2026-05-01T09:20:00.000Z',
     })
 
-    expect(result.title).toBe('Normal availability — old example update')
+    expect(result.title).toBe('Normal availability — older update')
     expect(result.tone).toBe('stale')
+  })
+
+  it('does not duplicate locality details already present in a full API address', () => {
+    expect(formatServiceAddress({
+      ...baseService,
+      address: '81 Barker Rd, Harcourt, VIC, 3453',
+    })).toBe('81 Barker Rd, Harcourt, VIC, 3453')
+  })
+
+  it('adds locality details to a street-only address', () => {
+    expect(formatServiceAddress({
+      ...baseService,
+      address: '81 Barker Rd',
+    })).toBe('81 Barker Rd Harcourt VIC 3453')
   })
 })

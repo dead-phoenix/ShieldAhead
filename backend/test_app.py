@@ -1,16 +1,18 @@
 import pytest
-from unittest.mock import patch
+from unittest.mock import Mock, patch
 import app as app_module
 from app import (
     app,
     attach_charity_coordinates,
     is_victorian_charity,
     infer_service_types,
+    is_relevant_support_charity,
     stable_charity_id,
     build_charity_address,
     charity_to_support_service,
     geocode_charities,
     _locality_names_from_address,
+    postcode_to_coords,
 )
 
 
@@ -39,6 +41,58 @@ def reset_caches():
 # ============================================================
 # Victoria / locality filtering (no network needed)
 # ============================================================
+
+def test_postcode_lookup_falls_back_when_nominatim_has_no_result():
+    nominatim_response = Mock()
+    nominatim_response.raise_for_status.return_value = None
+    nominatim_response.json.return_value = []
+    fallback_response = Mock()
+    fallback_response.raise_for_status.return_value = None
+    fallback_response.json.return_value = {
+        "country abbreviation": "AU",
+        "places": [
+            {
+                "place name": "Ravenswood",
+                "state abbreviation": "VIC",
+                "latitude": "-36.9",
+                "longitude": "144.2167",
+            },
+            {
+                "place name": "Harcourt",
+                "state abbreviation": "VIC",
+                "latitude": "-36.9384",
+                "longitude": "144.2208",
+            },
+        ],
+    }
+
+    with patch("app.http_requests.get", side_effect=[nominatim_response, fallback_response]) as mock_get:
+        latitude, longitude = postcode_to_coords("3453")
+        cached = postcode_to_coords("3453")
+
+    assert latitude == pytest.approx(-36.9192)
+    assert longitude == pytest.approx(144.21875)
+    assert cached == (latitude, longitude)
+    assert mock_get.call_count == 2
+
+
+def test_postcode_fallback_rejects_non_victorian_places():
+    nominatim_response = Mock()
+    nominatim_response.raise_for_status.return_value = None
+    nominatim_response.json.return_value = []
+    fallback_response = Mock()
+    fallback_response.raise_for_status.return_value = None
+    fallback_response.json.return_value = {
+        "country abbreviation": "AU",
+        "places": [{
+            "state abbreviation": "NSW",
+            "latitude": "-33.86",
+            "longitude": "151.2",
+        }],
+    }
+
+    with patch("app.http_requests.get", side_effect=[nominatim_response, fallback_response]):
+        assert postcode_to_coords("3453") == (None, None)
 
 def test_victorian_charity_is_kept():
     charity = {"State": "VIC", "Postcode": "3000", "Town_City": "Melbourne"}
@@ -89,6 +143,38 @@ def test_financial_keyword_infers_financial_counselling():
 def test_no_specific_keyword_falls_back_to_generic_label():
     charity = {"Charity_Legal_Name": "Test Org", "Objects": "general welfare nature"}
     assert infer_service_types(charity) == ["Community support services"]
+
+def test_support_relevance_requires_an_explicit_service_signal():
+    assert is_relevant_support_charity({
+        "Charity_Legal_Name": "Harcourt Valley Heritage and Tourist Centre Inc",
+        "Objects": "Local heritage collection",
+    }) is False
+    assert is_relevant_support_charity({
+        "Charity_Legal_Name": "Community Emergency Food Relief Inc",
+    }) is True
+    assert is_relevant_support_charity({
+        "Charity_Legal_Name": "Regional Assistance Inc",
+        "People_at_risk_of_homelessness": "Y",
+    }) is True
+
+def test_irrelevant_charities_are_not_returned_by_endpoint(client):
+    irrelevant = {
+        "Charity_Legal_Name": "Harcourt Landcare Group Inc",
+        "ABN": "22222222222",
+        "Town_City": "Harcourt",
+        "State": "VIC",
+        "Postcode": "3453",
+        "Objects": "Environmental conservation",
+    }
+    with patch("app.postcode_to_coords", return_value=(-36.94, 144.22)):
+        with patch("app.fetch_acnc_last_updated", return_value="2026-01-01"):
+            with patch("app.fetch_charities_for_region", return_value=[MOCK_CHARITY, irrelevant]):
+                response = client.get("/api/charities?postcode=3453")
+
+    assert response.status_code == 200
+    names = [record["name"] for record in response.json["records"]]
+    assert "Bendigo Food Relief Inc" in names
+    assert "Harcourt Landcare Group Inc" not in names
 
 
 # ============================================================

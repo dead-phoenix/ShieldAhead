@@ -18,18 +18,7 @@ describe('Wi-Fi repository selection', () => {
     vi.unstubAllGlobals()
   })
 
-  it('keeps query-string fixtures on Mock data even in API mode', async () => {
-    vi.stubEnv('VITE_DATA_SOURCE', 'api')
-    const repository = getWifiRepository('no-coverage', '3453')
-
-    const result = await repository.list()
-
-    expect(result.records).toEqual([])
-    expect(result.metadata.version).toBe('prototype-no-coverage-v1')
-  })
-
-  it('uses the configured API repository only when API mode is enabled', async () => {
-    vi.stubEnv('VITE_DATA_SOURCE', 'api')
+  it('always uses the configured API repository', async () => {
     vi.stubEnv('VITE_API_BASE_URL', 'http://127.0.0.1:5001')
     const fetchMock = vi.fn<typeof fetch>()
     fetchMock.mockResolvedValue({
@@ -39,7 +28,7 @@ describe('Wi-Fi repository selection', () => {
     } as Response)
     vi.stubGlobal('fetch', fetchMock)
 
-    const repository = getWifiRepository(null, '3453')
+    const repository = getWifiRepository('3453')
     await repository.list()
 
     expect((fetchMock.mock.calls[0][0] as URL).toString()).toBe(

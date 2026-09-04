@@ -27,9 +27,11 @@ export function useRepositoryData<T>(
       .then((result) => {
         if (isCurrent) setData(result)
       })
-      .catch(() => {
+      .catch((reason: unknown) => {
         if (isCurrent) {
-          setError('Saved information could not be opened. Try again.')
+          setError(reason instanceof Error && reason.message
+            ? reason.message
+            : 'Information could not be opened. Try again.')
         }
       })
       .finally(() => {

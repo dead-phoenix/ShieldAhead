@@ -7,7 +7,7 @@ Flask API providing nearby free wifi/connectivity locations for Epic 2 (US 2.1).
 ## Requirements 
 
 - Python 3.10+ recommended 
-- **Internet connection required for uncached requests** — the API uses Nominatim, VicFreeWiFi and Vicmap. Cached data can avoid repeat source calls for a short period, but the backend is not an offline data store.
+- **Internet connection required for uncached requests** — the API uses Nominatim, Zippopotam/GeoNames, VicFreeWiFi, Vicmap and ACNC. Cached data can avoid repeat source calls for a short period, but the backend is not an offline data store.
   
 ## Setup 
 
@@ -86,6 +86,12 @@ GET /api/wifi?postcode=3453
 
 - **Vicmap Features of Interest** - libraries and community centres statewide, wifi likely but not confirmed
 
+- **ACNC Registered Charities Register (CC BY 4.0)** - Victorian charity listings used for support-service search. Records require an explicit support-purpose/beneficiary flag or service keyword before they are shown. Service categories are inferred from published ACNC fields; eligibility and live availability are not supplied.
+
+- **Nominatim (OpenStreetMap)** - primary postcode and address geocoding.
+
+- **Zippopotam.us (GeoNames, ODbL)** - fallback postcode-centroid lookup when Nominatim is unavailable from the deployment host. Centroids are approximate and are not household or street locations.
+
 
 Results are combined, deduplicated, filtered to a 30km radius of the given postcode, and sorted nearest-first. If nothing is found within 30km, the nearest 10 results statewide are returned instead, with a note in `metadata.limitations`.
 
@@ -97,7 +103,7 @@ Results are combined, deduplicated, filtered to a 30km radius of the given postc
 
 - Wifi/library data is cached in memory for 5 minutes to avoid re-fetching both external sources on every request.
   
-- Postcode-to-coordinates lookups (via Nominatim) are cached for the lifetime of the backend process. Restarting the server clears this in-memory cache.
+- Postcode-to-coordinates lookups (via Nominatim with a Zippopotam/GeoNames fallback) are cached for the lifetime of the backend process. Restarting the server clears this in-memory cache.
   
 
 ---
@@ -120,5 +126,5 @@ python3 -m pytest test_app.py -v -m real_network
 
 - No production CORS restriction (currently allows all origins - fine for local dev/demo).
  
-- No automated retry/backoff if Nominatim itself rate-limits this server.
+- Nominatim has no automated retry/backoff. A separate postcode-centroid fallback is used, but both services remain external dependencies.
 

@@ -11,5 +11,3 @@ export interface WifiRepository {
 export interface SupportServiceRepository {
   list(): Promise<DatasetResult<SupportService>>
 }
-
-export type RepositorySource = 'mock' | 'static-json' | 'api'

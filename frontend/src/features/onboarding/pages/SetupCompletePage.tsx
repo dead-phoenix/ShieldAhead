@@ -11,7 +11,7 @@ export function SetupCompletePage() {
       <div className="success-symbol"><ShieldCheck aria-hidden="true" size={44} weight="duotone" /></div>
       <h1 id="complete-title">ShieldAhead is ready</h1>
       <p className="lead">Your profile is stored on this device. No account was created.</p>
-      <div className="summary-card"><span>Stored postcode</span><strong>{profile.postcode === '3453' ? 'Harcourt VIC 3453' : profile.postcode}</strong><p>Offline public information can be managed separately.</p></div>
+      <div className="summary-card"><span>Stored postcode</span><strong>{profile.postcode}</strong><p>Offline public information can be managed separately.</p></div>
       <div className="flow-actions flow-actions--stacked">
         <Link className="button button--primary" to={appRoutes.home}>Go to home</Link>
         <Link className="button button--quiet" to={appRoutes.offlineInformation}>Choose offline information</Link>
