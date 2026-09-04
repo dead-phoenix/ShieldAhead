@@ -810,24 +810,12 @@ input[type='checkbox'] {
   margin-top: 0.8rem;
 }
 
-.status-card__footer .prototype-badge,
 .status-card__link {
   margin-top: 0;
 }
 
 .status-card__link {
   min-width: 10rem;
-}
-
-.prototype-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.3rem;
-  margin-top: 0.65rem;
-  color: var(--color-text-muted);
-  font-size: 0.68rem;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
 }
 
 .setup-prompt {
@@ -1573,10 +1561,6 @@ input[type='checkbox'] {
 .offline-dataset small {
   color: var(--color-text-muted);
   font-size: var(--text-xs);
-}
-
-.offline-dataset .prototype-badge {
-  margin-top: 0.25rem;
 }
 
 .inline-status {

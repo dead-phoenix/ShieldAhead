@@ -19,7 +19,7 @@ import {
 } from '../../../storage/onboardingDraftStorage'
 
 export function OfflineInformationPage() {
-  const postcode = getHouseholdProfile()?.postcode ?? '3453'
+  const postcode = getHouseholdProfile()?.postcode ?? ''
   const [preferences, setPreferences] = useState(getOfflinePreferences)
   const [message, setMessage] = useState('')
   const [busyKind, setBusyKind] = useState<OfflineDatasetKind | 'all' | null>(null)
@@ -37,8 +37,8 @@ export function OfflineInformationPage() {
 
   async function download(kind: OfflineDatasetKind) {
     const repository = kind === 'wifi'
-      ? getWifiRepository(null, postcode)
-      : getSupportServiceRepository(null, postcode)
+      ? getWifiRepository(postcode)
+      : getSupportServiceRepository(postcode)
     const result = await repository.list()
     if (result.metadata.refreshError) throw new Error(result.metadata.refreshError)
   }

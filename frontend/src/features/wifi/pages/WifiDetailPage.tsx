@@ -1,13 +1,12 @@
 import { Clock, Heart, Info, MapPin, NavigationArrow, ShieldCheck, WifiHigh } from '@phosphor-icons/react'
 import { useMemo, useState } from 'react'
-import { Link, Navigate, useParams, useSearchParams } from 'react-router-dom'
+import { Link, Navigate, useParams } from 'react-router-dom'
 import { appRoutes } from '../../../app/config/product'
 import { useRepositoryData } from '../../../data/useRepositoryData'
-import { getWifiDataSourceMode, getWifiRepository } from '../../../data/wifiRepository'
+import { getWifiRepository } from '../../../data/wifiRepository'
 import { LoadingState } from '../../../shared/components/LoadingState'
 import { EmptyState } from '../../../shared/components/EmptyState'
 import { PageBackLink } from '../../../shared/components/PageBackLink'
-import { PrototypeBadge } from '../../../shared/components/PrototypeBadge'
 import { StatusBanner } from '../../../shared/components/StatusBanner'
 import { useOnlineStatus } from '../../../shared/hooks/useOnlineStatus'
 import { formatSavedDate } from '../../../shared/utils/formatDate'
@@ -17,13 +16,10 @@ import { WifiVerificationBadge } from '../components/WifiVerificationBadge'
 
 export function WifiDetailPage() {
   const { id } = useParams()
-  const [searchParams] = useSearchParams()
-  const fixture = searchParams.get('fixture')
-  const dataSourceMode = getWifiDataSourceMode(fixture)
-  const postcode = getHouseholdProfile()?.postcode ?? '3453'
+  const postcode = getHouseholdProfile()?.postcode ?? ''
   const repository = useMemo(
-    () => getWifiRepository(fixture, postcode),
-    [fixture, postcode],
+    () => getWifiRepository(postcode),
+    [postcode],
   )
   const { data, isLoading, error, retry } = useRepositoryData(repository.list)
   const [usualSpot, setUsualSpot] = useState(getUsualWifiSpot())
@@ -56,7 +52,7 @@ export function WifiDetailPage() {
   return (
     <section className="detail-page" aria-labelledby="wifi-detail-title">
       <PageBackLink to={appRoutes.wifi}>Back to Wi-Fi list</PageBackLink>
-      <div className="page-heading"><div><h1 id="wifi-detail-title">{location.name}</h1><div className="badge-row">{dataSourceMode === 'mock' ? <PrototypeBadge /> : null}<span className="positive-chip"><ShieldCheck aria-hidden="true" size={15} /> {data?.metadata.cachedAt ? 'Saved for offline use' : 'Online view only'}</span><WifiVerificationBadge status={location.verificationStatus} /></div></div></div>
+      <div className="page-heading"><div><h1 id="wifi-detail-title">{location.name}</h1><div className="badge-row"><span className="positive-chip"><ShieldCheck aria-hidden="true" size={15} /> {data?.metadata.cachedAt ? 'Saved for offline use' : 'Online view only'}</span><WifiVerificationBadge status={location.verificationStatus} /></div></div></div>
       {data?.metadata.refreshError ? <StatusBanner title="Couldn’t update — showing your saved copy" tone="warning"><p>{data.metadata.refreshError} Saved on this device: {formatSavedDate(data.metadata.cachedAt)}.</p></StatusBanner> : null}
       {data?.metadata.freshnessStatus === 'stale' && !data.metadata.refreshError ? <StatusBanner title="This saved Wi-Fi information may be out of date" tone="warning"><p>Saved copy: {formatSavedDate(data.metadata.cachedAt ?? data.metadata.generatedAt)}. Check for an update before relying on these details.</p></StatusBanner> : null}
       <div className={`notice-card${location.verificationStatus ? ` notice-card--${location.verificationStatus}` : ''}`}>

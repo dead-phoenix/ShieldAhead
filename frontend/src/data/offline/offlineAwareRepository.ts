@@ -11,7 +11,6 @@ interface ListRepository<T> {
 interface OfflineAwareRepositoryOptions<T> {
   kind: OfflineDatasetKind
   postcode: string
-  source: 'api' | 'mock'
   onlineRepository: ListRepository<T>
   shouldSave: () => boolean
   isOnline?: () => boolean
@@ -48,7 +47,6 @@ function cachedResult<T>(
 export function createOfflineAwareRepository<T>({
   kind,
   postcode,
-  source,
   onlineRepository,
   shouldSave,
   isOnline = () => navigator.onLine,
@@ -80,7 +78,7 @@ export function createOfflineAwareRepository<T>({
           ...downloaded,
           metadata: {
             ...downloaded.metadata,
-            dataOrigin: source === 'mock' ? 'mock' : 'network',
+            dataOrigin: 'network',
             cachedAt,
           },
         }
