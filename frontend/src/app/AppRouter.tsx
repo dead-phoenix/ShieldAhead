@@ -9,6 +9,7 @@ import { DataPrivacyPage } from '../features/onboarding/pages/DataPrivacyPage'
 import { SetupCompletePage } from '../features/onboarding/pages/SetupCompletePage'
 import { SetupReviewPage } from '../features/onboarding/pages/SetupReviewPage'
 import { SetupWelcomePage } from '../features/onboarding/pages/SetupWelcomePage'
+import { LoginToContinuePage } from '../features/onboarding/pages/LoginToContinuePage'
 import { DeleteProfilePage } from '../features/settings/pages/DeleteProfilePage'
 import { EditProfilePage } from '../features/settings/pages/EditProfilePage'
 import { ConsentSettingsPage } from '../features/settings/pages/ConsentSettingsPage'
@@ -19,7 +20,7 @@ import { SupportServicesPage } from '../features/support-services/pages/SupportS
 import { WifiDetailPage } from '../features/wifi/pages/WifiDetailPage'
 import { WifiListPage } from '../features/wifi/pages/WifiListPage'
 import { AppShell } from '../shared/layout/AppShell'
-import { getConsentState, getHouseholdProfile } from '../storage/onboardingDraftStorage'
+import { hasCompletedSetup } from '../storage/onboardingDraftStorage'
 import { appRoutes } from './config/product'
 
 function RouteFocusManager() {
@@ -41,8 +42,7 @@ function RouteFocusManager() {
 }
 
 function RequireCompletedSetup() {
-  const hasCompletedSetup = Boolean(getHouseholdProfile() && getConsentState())
-  return hasCompletedSetup ? <Outlet /> : <Navigate replace to={appRoutes.setup} />
+  return hasCompletedSetup() ? <Outlet /> : <LoginToContinuePage />
 }
 
 export function AppRouter() {
@@ -51,6 +51,7 @@ export function AppRouter() {
       <RouteFocusManager />
       <Routes>
         <Route element={<AppShell />}>
+          <Route index element={<HomePage />} />
           <Route path={appRoutes.setup} element={<SetupWelcomePage />} />
           <Route path={appRoutes.setupPrivacy} element={<DataPrivacyPage />} />
           <Route
@@ -62,7 +63,6 @@ export function AppRouter() {
           <Route path={appRoutes.consentChoices} element={<ConsentChoicesPage />} />
           <Route path={appRoutes.setupComplete} element={<SetupCompletePage />} />
           <Route element={<RequireCompletedSetup />}>
-            <Route index element={<HomePage />} />
             <Route path={appRoutes.wifi} element={<WifiListPage />} />
             <Route path="/wifi/:id" element={<WifiDetailPage />} />
             <Route path={appRoutes.support} element={<SupportServicesPage />} />
@@ -72,8 +72,8 @@ export function AppRouter() {
             <Route path={appRoutes.consentSettings} element={<ConsentSettingsPage />} />
             <Route path={appRoutes.offlineInformation} element={<OfflineInformationPage />} />
             <Route path={appRoutes.deleteProfile} element={<DeleteProfilePage />} />
-            <Route path="*" element={<Navigate replace to={appRoutes.home} />} />
           </Route>
+          <Route path="*" element={<Navigate replace to={appRoutes.home} />} />
         </Route>
       </Routes>
     </BrowserRouter>

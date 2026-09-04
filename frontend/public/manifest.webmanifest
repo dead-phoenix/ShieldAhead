@@ -4,8 +4,8 @@
   "description": "Prepare local Wi-Fi and support information for unreliable connections.",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#f8fafc",
-  "theme_color": "#2563eb",
+  "background_color": "#fbf8f1",
+  "theme_color": "#3F6B63",
   "lang": "en-AU",
   "icons": [
     {

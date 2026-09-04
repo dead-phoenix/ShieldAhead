@@ -8,24 +8,24 @@ describe('first-run routing', () => {
     window.history.replaceState({}, '', '/')
   })
 
-  it('sends a new user to setup before showing the home page', async () => {
+  it('shows the home page to a new visitor, with log in and sign up', async () => {
     render(<AppRouter />)
 
-    expect(await screen.findByRole('heading', {
-      name: /Know where to go, even when the network is down/i,
-    })).toBeVisible()
-    expect(window.location.pathname).toBe('/setup')
+    expect(await screen.findByRole('heading', { name: 'About ShieldAhead' })).toBeVisible()
+    expect(window.location.pathname).toBe('/')
+    expect(screen.getByRole('link', { name: 'Log in' })).toHaveAttribute('href', '/setup')
+    expect(screen.getByRole('link', { name: 'Sign up' })).toHaveAttribute('href', '/setup')
   })
 
-  it('protects a direct main-feature link until setup is complete', async () => {
+  it('asks an unsigned visitor to log in instead of opening support', async () => {
     window.history.replaceState({}, '', '/support')
 
     render(<AppRouter />)
 
-    expect(await screen.findByRole('heading', {
-      name: /Know where to go, even when the network is down/i,
-    })).toBeVisible()
-    expect(window.location.pathname).toBe('/setup')
+    expect(await screen.findByRole('heading', { name: 'Log in to continue' })).toBeVisible()
+    expect(window.location.pathname).toBe('/support')
+    expect(screen.getByRole('link', { name: 'Back to home' })).toHaveAttribute('href', '/')
+    expect(screen.getByRole('link', { name: 'Sign up' })).toHaveAttribute('href', '/setup')
   })
 
   it('shows home to a returning user with a saved profile and consent', async () => {
@@ -38,7 +38,8 @@ describe('first-run routing', () => {
 
     render(<AppRouter />)
 
-    expect(await screen.findByRole('heading', { name: 'Choose offline information' })).toBeVisible()
+    expect(await screen.findByRole('heading', { name: 'About ShieldAhead' })).toBeVisible()
     expect(window.location.pathname).toBe('/')
+    expect(screen.queryByRole('link', { name: 'Sign up' })).not.toBeInTheDocument()
   })
 })

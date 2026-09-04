@@ -74,6 +74,10 @@ export function getConsentState(): ConsentState | null {
   return readStoredValue<ConsentState>(storageKeys.consent)
 }
 
+export function hasCompletedSetup(): boolean {
+  return Boolean(getHouseholdProfile() && getConsentState())
+}
+
 export function saveConsentState(consent: ConsentState): boolean {
   return writeStoredValue(storageKeys.consent, consent)
 }

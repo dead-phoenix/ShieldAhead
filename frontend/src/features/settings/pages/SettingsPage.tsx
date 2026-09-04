@@ -26,7 +26,7 @@ export function SettingsPage() {
               <div><dt>Health</dt><dd>{profile.healthNeeds?.join(', ') || 'Not provided'}</dd></div>
               <div><dt>Accessibility</dt><dd>{profile.accessibilityNeeds?.join(', ') || 'Not provided'}</dd></div>
             </dl>
-            <Link className="button button--quiet" to={appRoutes.editProfile}>Edit details</Link>
+            <Link className="button button--accent-outline" to={appRoutes.editProfile}>Edit details</Link>
           </section>
           <section className="settings-group" aria-labelledby="stored-data-title"><h2 id="stored-data-title">Stored data</h2>
             <Link className="settings-row" to={appRoutes.offlineInformation}><Database aria-hidden="true" size={22} /><span><strong>Offline information</strong><small>{offline.wifiSaved || offline.supportSaved ? 'Wi-Fi and support records are available' : 'No public information selected'}</small></span><ArrowRight aria-hidden="true" size={19} /></Link>
