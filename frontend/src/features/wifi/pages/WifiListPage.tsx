@@ -54,8 +54,9 @@ export function WifiListPage() {
           <h1 id="wifi-title">Nearby free Wi-Fi</h1>
           <p>Nearest available results around {searchLabel}. Check conditions before travelling.</p>
         </div>
-        <Link className="button button--text" to={`${appRoutes.location}?next=${encodeURIComponent(appRoutes.wifi)}`}>
-          Change location
+        <Link className="button location-change" to={`${appRoutes.location}?next=${encodeURIComponent(appRoutes.wifi)}`}>
+          <MapPin aria-hidden="true" size={18} weight="fill" />
+          <span>Change location</span>
         </Link>
       </div>
       {isLoading ? <LoadingState /> : null}

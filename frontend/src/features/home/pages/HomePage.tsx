@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { ArrowRight, CloudSlash, HandHeart, LockKey, ShieldCheck, WifiHigh } from '@phosphor-icons/react'
+import { ArrowDown, ArrowRight, CloudSlash, HandHeart, LockKey, MapPin, ShieldCheck, WifiHigh } from '@phosphor-icons/react'
 import { Link } from 'react-router-dom'
 import { appRoutes } from '../../../app/config/product'
 import {
@@ -22,20 +22,41 @@ export function HomePage() {
   return (
     <div className="landing-page landing-page--focused">
       <section className="landing-about" aria-labelledby="about-title">
-        <h1 id="about-title">
-          Local help.
-          <br />
-          <span className="landing-about__accent">Within reach.</span>
-        </h1>
-        <p className="landing-about__copy">
-          Find nearby support and free Wi-Fi. Save local information on your device for when the network goes down.
-        </p>
+        <div className="landing-hero">
+          <div className="landing-hero__message">
+            <h1 id="about-title">
+              Local help.
+              <br />
+              <span className="landing-about__accent">Within reach.</span>
+            </h1>
+            <p className="landing-about__copy">
+              Find nearby support and free Wi-Fi. Save local information on your device for when the network goes down.
+            </p>
+          </div>
+
+          <div className="landing-hero__visual" aria-hidden="true">
+            <span className="landing-hero__orbit landing-hero__orbit--outer" />
+            <span className="landing-hero__orbit landing-hero__orbit--inner" />
+            <span className="landing-hero__node landing-hero__node--support"><HandHeart weight="duotone" /></span>
+            <span className="landing-hero__node landing-hero__node--wifi"><WifiHigh weight="duotone" /></span>
+            <span className="landing-hero__node landing-hero__node--location"><MapPin weight="duotone" /></span>
+            <div className="landing-hero__device">
+              <span className="landing-hero__device-mark"><ShieldCheck weight="duotone" /></span>
+              <span className="landing-hero__device-line landing-hero__device-line--strong" />
+              <span className="landing-hero__device-line" />
+              <span className="landing-hero__device-status">Ready offline</span>
+            </div>
+          </div>
+        </div>
         <div className="landing-about__actions">
-          <Link className="button button--primary" to={appRoutes.location}>
-            Find what’s near you
+          <Link className="button landing-action landing-action--primary" to={appRoutes.location}>
+            <MapPin aria-hidden="true" size={19} weight="fill" />
+            <span>Find what’s near you</span>
+            <ArrowRight aria-hidden="true" size={17} weight="bold" />
           </Link>
-          <a className="button button--accent-outline" href="#how-it-works">
-            See how it works
+          <a className="button landing-action landing-action--secondary" href="#how-it-works">
+            <span>See how it works</span>
+            <ArrowDown aria-hidden="true" size={17} weight="bold" />
           </a>
         </div>
         <dl className="landing-stats">

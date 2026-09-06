@@ -52,23 +52,113 @@
 .landing-page--focused .landing-about::after {
   display: none;
 }
-.landing-page--focused .landing-about h1 {
+.landing-page--focused .landing-hero {
   order: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(18rem, 25rem);
+  align-items: center;
+  gap: clamp(2rem, 6vw, 5rem);
+  min-height: 18rem;
+}
+.landing-page--focused .landing-hero__message {
+  display: grid;
+  gap: 1.5rem;
+}
+.landing-page--focused .landing-about h1 {
   max-width: 18ch;
-  margin-top: 1.5rem;
+  margin: 0;
   font-size: clamp(2.25rem, 4.5vw, 3.75rem);
   font-weight: 600;
   line-height: 1.14;
   letter-spacing: -0.04em;
 }
 .landing-page--focused .landing-about__copy {
-  order: 1;
   max-width: 40rem;
-  margin-top: -0.75rem;
+  margin: 0;
   font-size: 1.0625rem;
   line-height: 1.8;
   color: var(--spatial-muted);
 }
+.landing-hero__visual {
+  position: relative;
+  display: grid;
+  place-items: center;
+  min-height: 17rem;
+  isolation: isolate;
+}
+.landing-hero__visual::before {
+  position: absolute;
+  width: 15rem;
+  height: 15rem;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(84,199,255,.3), rgba(129,119,255,.08) 58%, transparent 70%);
+  content: '';
+  filter: blur(6px);
+}
+.landing-hero__orbit {
+  position: absolute;
+  border: 1px solid rgba(8,120,249,.2);
+  border-radius: 50%;
+}
+.landing-hero__orbit--outer { width: 18rem; height: 12rem; transform: rotate(-12deg); }
+.landing-hero__orbit--inner { width: 12rem; height: 8rem; transform: rotate(28deg); }
+.landing-hero__device {
+  z-index: 2;
+  display: grid;
+  align-content: start;
+  width: 9.5rem;
+  height: 12rem;
+  padding: 1.25rem;
+  border: 1px solid rgba(255,255,255,.9);
+  border-radius: 28px;
+  background: linear-gradient(155deg, rgba(255,255,255,.92), rgba(218,239,255,.72));
+  box-shadow: 0 28px 55px rgba(32,91,159,.2), inset 0 1px 0 #fff;
+  transform: rotate(3deg);
+}
+.landing-hero__device-mark {
+  display: grid;
+  place-items: center;
+  width: 3.2rem;
+  height: 3.2rem;
+  margin-bottom: 1.25rem;
+  border-radius: 15px;
+  background: linear-gradient(145deg, var(--spatial-blue), var(--spatial-cyan));
+  color: #fff;
+}
+.landing-hero__device-mark svg { width: 1.8rem; height: 1.8rem; }
+.landing-hero__device-line {
+  width: 72%;
+  height: .38rem;
+  margin-top: .55rem;
+  border-radius: .2rem;
+  background: rgba(74,96,125,.2);
+}
+.landing-hero__device-line--strong { width: 92%; background: rgba(11,24,48,.45); }
+.landing-hero__device-status {
+  align-self: end;
+  margin-top: auto;
+  color: #0061c7;
+  font-size: .7rem;
+  font-weight: 700;
+  letter-spacing: .01em;
+}
+.landing-hero__node {
+  position: absolute;
+  z-index: 3;
+  display: grid;
+  place-items: center;
+  width: 3.4rem;
+  height: 3.4rem;
+  border: 1px solid rgba(255,255,255,.92);
+  border-radius: 17px;
+  background: rgba(255,255,255,.82);
+  box-shadow: 0 14px 30px rgba(42,87,143,.16);
+  color: var(--spatial-blue-deep);
+}
+.landing-hero__node svg { width: 1.65rem; height: 1.65rem; }
+.landing-hero__node--support { top: 1.4rem; left: 1.6rem; }
+.landing-hero__node--wifi { top: 2.8rem; right: .6rem; color: #5148c8; }
+.landing-hero__node--location { right: 1.8rem; bottom: 1.2rem; }
 .landing-page--focused .landing-features { order: 2; margin-top: 0.5rem; }
 .landing-page--focused .landing-features__intro { display: none; }
 .landing-page--focused .landing-features__card {
@@ -120,17 +210,60 @@
   font-size: .9375rem;
 }
 .landing-page--focused .landing-about__actions { order: 3; }
-.landing-page--focused .landing-about__actions .button {
+.landing-page--focused .landing-about__actions { gap: .75rem; }
+.landing-page--focused .landing-about__actions .landing-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: .65rem;
   min-width: 0;
-  min-height: 2.75rem;
-  padding: .5rem 0;
-  border: 0;
-  background: transparent;
-  box-shadow: none;
-  color: var(--spatial-blue-deep);
+  min-height: 3.25rem;
+  padding: .75rem 1.05rem;
+  border-radius: 14px;
   font-size: .9375rem;
+  font-weight: 700;
+  text-decoration: none;
 }
-.landing-page--focused .landing-about__actions { gap: 2rem; }
+.landing-page--focused .landing-action--primary {
+  border: 1px solid transparent;
+  background: linear-gradient(145deg, var(--spatial-blue), #339cfb);
+  box-shadow: var(--shadow-control);
+  color: #fff;
+}
+.landing-page--focused .landing-action--primary svg:last-child { margin-left: .3rem; }
+.landing-page--focused .landing-action--secondary {
+  border: 1px solid rgba(86,131,184,.24);
+  background: rgba(255,255,255,.55);
+  box-shadow: 0 9px 24px rgba(42,87,143,.08);
+  color: var(--spatial-blue-deep);
+}
+.landing-page--focused .landing-action:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 14px 30px rgba(8,120,249,.2);
+}
+.location-change {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: .5rem;
+  min-height: 3rem;
+  padding: .7rem 1rem;
+  border: 1px solid rgba(255,255,255,.86);
+  border-radius: 14px;
+  background: rgba(255,255,255,.62);
+  box-shadow: 0 10px 26px rgba(42,87,143,.1);
+  color: var(--spatial-blue-deep);
+  font-size: .9rem;
+  font-weight: 700;
+  text-decoration: none;
+  white-space: nowrap;
+  backdrop-filter: blur(18px) saturate(150%);
+}
+.location-change:hover {
+  background: rgba(255,255,255,.86);
+  box-shadow: 0 14px 30px rgba(42,87,143,.15);
+  transform: translateY(-2px);
+}
 .landing-page--focused .landing-values { order: 4; display: flex; flex-wrap: wrap; gap: 1rem 2rem; }
 .landing-page--focused .landing-value {
   display: flex;
@@ -154,7 +287,9 @@
 }
 @media(max-width: 39.99rem) {
   .landing-page--focused { gap: 1.5rem; }
-  .landing-page--focused .landing-about h1 { margin-top: .5rem; }
+  .landing-page--focused .landing-hero { grid-template-columns: 1fr; gap: .75rem; min-height: 0; }
+  .landing-page--focused .landing-hero__message { gap: 1rem; }
+  .landing-hero__visual { min-height: 13.5rem; transform: scale(.88); margin: -1rem 0; }
   .landing-page--focused .landing-feature { gap: .75rem; }
   .landing-page--focused .landing-stats dd { font-size: 1.2rem; }
 }

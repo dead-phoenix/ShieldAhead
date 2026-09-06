@@ -71,8 +71,9 @@ export function SupportServicesPage() {
           <h1 id="support-title">Nearby support services</h1>
           <p>Nearest available services around {searchLabel}. Addresses may be in nearby suburbs.</p>
         </div>
-        <Link className="button button--text" to={`${appRoutes.location}?next=${encodeURIComponent(appRoutes.support)}`}>
-          Change location
+        <Link className="button location-change" to={`${appRoutes.location}?next=${encodeURIComponent(appRoutes.support)}`}>
+          <MapPin aria-hidden="true" size={18} weight="fill" />
+          <span>Change location</span>
         </Link>
       </div>
       {data && allServices.length > 0 ? <div className="filter-row" aria-label="Filter support services">
