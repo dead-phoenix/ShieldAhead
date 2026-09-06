@@ -19,7 +19,7 @@ import { LoadingState } from '../../../shared/components/LoadingState'
 import { StatusBanner } from '../../../shared/components/StatusBanner'
 import { useOnlineStatus } from '../../../shared/hooks/useOnlineStatus'
 import { formatSavedDate } from '../../../shared/utils/formatDate'
-import { getSearchPostcode } from '../../../storage/searchLocationStorage'
+import { getSearchLocation, getSearchPostcode } from '../../../storage/searchLocationStorage'
 import { getOfflinePreferences } from '../../../storage/onboardingDraftStorage'
 import {
   formatServiceAddress,
@@ -39,6 +39,7 @@ function AvailabilityIcon({ tone }: { tone: AvailabilityTone }) {
 
 export function SupportServicesPage() {
   const postcode = getSearchPostcode()
+  const searchLabel = getSearchLocation()?.label ?? postcode
   const repository = useMemo(
     () => getSupportServiceRepository(postcode),
     [postcode],
@@ -68,7 +69,7 @@ export function SupportServicesPage() {
       <div className="page-heading">
         <div>
           <h1 id="support-title">Nearby support services</h1>
-          <p>Find assistance closest to you.</p>
+          <p>Nearest available services around {searchLabel}. Addresses may be in nearby suburbs.</p>
         </div>
         <Link className="button button--text" to={`${appRoutes.location}?next=${encodeURIComponent(appRoutes.support)}`}>
           Change location

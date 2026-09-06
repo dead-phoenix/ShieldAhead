@@ -20,17 +20,15 @@ export function HomePage() {
   }, [])
 
   return (
-    <div className="landing-page">
+    <div className="landing-page landing-page--focused">
       <section className="landing-about" aria-labelledby="about-title">
         <h1 id="about-title">
-          Getting your household ready,
+          Local help.
           <br />
-          <span className="landing-about__accent">before</span> you need to be
+          <span className="landing-about__accent">Within reach.</span>
         </h1>
         <p className="landing-about__copy">
-          ShieldAhead helps Victorian households prepare quietly and privately — local support,
-          emergency information and free Wi-Fi, saved on your device so it still works when the
-          network does not.
+          Find nearby support and free Wi-Fi. Save local information on your device for when the network goes down.
         </p>
         <div className="landing-about__actions">
           <Link className="button button--primary" to={appRoutes.location}>

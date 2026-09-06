@@ -65,6 +65,10 @@ export function saveHouseholdProfile(profile: HouseholdProfile): boolean {
   const previousPostcode = getHouseholdProfile()?.postcode
   const saved = writeStoredValue(storageKeys.householdProfile, profile)
   if (saved && profile.postcode && profile.postcode !== previousPostcode) {
+    // A changed household postcode becomes the active search area. Remove any
+    // older location override so Wi-Fi and support pages fall back to this
+    // newly saved postcode on their next render.
+    window.localStorage.removeItem(storageKeys.searchLocation)
     void preloadNearbyData(profile.postcode)
   }
   return saved

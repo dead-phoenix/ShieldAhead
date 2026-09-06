@@ -9,7 +9,7 @@ import { EmptyState } from '../../../shared/components/EmptyState'
 import { StatusBanner } from '../../../shared/components/StatusBanner'
 import { useOnlineStatus } from '../../../shared/hooks/useOnlineStatus'
 import { formatSavedDate } from '../../../shared/utils/formatDate'
-import { getSearchPostcode } from '../../../storage/searchLocationStorage'
+import { getSearchLocation, getSearchPostcode } from '../../../storage/searchLocationStorage'
 import { clearUsualWifiSpot, getOfflinePreferences, getUsualWifiSpot } from '../../../storage/onboardingDraftStorage'
 import { selectWifiLocationsForList } from '../utils/sortWifiLocations'
 import { wifiAreaLabel, wifiMapsUrl } from '../utils/wifiMapsUrl'
@@ -17,6 +17,7 @@ import { WifiVerificationBadge } from '../components/WifiVerificationBadge'
 
 export function WifiListPage() {
   const postcode = getSearchPostcode()
+  const searchLabel = getSearchLocation()?.label ?? postcode
   const repository = useMemo(
     () => getWifiRepository(postcode),
     [postcode],
@@ -51,7 +52,7 @@ export function WifiListPage() {
       <div className="page-heading">
         <div>
           <h1 id="wifi-title">Nearby free Wi-Fi</h1>
-          <p>Check conditions before travelling.</p>
+          <p>Nearest available results around {searchLabel}. Check conditions before travelling.</p>
         </div>
         <Link className="button button--text" to={`${appRoutes.location}?next=${encodeURIComponent(appRoutes.wifi)}`}>
           Change location

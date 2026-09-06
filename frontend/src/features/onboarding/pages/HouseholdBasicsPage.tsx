@@ -44,7 +44,7 @@ export function HouseholdBasicsPage() {
           <input id="name" name="name" autoComplete="name" defaultValue={currentProfile.name} />
           <p className="field-help">A first name or nickname is enough.</p>
         </div>
-        <div className="field-grid">
+        <div className="field-grid field-grid--aligned-labels">
           <div className="field">
             <label htmlFor="age">Age <span>Optional</span></label>
             <input id="age" name="age" type="number" inputMode="numeric" min="0" max="120" defaultValue={currentProfile.age} />

@@ -15,8 +15,8 @@ describe('home landing page', () => {
   it('introduces ShieldAhead, then offers support and Wi-Fi destinations', () => {
     renderHome()
 
-    expect(screen.getByRole('heading', { name: /Getting your household ready/i })).toBeVisible()
-    expect(screen.getByText('before')).toBeVisible()
+    expect(screen.getByRole('heading', { name: /Local help.*Within reach/i })).toBeVisible()
+    expect(screen.getByText('Within reach.')).toBeVisible()
     expect(screen.getByRole('link', { name: 'Find what’s near you' })).toHaveAttribute('href', '/location')
     expect(screen.getByRole('link', { name: 'See how it works' })).toHaveAttribute('href', '#how-it-works')
     expect(screen.getByText('Prevention, not crisis response')).toBeVisible()
