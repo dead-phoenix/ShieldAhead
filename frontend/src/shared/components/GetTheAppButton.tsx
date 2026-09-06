@@ -1,5 +1,5 @@
 import { useEffect, useId, useState } from 'react'
-import { DeviceMobile, Export, X } from '@phosphor-icons/react'
+import { DeviceMobile, Export } from '@phosphor-icons/react'
 import {
   clearDeferredInstallPrompt,
   getDeferredInstallPrompt,
