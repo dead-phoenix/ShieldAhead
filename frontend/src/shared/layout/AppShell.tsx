@@ -37,6 +37,24 @@ export function AppShell() {
           </span>
         </NavLink>
         {!isSetupFlow ? (
+          <nav className="desktop-nav" aria-label="Primary navigation">
+            {primaryNavigation.map((item) => {
+              const Icon = item.icon
+              return (
+                <NavLink
+                  key={item.to}
+                  className={({ isActive }) => (isActive ? 'is-active' : undefined)}
+                  end={item.end}
+                  to={item.to}
+                >
+                  <Icon aria-hidden="true" size={20} weight="regular" />
+                  <span>{item.label}</span>
+                </NavLink>
+              )
+            })}
+          </nav>
+        ) : null}
+        {!isSetupFlow ? (
           <nav className="header-auth" aria-label="Site actions">
             <GetTheAppButton />
             {showAuthActions ? (
@@ -48,25 +66,6 @@ export function AppShell() {
           </nav>
         ) : null}
       </header>
-
-      {!isSetupFlow ? (
-        <nav className="desktop-nav" aria-label="Primary navigation">
-          {primaryNavigation.map((item) => {
-            const Icon = item.icon
-            return (
-              <NavLink
-                key={item.to}
-                className={({ isActive }) => (isActive ? 'is-active' : undefined)}
-                end={item.end}
-                to={item.to}
-              >
-                <Icon aria-hidden="true" size={22} weight="regular" />
-                <span>{item.label}</span>
-              </NavLink>
-            )
-          })}
-        </nav>
-      ) : null}
 
       <main id="main-content" className="app-main" tabIndex={-1}>
         <Outlet />
