@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { ArrowDown, ArrowRight, CloudSlash, HandHeart, LockKey, MapPin, ShieldCheck, WifiHigh } from '@phosphor-icons/react'
 import { Link } from 'react-router-dom'
 import { appRoutes } from '../../../app/config/product'
@@ -14,13 +14,40 @@ function formatCount(value: number): string {
 
 export function HomePage() {
   const [stats, setStats] = useState(bundledCoverageStats)
+  const pageRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     void loadCoverageStats().then(setStats)
   }, [])
 
+  useEffect(() => {
+    const page = pageRef.current
+    if (!page) return
+
+    const revealItems = Array.from(page.querySelectorAll<HTMLElement>('[data-scroll-reveal]'))
+    if (!('IntersectionObserver' in window)) {
+      revealItems.forEach((item) => item.setAttribute('data-revealed', 'true'))
+      return
+    }
+
+    page.setAttribute('data-reveal-ready', 'true')
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (!entry.isIntersecting) return
+          entry.target.setAttribute('data-revealed', 'true')
+          observer.unobserve(entry.target)
+        })
+      },
+      { rootMargin: '0px 0px -12% 0px', threshold: 0.12 },
+    )
+
+    revealItems.forEach((item) => observer.observe(item))
+    return () => observer.disconnect()
+  }, [])
+
   return (
-    <div className="landing-page landing-page--focused">
+    <div ref={pageRef} className="landing-page landing-page--focused">
       <section className="landing-about" aria-labelledby="about-title">
         <div className="landing-hero">
           <div className="landing-hero__message">
@@ -89,33 +116,76 @@ export function HomePage() {
         </ul>
       </section>
 
-      <section className="landing-features" id="how-it-works" aria-label="Find nearby information">
-        <p className="landing-features__intro">Here’s what you can do</p>
-        <div className="landing-features__card">
-          <article className="landing-feature">
-            <span className="landing-icon-tile" aria-hidden="true">
-              <HandHeart size={22} weight="regular" />
-            </span>
-            <h2>Find local support</h2>
-            <p>Food, health, transport and other nearby services listed for your area.</p>
-            <Link className="landing-feature__link" to={appRoutes.support}>
-              Open support list <ArrowRight aria-hidden="true" size={16} weight="bold" />
-            </Link>
-          </article>
-          <article className="landing-feature">
-            <span className="landing-icon-tile" aria-hidden="true">
-              <WifiHigh size={22} weight="regular" />
-            </span>
-            <h2>Find free Wi-Fi</h2>
-            <p>Public Wi-Fi places in your area, with confirmed and likely listings kept distinct.</p>
-            <Link className="landing-feature__link" to={appRoutes.wifi}>
-              Open Wi-Fi list <ArrowRight aria-hidden="true" size={16} weight="bold" />
-            </Link>
-          </article>
-        </div>
+      <section className="landing-journey" id="how-it-works" aria-labelledby="journey-title">
+        <header className="landing-journey__header" data-scroll-reveal>
+          <p>How ShieldAhead works</p>
+          <h2 id="journey-title">Prepare once. Know where to turn.</h2>
+          <span>Four clear steps take you from setting your area to keeping useful local information available when your connection is not.</span>
+        </header>
+
+        <article className="journey-step" data-scroll-reveal>
+          <div className="journey-step__copy">
+            <p className="journey-step__index">01 / HOUSEHOLD</p>
+            <span className="journey-step__signal"><ShieldCheck aria-hidden="true" weight="fill" /> Private setup</span>
+            <h3>Prepare your household.</h3>
+            <p>Add only what you are comfortable sharing. Your postcode helps ShieldAhead prepare information for your area, while your profile stays on this device.</p>
+            <Link className="journey-step__action" to={appRoutes.setup}>Set up your profile <ArrowRight aria-hidden="true" weight="bold" /></Link>
+          </div>
+          <figure className="journey-step__media">
+            <img src="/images/household-support.webp" alt="Two people looking at information together on a mobile phone" loading="lazy" />
+          </figure>
+        </article>
+
+        <article className="journey-step journey-step--reverse" data-scroll-reveal>
+          <div className="journey-step__copy">
+            <p className="journey-step__index">02 / LOCAL INFORMATION</p>
+            <span className="journey-step__signal"><MapPin aria-hidden="true" weight="fill" /> Based on your area</span>
+            <h3>See what is nearby.</h3>
+            <p>Use your postcode to explore public Wi-Fi and support services, with the closest available results shown first.</p>
+            <Link className="journey-step__action" to={appRoutes.location}>Choose your location <ArrowRight aria-hidden="true" weight="bold" /></Link>
+          </div>
+          <figure className="journey-step__media">
+            <img src="/images/state-library-victoria.webp" alt="The entrance of the State Library Victoria in Melbourne" loading="lazy" />
+            <figcaption>Public places can provide a way to reconnect. Always check the listing before travelling.</figcaption>
+          </figure>
+        </article>
+
+        <article className="journey-step" data-scroll-reveal>
+          <div className="journey-step__copy">
+            <p className="journey-step__index">03 / CHECK DETAILS</p>
+            <span className="journey-step__signal"><HandHeart aria-hidden="true" weight="fill" /> Know before you go</span>
+            <h3>Check before travelling.</h3>
+            <p>Review distance, address, service type and availability notes before choosing where to go. Unconfirmed information is clearly identified.</p>
+            <Link className="journey-step__action" to={appRoutes.support}>Explore local support <ArrowRight aria-hidden="true" weight="bold" /></Link>
+          </div>
+          <div className="journey-step__media journey-step__media--interface" aria-label="Example support service information">
+            <div className="journey-preview">
+              <span className="journey-preview__icon"><HandHeart aria-hidden="true" weight="duotone" /></span>
+              <p>Community support service</p>
+              <strong>Help near your saved area</strong>
+              <span><MapPin aria-hidden="true" /> Address and distance shown</span>
+              <div><b>Availability not confirmed</b><small>Check the details before travelling.</small></div>
+              <span className="journey-preview__link">View service details <ArrowRight aria-hidden="true" /></span>
+            </div>
+          </div>
+        </article>
+
+        <article className="journey-step journey-step--reverse" data-scroll-reveal>
+          <div className="journey-step__copy">
+            <p className="journey-step__index">04 / OFFLINE ACCESS</p>
+            <span className="journey-step__signal"><CloudSlash aria-hidden="true" weight="fill" /> Ready without signal</span>
+            <h3>Keep it on your phone.</h3>
+            <p>Prepare nearby information while you are online, then read the saved copy if your connection becomes unreliable.</p>
+            <Link className="journey-step__action" to={appRoutes.offlineInformation}>Prepare offline information <ArrowRight aria-hidden="true" weight="bold" /></Link>
+          </div>
+          <figure className="journey-step__media journey-step__media--offline">
+            <img src="/images/offline-phone.webp" alt="A person using a mobile phone" loading="lazy" />
+            <figcaption><ShieldCheck aria-hidden="true" weight="fill" /><span><strong>Saved on this device</strong><small>Available when the network is not</small></span></figcaption>
+          </figure>
+        </article>
       </section>
 
-      <section className="landing-pack" aria-labelledby="crisis-pack-title">
+      <section className="landing-pack" aria-labelledby="crisis-pack-title" data-scroll-reveal>
         <p className="landing-tag landing-tag--later">Coming later</p>
         <h2 id="crisis-pack-title">Crisis Pack</h2>
         <p>
