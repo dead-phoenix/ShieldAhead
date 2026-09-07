@@ -42,31 +42,39 @@ def reset_caches():
 # Victoria / locality filtering (no network needed)
 # ============================================================
 
-def test_postcode_lookup_falls_back_when_nominatim_has_no_result():
+def test_postcode_lookup_uses_exact_postal_result_and_caches():
+    postal_response = Mock()
+    postal_response.raise_for_status.return_value = None
+    postal_response.json.return_value = {
+        "country abbreviation": "AU",
+        "places": [{
+            "state abbreviation": "VIC",
+            "latitude": "-37.8262",
+            "longitude": "144.9815",
+        }],
+    }
+
+    with patch("app.http_requests.get", return_value=postal_response) as mock_get:
+        coordinates = postcode_to_coords("3001")
+        cached = postcode_to_coords("3001")
+
+    assert coordinates == pytest.approx((-37.8262, 144.9815))
+    assert cached == coordinates
+    assert mock_get.call_count == 1
+
+
+def test_postcode_lookup_falls_back_when_postal_lookup_has_no_result():
     nominatim_response = Mock()
     nominatim_response.raise_for_status.return_value = None
-    nominatim_response.json.return_value = []
+    nominatim_response.json.return_value = [{"lat": "-36.9192", "lon": "144.21875"}]
     fallback_response = Mock()
     fallback_response.raise_for_status.return_value = None
     fallback_response.json.return_value = {
         "country abbreviation": "AU",
-        "places": [
-            {
-                "place name": "Ravenswood",
-                "state abbreviation": "VIC",
-                "latitude": "-36.9",
-                "longitude": "144.2167",
-            },
-            {
-                "place name": "Harcourt",
-                "state abbreviation": "VIC",
-                "latitude": "-36.9384",
-                "longitude": "144.2208",
-            },
-        ],
+        "places": [],
     }
 
-    with patch("app.http_requests.get", side_effect=[nominatim_response, fallback_response]) as mock_get:
+    with patch("app.http_requests.get", side_effect=[fallback_response, nominatim_response]) as mock_get:
         latitude, longitude = postcode_to_coords("3453")
         cached = postcode_to_coords("3453")
 
@@ -91,7 +99,7 @@ def test_postcode_fallback_rejects_non_victorian_places():
         }],
     }
 
-    with patch("app.http_requests.get", side_effect=[nominatim_response, fallback_response]):
+    with patch("app.http_requests.get", side_effect=[fallback_response, nominatim_response]):
         assert postcode_to_coords("3453") == (None, None)
 
 def test_victorian_charity_is_kept():

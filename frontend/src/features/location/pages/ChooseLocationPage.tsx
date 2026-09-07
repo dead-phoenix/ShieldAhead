@@ -2,7 +2,7 @@ import { useState, type FormEvent } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { MapPin } from '@phosphor-icons/react'
 import { appRoutes } from '../../../app/config/product'
-import { saveSearchLocation } from '../../../storage/searchLocationStorage'
+import { getSearchLocation, getSearchPostcode, saveSearchLocation } from '../../../storage/searchLocationStorage'
 import {
   LocationResolveError,
   parseManualLocationQuery,
@@ -23,7 +23,9 @@ export function ChooseLocationPage() {
   const navigate = useNavigate()
   const [params] = useSearchParams()
   const destination = nextPath(params.get('next'))
-  const [query, setQuery] = useState('')
+  const currentLocation = getSearchLocation()
+  const currentPostcode = getSearchPostcode()
+  const [query, setQuery] = useState(currentPostcode)
   const [error, setError] = useState('')
   const [busy, setBusy] = useState<'geo' | 'search' | null>(null)
 
@@ -32,7 +34,10 @@ export function ChooseLocationPage() {
       setError('This browser could not save your search area. Check storage settings and try again.')
       return
     }
-    navigate(destination, { replace: true })
+    navigate(destination, {
+      replace: true,
+      state: { searchPostcode: postcode, searchUpdatedAt: Date.now() },
+    })
   }
 
   async function handleUseLocation() {
@@ -82,6 +87,11 @@ export function ChooseLocationPage() {
     <section className="location-page" aria-labelledby="location-title">
       <h1 id="location-title">Find places near you</h1>
       <p className="lead">Choose a search area for nearby Wi-Fi and support services.</p>
+      {currentPostcode ? (
+        <p className="current-search-location" role="status">
+          Current search area: <strong>{currentLocation?.label ?? currentPostcode}</strong>
+        </p>
+      ) : null}
 
       <button
         className="button button--primary"

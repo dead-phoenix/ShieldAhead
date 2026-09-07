@@ -92,7 +92,7 @@ export function EditProfilePage() {
             <label htmlFor="edit-name">Name <span>Optional</span></label>
             <input id="edit-name" name="name" autoComplete="name" defaultValue={profile.name} />
           </div>
-          <div className="field-grid">
+          <div className="field-grid field-grid--aligned-labels">
             <div className="field">
               <label htmlFor="edit-age">Age <span>Optional</span></label>
               <input id="edit-age" name="age" type="number" inputMode="numeric" min="0" max="120" defaultValue={profile.age} />

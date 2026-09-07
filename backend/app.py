@@ -529,9 +529,17 @@ def _zippopotam_vic_centroid(postcode):
 
 
 def postcode_to_coords(postcode):
-    """Convert an Australian postcode to (lat, lng) using Nominatim, with a local cache."""
+    """Convert a Victorian postcode to coordinates, preferring an exact postal lookup."""
     if postcode in _postcode_cache:
         return _postcode_cache[postcode]
+
+    try:
+        coords = _zippopotam_vic_centroid(postcode)
+        if coords[0] is not None and coords[1] is not None:
+            _postcode_cache[postcode] = coords
+            return coords
+    except Exception:
+        pass
 
     try:
         resp = http_requests.get(
@@ -549,14 +557,6 @@ def postcode_to_coords(postcode):
         results = resp.json()
         if results:
             coords = (float(results[0]["lat"]), float(results[0]["lon"]))
-            _postcode_cache[postcode] = coords
-            return coords
-    except Exception:
-        pass
-
-    try:
-        coords = _zippopotam_vic_centroid(postcode)
-        if coords[0] is not None and coords[1] is not None:
             _postcode_cache[postcode] = coords
             return coords
     except Exception:

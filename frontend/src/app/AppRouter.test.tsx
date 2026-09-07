@@ -11,7 +11,7 @@ describe('first-run routing', () => {
   it('shows the home page to a new visitor, with log in and sign up', async () => {
     render(<AppRouter />)
 
-    expect(await screen.findByRole('heading', { name: /Getting your household ready/i })).toBeVisible()
+    expect(await screen.findByRole('heading', { name: /Local help.*Within reach/i })).toBeVisible()
     expect(window.location.pathname).toBe('/')
     expect(screen.getByRole('link', { name: 'Log in' })).toHaveAttribute('href', '/setup')
     expect(screen.getByRole('link', { name: 'Sign up' })).toHaveAttribute('href', '/setup')
@@ -49,7 +49,7 @@ describe('first-run routing', () => {
 
     render(<AppRouter />)
 
-    expect(await screen.findByRole('heading', { name: /Getting your household ready/i })).toBeVisible()
+    expect(await screen.findByRole('heading', { name: /Local help.*Within reach/i })).toBeVisible()
     expect(window.location.pathname).toBe('/')
     expect(screen.queryByRole('link', { name: 'Sign up' })).not.toBeInTheDocument()
   })

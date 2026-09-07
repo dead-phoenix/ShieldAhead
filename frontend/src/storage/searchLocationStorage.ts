@@ -7,13 +7,22 @@ export interface SearchLocation {
   label: string
 }
 
+interface StoredSearchLocation extends SearchLocation {
+  selectedAt?: string
+}
+
 function readSearchLocation(): SearchLocation | null {
   try {
     const storedValue = window.localStorage.getItem(storageKeys.searchLocation)
     if (!storedValue) return null
-    const parsed = JSON.parse(storedValue) as Partial<SearchLocation>
+    const parsed = JSON.parse(storedValue) as Partial<StoredSearchLocation>
     const postcode = typeof parsed.postcode === 'string' ? parsed.postcode.trim() : ''
     if (!/^\d{4}$/.test(postcode)) return null
+    const profilePostcode = getHouseholdProfile()?.postcode
+    // Search locations saved by older builds did not record whether the user
+    // deliberately selected them. If one conflicts with the current profile,
+    // use the profile once; future explicit selections include selectedAt.
+    if (!parsed.selectedAt && profilePostcode && postcode !== profilePostcode) return null
     return {
       postcode,
       label: typeof parsed.label === 'string' && parsed.label.trim()
@@ -36,6 +45,7 @@ export function saveSearchLocation(location: SearchLocation): boolean {
     window.localStorage.setItem(storageKeys.searchLocation, JSON.stringify({
       postcode,
       label: location.label.trim() || postcode,
+      selectedAt: new Date().toISOString(),
     }))
     void preloadNearbyData(postcode)
     return true

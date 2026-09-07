@@ -12,11 +12,11 @@ function renderHome() {
 }
 
 describe('home landing page', () => {
-  it('introduces ShieldAhead, then offers support and Wi-Fi destinations', () => {
+  it('introduces ShieldAhead, then explains the complete preparation journey', () => {
     renderHome()
 
-    expect(screen.getByRole('heading', { name: /Getting your household ready/i })).toBeVisible()
-    expect(screen.getByText('before')).toBeVisible()
+    expect(screen.getByRole('heading', { name: /Local help.*Within reach/i })).toBeVisible()
+    expect(screen.getByText('Within reach.')).toBeVisible()
     expect(screen.getByRole('link', { name: 'Find what’s near you' })).toHaveAttribute('href', '/location')
     expect(screen.getByRole('link', { name: 'See how it works' })).toHaveAttribute('href', '#how-it-works')
     expect(screen.getByText('Prevention, not crisis response')).toBeVisible()
@@ -24,15 +24,17 @@ describe('home landing page', () => {
     expect(screen.getByText('Private by default, on your device')).toBeVisible()
     expect(screen.getByText('All of VIC')).toBeVisible()
     expect(screen.queryByText(/Loddon Campaspe/i)).not.toBeInTheDocument()
-    expect(screen.getByText(/Here’s what you can do/i)).toBeVisible()
-    expect(screen.getByText(/listed for your area/i)).toBeVisible()
-    expect(screen.getByText(/Wi-Fi places in your area/i)).toBeVisible()
+    expect(screen.getByRole('heading', { name: 'Prepare once. Know where to turn.' })).toBeVisible()
+    expect(screen.getByRole('heading', { name: 'Prepare your household.' })).toBeVisible()
+    expect(screen.getByRole('heading', { name: 'See what is nearby.' })).toBeVisible()
+    expect(screen.getByRole('heading', { name: 'Check before travelling.' })).toBeVisible()
+    expect(screen.getByRole('heading', { name: 'Keep it on your phone.' })).toBeVisible()
 
-    const supportLink = screen.getByRole('link', { name: /Open support list/i })
-    const wifiLink = screen.getByRole('link', { name: /Open Wi-Fi list/i })
+    const supportLink = screen.getByRole('link', { name: /Explore local support/i })
+    const wifiLink = screen.getByRole('link', { name: /Choose your location/i })
     expect(supportLink).toHaveAttribute('href', '/support')
-    expect(wifiLink).toHaveAttribute('href', '/wifi')
-    expect(supportLink.compareDocumentPosition(wifiLink) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+    expect(wifiLink).toHaveAttribute('href', '/location')
+    expect(wifiLink.compareDocumentPosition(supportLink) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
   })
 
   it('describes the Crisis Pack as a later iteration, not a current destination', () => {
