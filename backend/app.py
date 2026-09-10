@@ -4,6 +4,7 @@ from routes.wifi_routes import wifi_bp
 from routes.charities_routes import charities_bp
 from routes.stats_routes import stats_bp
 from routes.spa_routes import spa_bp
+from routes.directions_routes import directions_bp
 
 init_db()
 
@@ -11,6 +12,7 @@ app.register_blueprint(wifi_bp)
 app.register_blueprint(charities_bp)
 app.register_blueprint(stats_bp)
 app.register_blueprint(spa_bp)
+app.register_blueprint(directions_bp)
 
 #  Start server
 

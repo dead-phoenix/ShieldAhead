@@ -1,3 +1,7 @@
+import os
+import sys
+from pathlib import Path
+
 CACHE_TTL_SECONDS = 300  # 5 minutes
 CHARITY_CACHE_TTL_SECONDS = 3600  # 1 hour
 EXTRA_POSTCODE_CACHE_TTL_SECONDS = 3600  # 1 hour, same as the main charity cache
@@ -80,3 +84,30 @@ SERVICE_TYPE_RULES = [
 
 MAX_ADDRESSES_TO_GEOCODE_PER_REFRESH = 40
 MAX_ADDRESSES_TO_GEOCODE_FOR_EXTRA_POSTCODE = 8  # kept small: runs inline on a live request
+
+#  OpenRouteService (server-side directions proxy — never send this key to the frontend)
+
+ORS_DIRECTIONS_URL = "https://api.openrouteservice.org/v2/directions/{profile}/geojson"
+
+
+def _load_ors_api_key():
+    key = os.environ.get("ORS_API_KEY", "").strip()
+    # Tests must not read a local .env key and accidentally call the live ORS API.
+    if not key and "pytest" not in sys.modules:
+        for candidate in (
+            Path(__file__).resolve().parent / ".env",
+            Path(__file__).resolve().parent.parent / ".env.local",
+            Path(__file__).resolve().parent.parent / ".env",
+        ):
+            if not candidate.is_file():
+                continue
+            for line in candidate.read_text(encoding="utf-8").splitlines():
+                if line.startswith("ORS_API_KEY="):
+                    key = line.split("=", 1)[1].strip().strip('"').strip("'")
+                    break
+            if key:
+                break
+    return key
+
+
+ORS_API_KEY = _load_ors_api_key()

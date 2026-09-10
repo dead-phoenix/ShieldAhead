@@ -1,0 +1,105 @@
+import requests as http_requests
+
+from config import HEADERS_CKAN, ORS_API_KEY, ORS_DIRECTIONS_URL
+
+ALLOWED_PROFILES = ("driving-car", "foot-walking")
+
+
+class ORSServiceError(Exception):
+    """Raised when OpenRouteService cannot return a route.
+
+    Intentionally a dedicated exception (not RuntimeError) so the route layer
+    can map rate-limit/quota failures to HTTP 429 and everything else to 502
+    without leaking ORS error details to the client.
+    """
+
+    def __init__(self, message, status_code=None, is_rate_limited=False):
+        super().__init__(message)
+        self.status_code = status_code
+        self.is_rate_limited = is_rate_limited
+
+
+def _ors_error_message(response):
+    try:
+        payload = response.json()
+    except ValueError:
+        return f"ORS returned HTTP {response.status_code}"
+    error = payload.get("error") if isinstance(payload, dict) else None
+    if isinstance(error, dict):
+        return str(error.get("message") or error)
+    if isinstance(error, str) and error.strip():
+        return error
+    return f"ORS returned HTTP {response.status_code}"
+
+
+def _is_rate_limited(status_code, message):
+    lowered = (message or "").lower()
+    if status_code == 429:
+        return True
+    if status_code == 403 and any(token in lowered for token in ("rate limit", "quota")):
+        return True
+    return False
+
+
+def get_route(start_lat, start_lng, end_lat, end_lng, profile="driving-car"):
+    """Request a route from ORS Directions (GeoJSON) and return a compact dict.
+
+    Coordinates are sent to ORS only; they are not logged or stored here.
+    """
+    if not ORS_API_KEY:
+        raise ORSServiceError("ORS API key is not configured")
+
+    if profile not in ALLOWED_PROFILES:
+        raise ORSServiceError(f"Unsupported routing profile: {profile}")
+
+    url = ORS_DIRECTIONS_URL.format(profile=profile)
+    headers = {
+        **HEADERS_CKAN,
+        "Authorization": ORS_API_KEY,
+        "Content-Type": "application/json",
+        "Accept": "application/json, application/geo+json",
+    }
+    body = {
+        "coordinates": [
+            [float(start_lng), float(start_lat)],
+            [float(end_lng), float(end_lat)],
+        ]
+    }
+
+    try:
+        resp = http_requests.post(url, json=body, headers=headers, timeout=15)
+    except http_requests.RequestException as e:
+        raise ORSServiceError(f"ORS request failed: {e}") from e
+
+    if resp.status_code != 200:
+        message = _ors_error_message(resp)
+        raise ORSServiceError(
+            message,
+            status_code=resp.status_code,
+            is_rate_limited=_is_rate_limited(resp.status_code, message),
+        )
+
+    try:
+        payload = resp.json()
+    except ValueError as e:
+        raise ORSServiceError("ORS returned a non-JSON response") from e
+
+    features = payload.get("features") if isinstance(payload, dict) else None
+    if not features:
+        raise ORSServiceError("ORS returned no route features")
+
+    feature = features[0] or {}
+    properties = feature.get("properties") or {}
+    summary = properties.get("summary") or {}
+    geometry = feature.get("geometry")
+    distance = summary.get("distance")
+    duration = summary.get("duration")
+
+    if geometry is None or distance is None or duration is None:
+        raise ORSServiceError("ORS response was missing distance, duration, or geometry")
+
+    return {
+        "distance_meters": distance,
+        "duration_seconds": duration,
+        "geometry": geometry,
+    }
