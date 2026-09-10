@@ -1,5 +1,5 @@
 import { useEffect, useId, useState } from 'react'
-import { DeviceMobile, Export } from '@phosphor-icons/react'
+import { DeviceMobileIcon, ExportIcon, XIcon } from '@phosphor-icons/react'
 import {
   clearDeferredInstallPrompt,
   getDeferredInstallPrompt,
@@ -45,7 +45,7 @@ export function GetTheAppButton({ variant = 'header' }: GetTheAppButtonProps) {
         type="button"
         onClick={() => void handleClick()}
       >
-        <DeviceMobile aria-hidden="true" size={variant === 'footer' ? 18 : 16} />
+        <DeviceMobileIcon aria-hidden="true" size={variant === 'footer' ? 18 : 16} />
         Get the app
       </button>
       {helpMode ? (
@@ -63,12 +63,12 @@ export function GetTheAppButton({ variant = 'header' }: GetTheAppButtonProps) {
               aria-label="Close"
               onClick={() => setHelpMode(null)}
             >
-              <X aria-hidden="true" size={18} weight="bold" />
+              <XIcon aria-hidden="true" size={18} weight="bold" />
             </button>
             <h2 id={titleId}>Add ShieldAhead to your home screen</h2>
             {helpMode === 'ios' ? (
               <p>
-                <Export aria-hidden="true" size={18} /> Tap the Share icon, then “Add to Home Screen”.
+                <ExportIcon aria-hidden="true" size={18} /> Tap the Share icon, then “Add to Home Screen”.
               </p>
             ) : (
               <p>Use your browser menu to install ShieldAhead. On Android Chrome, choose Install app.</p>
