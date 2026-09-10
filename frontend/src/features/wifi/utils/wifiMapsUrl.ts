@@ -1,4 +1,5 @@
 import type { WifiLocation } from '../../../data/contracts'
+import { openMapUrl } from '../../../shared/utils/openMapUrl'
 
 export function wifiAreaLabel(location: Pick<WifiLocation, 'address' | 'suburb' | 'postcode'>): string {
   if (location.address) {
@@ -13,8 +14,9 @@ export function wifiAreaLabel(location: Pick<WifiLocation, 'address' | 'suburb' 
 }
 
 export function wifiMapsUrl(location: Pick<WifiLocation, 'latitude' | 'longitude' | 'address' | 'suburb' | 'postcode'>): string {
-  const query = location.latitude != null && location.longitude != null
-    ? `${location.latitude},${location.longitude}`
-    : wifiAreaLabel(location)
-  return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}`
+  return openMapUrl({
+    latitude: location.latitude,
+    longitude: location.longitude,
+    query: wifiAreaLabel(location),
+  })
 }

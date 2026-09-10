@@ -54,10 +54,10 @@ describe('sortWifiLocations', () => {
     ])
   })
 
-  it('ranks confirmed public Wi-Fi above nearer likely listings', () => {
+  it('ranks nearer likely listings above farther confirmed listings', () => {
     expect(
       sortWifiLocations([nearbyLikely, fartherConfirmed], null).map(({ id }) => id),
-    ).toEqual(['farther-confirmed', 'nearby-likely'])
+    ).toEqual(['nearby-likely', 'farther-confirmed'])
   })
 
   it('keeps nearer confirmed spots ahead of farther confirmed spots', () => {

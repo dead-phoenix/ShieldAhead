@@ -20,10 +20,11 @@ export function sortWifiLocations(
     if (left.id === usualSpotId) return -1
     if (right.id === usualSpotId) return 1
 
-    const verificationDiff = verificationRank(left) - verificationRank(right)
-    if (verificationDiff !== 0) return verificationDiff
+    const leftDistance = distanceFrom(left)
+    const rightDistance = distanceFrom(right)
+    if (leftDistance !== rightDistance) return leftDistance - rightDistance
 
-    return distanceFrom(left) - distanceFrom(right)
+    return verificationRank(left) - verificationRank(right)
   })
 }
 
