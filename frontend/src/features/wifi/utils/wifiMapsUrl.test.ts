@@ -27,4 +27,11 @@ describe('wifiAreaLabel', () => {
       postcode: '3350',
     })).toBe('Ballarat VIC 3350')
   })
+
+  it('identifies an exact map point when the area fields are missing', () => {
+    expect(wifiAreaLabel({
+      latitude: -37.72,
+      longitude: 144.86,
+    })).toBe('Exact map location available')
+  })
 })

@@ -68,7 +68,7 @@ export function WifiDetailPage() {
       </div>
       <dl className="detail-list">
         <div><dt><NavigationArrow aria-hidden="true" size={20} /> Distance</dt><dd>{location.distanceKm === undefined ? 'Distance from your postcode is not confirmed' : `${location.distanceKm} km from ${postcode}`}</dd></div>
-        <div><dt><MapPin aria-hidden="true" size={20} /> Address</dt><dd>{location.address ? locationLabel : `Street address not confirmed. Listed for ${locationLabel}.`}</dd></div>
+        <div><dt><MapPin aria-hidden="true" size={20} /> Address</dt><dd>{location.address ? locationLabel : location.latitude != null && location.longitude != null ? `Street address not confirmed. Exact map point available for ${locationLabel}.` : `Street address not confirmed. Listed for ${locationLabel}.`}</dd></div>
         <div><dt><Clock aria-hidden="true" size={20} /> Opening hours</dt><dd>{location.openingHours ?? 'Opening hours not confirmed'}</dd></div>
         <div><dt><WifiHigh aria-hidden="true" size={20} /> Access conditions</dt><dd>{location.accessConditions?.length ? <ul>{location.accessConditions.map((condition) => <li key={condition}>{condition}</li>)}</ul> : 'Access conditions not confirmed'}</dd></div>
       </dl>
