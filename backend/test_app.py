@@ -1,8 +1,9 @@
 import pytest
 from unittest.mock import Mock, patch
-import app as app_module
-from app import (
-    app,
+from app import app
+from cache import _address_cache, _cache, _charity_cache, _postcode_cache, _reverse_geocode_cache
+from extensions import limiter
+from services.acnc_service import (
     attach_charity_coordinates,
     is_victorian_charity,
     infer_service_types,
@@ -11,6 +12,8 @@ from app import (
     build_charity_address,
     charity_to_support_service,
     geocode_charities,
+)
+from services.geocoding import (
     _locality_names_from_address,
     postcode_to_coords,
 )
@@ -26,13 +29,13 @@ def client():
 @pytest.fixture(autouse=True)
 def reset_caches():
     """Ensure each test starts with clean caches so tests don't interfere with each other."""
-    app_module._charity_cache.clear()
-    app_module._address_cache.clear()
-    app_module._postcode_cache.clear()
-    app_module._reverse_geocode_cache.clear()
-    app_module.limiter.reset()
+    _charity_cache.clear()
+    _address_cache.clear()
+    _postcode_cache.clear()
+    _reverse_geocode_cache.clear()
+    limiter.reset()
     with patch(
-        "app.reverse_geocode_locality",
+        "services.geocoding.reverse_geocode_locality",
         return_value={"suburb": None, "postcode": None, "place_names": []},
     ):
         yield
@@ -54,7 +57,7 @@ def test_postcode_lookup_uses_exact_postal_result_and_caches():
         }],
     }
 
-    with patch("app.http_requests.get", return_value=postal_response) as mock_get:
+    with patch("services.geocoding.http_requests.get", return_value=postal_response) as mock_get:
         coordinates = postcode_to_coords("3001")
         cached = postcode_to_coords("3001")
 
@@ -74,7 +77,7 @@ def test_postcode_lookup_falls_back_when_postal_lookup_has_no_result():
         "places": [],
     }
 
-    with patch("app.http_requests.get", side_effect=[fallback_response, nominatim_response]) as mock_get:
+    with patch("services.geocoding.http_requests.get", side_effect=[fallback_response, nominatim_response]) as mock_get:
         latitude, longitude = postcode_to_coords("3453")
         cached = postcode_to_coords("3453")
 
@@ -99,7 +102,7 @@ def test_postcode_fallback_rejects_non_victorian_places():
         }],
     }
 
-    with patch("app.http_requests.get", side_effect=[fallback_response, nominatim_response]):
+    with patch("services.geocoding.http_requests.get", side_effect=[fallback_response, nominatim_response]):
         assert postcode_to_coords("3453") == (None, None)
 
 def test_victorian_charity_is_kept():
@@ -127,7 +130,7 @@ def test_lga_names_are_not_used_as_place_names():
 
 
 def test_north_melbourne_matches_melbourne_search():
-    from app import charity_town_matches
+    from services.acnc_service import charity_town_matches
     assert charity_town_matches({"Town_City": "North Melbourne"}, "Melbourne") is True
     assert charity_town_matches({"Town_City": "Sydney"}, "Melbourne") is False
 
@@ -174,9 +177,9 @@ def test_irrelevant_charities_are_not_returned_by_endpoint(client):
         "Postcode": "3453",
         "Objects": "Environmental conservation",
     }
-    with patch("app.postcode_to_coords", return_value=(-36.94, 144.22)):
-        with patch("app.fetch_acnc_last_updated", return_value="2026-01-01"):
-            with patch("app.fetch_charities_for_region", return_value=[MOCK_CHARITY, irrelevant]):
+    with patch("services.geocoding.postcode_to_coords", return_value=(-36.94, 144.22)):
+        with patch("services.acnc_service.fetch_acnc_last_updated", return_value="2026-01-01"):
+            with patch("services.acnc_service.fetch_charities_for_region", return_value=[MOCK_CHARITY, irrelevant]):
                 response = client.get("/api/charities?postcode=3453")
 
     assert response.status_code == 200
@@ -273,8 +276,8 @@ def test_geocode_charities_respects_cap():
     services = [
         {"address": f"{i} Test Street, Bendigo, VIC, 3550"} for i in range(5)
     ]
-    with patch("app.MAX_ADDRESSES_TO_GEOCODE_PER_REFRESH", 2):
-        with patch("app.geocode_address", return_value=(-36.75, 144.27)) as mock_geocode:
+    with patch("services.acnc_service.MAX_ADDRESSES_TO_GEOCODE_PER_REFRESH", 2):
+        with patch("services.geocoding.geocode_address", return_value=(-36.75, 144.27)) as mock_geocode:
             geocode_charities(services)
             assert mock_geocode.call_count == 2
 
@@ -285,8 +288,8 @@ def test_geocode_charities_skips_records_without_address():
 
 def test_geocode_charities_uses_cache_without_calling_geocoder():
     services = [{"address": "1 Cached St, Bendigo, VIC, 3550"}]
-    app_module._address_cache["1 Cached St, Bendigo, VIC, 3550"] = (-36.75, 144.27)
-    with patch("app.http_requests.get") as mock_get:
+    _address_cache["1 Cached St, Bendigo, VIC, 3550"] = (-36.75, 144.27)
+    with patch("services.geocoding.http_requests.get") as mock_get:
         geocode_charities(services)
         mock_get.assert_not_called()
     assert services[0]["latitude"] == -36.75
@@ -294,7 +297,7 @@ def test_geocode_charities_uses_cache_without_calling_geocoder():
 
 def test_attach_charity_coordinates_uses_postcode_lookup():
     records = [{"postcode": "3000", "latitude": None, "longitude": None}]
-    with patch("app.postcode_to_coords", return_value=(-37.81, 144.96)):
+    with patch("services.geocoding.postcode_to_coords", return_value=(-37.81, 144.96)):
         attach_charity_coordinates(records)
     assert records[0]["latitude"] == -37.81
     assert records[0]["longitude"] == 144.96
@@ -339,34 +342,34 @@ MELBOURNE_CHARITY = {
 
 
 def test_valid_postcode_returns_fetched_charities(client):
-    with patch("app.postcode_to_coords", return_value=(-36.757, 144.279)):
-        with patch("app.fetch_acnc_last_updated", return_value="2026-01-01"):
-            with patch("app.fetch_charities_for_region", return_value=[MOCK_CHARITY]):
+    with patch("services.geocoding.postcode_to_coords", return_value=(-36.757, 144.279)):
+        with patch("services.acnc_service.fetch_acnc_last_updated", return_value="2026-01-01"):
+            with patch("services.acnc_service.fetch_charities_for_region", return_value=[MOCK_CHARITY]):
                 response = client.get("/api/charities?postcode=3550")
                 assert response.status_code == 200
                 names = [r["name"] for r in response.json["records"]]
                 assert "Bendigo Food Relief Inc" in names
 
 def test_records_sorted_by_distance(client):
-    with patch("app.postcode_to_coords", return_value=(-36.757, 144.279)):
-        with patch("app.fetch_acnc_last_updated", return_value="2026-01-01"):
-            with patch("app.fetch_charities_for_region", return_value=[MOCK_CHARITY]):
+    with patch("services.geocoding.postcode_to_coords", return_value=(-36.757, 144.279)):
+        with patch("services.acnc_service.fetch_acnc_last_updated", return_value="2026-01-01"):
+            with patch("services.acnc_service.fetch_charities_for_region", return_value=[MOCK_CHARITY]):
                 response = client.get("/api/charities?postcode=3550")
                 records = response.json["records"]
                 distances = [r["distanceKm"] for r in records if r["distanceKm"] is not None]
                 assert distances == sorted(distances)
 
 def test_source_failure_returns_503(client):
-    with patch("app.postcode_to_coords", return_value=(-36.757, 144.279)):
-        with patch("app.fetch_charities_for_region", side_effect=Exception("ACNC down")):
+    with patch("services.geocoding.postcode_to_coords", return_value=(-36.757, 144.279)):
+        with patch("services.acnc_service.fetch_charities_for_region", side_effect=Exception("ACNC down")):
             response = client.get("/api/charities?postcode=3550")
             assert response.status_code == 503
 
 def test_eligibility_is_never_populated_end_to_end(client):
     """Guards against ever silently starting to fabricate eligibility text."""
-    with patch("app.postcode_to_coords", return_value=(-36.757, 144.279)):
-        with patch("app.fetch_acnc_last_updated", return_value="2026-01-01"):
-            with patch("app.fetch_charities_for_region", return_value=[MOCK_CHARITY]):
+    with patch("services.geocoding.postcode_to_coords", return_value=(-36.757, 144.279)):
+        with patch("services.acnc_service.fetch_acnc_last_updated", return_value="2026-01-01"):
+            with patch("services.acnc_service.fetch_charities_for_region", return_value=[MOCK_CHARITY]):
                 response = client.get("/api/charities?postcode=3550")
                 for record in response.json["records"]:
                     assert record["eligibility"] is None
@@ -376,11 +379,11 @@ def test_eligibility_is_never_populated_end_to_end(client):
                 )
 
 def test_metadata_includes_victoria_coverage(client):
-    with patch("app.postcode_to_coords", return_value=(-36.757, 144.279)):
-        with patch("app.fetch_acnc_last_updated", return_value="2026-01-01"):
-            with patch("app.fetch_charities_for_region", return_value=[MOCK_CHARITY]):
+    with patch("services.geocoding.postcode_to_coords", return_value=(-36.757, 144.279)):
+        with patch("services.acnc_service.fetch_acnc_last_updated", return_value="2026-01-01"):
+            with patch("services.acnc_service.fetch_charities_for_region", return_value=[MOCK_CHARITY]):
                 with patch(
-                    "app.reverse_geocode_locality",
+                    "services.geocoding.reverse_geocode_locality",
                     return_value={"suburb": "Bendigo", "postcode": "3550", "place_names": ["Bendigo"]},
                 ):
                     response = client.get("/api/charities?postcode=3550")
@@ -390,9 +393,9 @@ def test_metadata_includes_victoria_coverage(client):
                     assert "3550" in coverage
 
 def test_charity_cache_avoids_repeat_source_fetch_for_same_postcode(client):
-    with patch("app.postcode_to_coords", return_value=(-36.757, 144.279)):
-        with patch("app.fetch_acnc_last_updated", return_value="2026-01-01"):
-            with patch("app.fetch_charities_for_region", return_value=[MOCK_CHARITY]) as mock_fetch:
+    with patch("services.geocoding.postcode_to_coords", return_value=(-36.757, 144.279)):
+        with patch("services.acnc_service.fetch_acnc_last_updated", return_value="2026-01-01"):
+            with patch("services.acnc_service.fetch_charities_for_region", return_value=[MOCK_CHARITY]) as mock_fetch:
                 client.get("/api/charities?postcode=3550")
                 client.get("/api/charities?postcode=3550")
                 assert mock_fetch.call_count == 1
@@ -411,9 +414,9 @@ def test_melbourne_postcode_does_not_return_bendigo_charities(client):
             return [MELBOURNE_CHARITY]
         return [MOCK_CHARITY]
 
-    with patch("app.postcode_to_coords", side_effect=fake_coords):
-        with patch("app.fetch_acnc_last_updated", return_value="2026-01-01"):
-            with patch("app.fetch_charities_for_region", side_effect=fake_fetch):
+    with patch("services.geocoding.postcode_to_coords", side_effect=fake_coords):
+        with patch("services.acnc_service.fetch_acnc_last_updated", return_value="2026-01-01"):
+            with patch("services.acnc_service.fetch_charities_for_region", side_effect=fake_fetch):
                 bendigo = client.get("/api/charities?postcode=3550")
                 melbourne = client.get("/api/charities?postcode=3000")
 
@@ -432,9 +435,9 @@ def test_charity_cache_is_per_postcode(client):
             return [MELBOURNE_CHARITY]
         return [MOCK_CHARITY]
 
-    with patch("app.postcode_to_coords", return_value=(-36.757, 144.279)):
-        with patch("app.fetch_acnc_last_updated", return_value="2026-01-01"):
-            with patch("app.fetch_charities_for_region", side_effect=fake_fetch) as mock_fetch:
+    with patch("services.geocoding.postcode_to_coords", return_value=(-36.757, 144.279)):
+        with patch("services.acnc_service.fetch_acnc_last_updated", return_value="2026-01-01"):
+            with patch("services.acnc_service.fetch_charities_for_region", side_effect=fake_fetch) as mock_fetch:
                 client.get("/api/charities?postcode=3550")
                 client.get("/api/charities?postcode=3000")
                 client.get("/api/charities?postcode=3550")
@@ -445,7 +448,7 @@ def test_spa_serves_index_for_client_routes(tmp_path, monkeypatch, client):
     dist = tmp_path / "dist"
     dist.mkdir()
     (dist / "index.html").write_text("<html>shieldahead</html>", encoding="utf-8")
-    monkeypatch.setattr("app.frontend_dist_path", lambda: dist)
+    monkeypatch.setattr("routes.spa_routes.frontend_dist_path", lambda: dist)
 
     response = client.get("/wifi")
 
@@ -458,7 +461,7 @@ def test_spa_serves_built_assets(tmp_path, monkeypatch, client):
     (dist / "assets").mkdir(parents=True)
     (dist / "index.html").write_text("<html>shieldahead</html>", encoding="utf-8")
     (dist / "assets" / "app.js").write_text("console.log('ok')", encoding="utf-8")
-    monkeypatch.setattr("app.frontend_dist_path", lambda: dist)
+    monkeypatch.setattr("routes.spa_routes.frontend_dist_path", lambda: dist)
 
     response = client.get("/assets/app.js")
 
@@ -473,9 +476,9 @@ def test_api_stats_is_not_captured_by_spa(client):
 
 
 def test_coverage_stats_count_in_memory_pipeline_entries(client):
-    previous_wifi = app_module._cache.get("data")
-    app_module._cache["data"] = [{"id": "wifi-1"}, {"id": "wifi-2"}, {"id": "wifi-3"}]
-    app_module._charity_cache["3000"] = {
+    previous_wifi = _cache.get("data")
+    _cache["data"] = [{"id": "wifi-1"}, {"id": "wifi-2"}, {"id": "wifi-3"}]
+    _charity_cache["3000"] = {
         "data": [{"id": "charity-1"}, {"id": "charity-2"}],
         "timestamp": 1,
         "freshness_status": "current",
@@ -484,7 +487,7 @@ def test_coverage_stats_count_in_memory_pipeline_entries(client):
     try:
         response = client.get("/api/stats")
     finally:
-        app_module._cache["data"] = previous_wifi
+        _cache["data"] = previous_wifi
 
     assert response.status_code == 200
     payload = response.json
@@ -504,7 +507,7 @@ def test_api_wifi_is_not_captured_by_spa(client):
 # ============================================================
 
 def test_humanizes_ballarat_installer_codes():
-    from app import humanize_vicfreewifi_name
+    from services.vicfreewifi_service import humanize_vicfreewifi_name
 
     assert humanize_vicfreewifi_name("BR-81- MESHWendouree") == "Wendouree outdoor hotspot"
     assert humanize_vicfreewifi_name("BR-21-CnrParkerWendouree") == "Corner of Parker and Wendouree"
@@ -516,13 +519,13 @@ def test_humanizes_ballarat_installer_codes():
 
 
 def test_keeps_melbourne_street_addresses():
-    from app import humanize_vicfreewifi_name
+    from services.vicfreewifi_service import humanize_vicfreewifi_name
 
     assert humanize_vicfreewifi_name("MEL-0083-179 Collins Street") == "179 Collins Street"
 
 
 def test_vicfreewifi_rows_do_not_use_installer_codes_as_addresses():
-    from app import csv_to_wifi_locations
+    from services.vicfreewifi_service import csv_to_wifi_locations
 
     records = csv_to_wifi_locations([
         {
