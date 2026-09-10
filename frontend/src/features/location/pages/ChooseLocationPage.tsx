@@ -19,22 +19,25 @@ function nextPath(raw: string | null): string {
   return appRoutes.wifi
 }
 
+type SearchDestination = 'wifi' | 'support'
+
 export function ChooseLocationPage() {
   const navigate = useNavigate()
   const [params] = useSearchParams()
-  const destination = nextPath(params.get('next'))
+  const initialDestination = nextPath(params.get('next')) === appRoutes.support ? 'support' : 'wifi'
   const currentLocation = getSearchLocation()
   const currentPostcode = getSearchPostcode()
   const [query, setQuery] = useState(currentPostcode)
   const [error, setError] = useState('')
   const [busy, setBusy] = useState<'geo' | 'search' | null>(null)
+  const [destination, setDestination] = useState<SearchDestination>(initialDestination)
 
   async function finish(postcode: string, label: string) {
     if (!saveSearchLocation({ postcode, label })) {
       setError('This browser could not save your search area. Check storage settings and try again.')
       return
     }
-    navigate(destination, {
+    navigate(destination === 'support' ? appRoutes.support : appRoutes.wifi, {
       replace: true,
       state: { searchPostcode: postcode, searchUpdatedAt: Date.now() },
     })
@@ -86,7 +89,12 @@ export function ChooseLocationPage() {
   return (
     <section className="location-page" aria-labelledby="location-title">
       <h1 id="location-title">Find places near you</h1>
-      <p className="lead">Choose a search area for nearby Wi-Fi and support services.</p>
+      <p className="lead">Choose a search area for nearby Wi-Fi or support services.</p>
+      <fieldset className="location-destination">
+        <legend>Show nearby</legend>
+        <label><input type="radio" name="location-destination" value="wifi" checked={destination === 'wifi'} onChange={() => setDestination('wifi')} disabled={busy !== null} /> <span>Wi-Fi</span></label>
+        <label><input type="radio" name="location-destination" value="support" checked={destination === 'support'} onChange={() => setDestination('support')} disabled={busy !== null} /> <span>Support services</span></label>
+      </fieldset>
       {currentPostcode ? (
         <p className="current-search-location" role="status">
           Current search area: <strong>{currentLocation?.label ?? currentPostcode}</strong>

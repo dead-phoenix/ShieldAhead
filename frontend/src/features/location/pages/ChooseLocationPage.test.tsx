@@ -31,4 +31,12 @@ describe('choose location page', () => {
     expect(screen.getByRole('button', { name: 'Use my current location' })).toBeVisible()
     expect(screen.getByText('Your location stays on this device and is never sent to a server.')).toBeVisible()
   })
+
+  it('defaults to Wi-Fi and allows support services as the destination', () => {
+    renderLocation()
+
+    expect(screen.getByRole('radio', { name: 'Wi-Fi' })).toBeChecked()
+    fireEvent.click(screen.getByRole('radio', { name: 'Support services' }))
+    expect(screen.getByRole('radio', { name: 'Support services' })).toBeChecked()
+  })
 })
