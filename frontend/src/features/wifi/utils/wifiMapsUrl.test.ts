@@ -8,7 +8,7 @@ describe('wifiMapsUrl', () => {
       longitude: 143.831,
       suburb: 'Ballarat',
       postcode: '3350',
-    })).toBe('https://www.google.com/maps/search/?api=1&query=-37.548%2C143.831')
+    })).toBe('https://www.openstreetmap.org/?mlat=-37.548&mlon=143.831#map=18/-37.548/143.831')
   })
 
   it('falls back to the area label when coordinates are missing', () => {
@@ -16,7 +16,7 @@ describe('wifiMapsUrl', () => {
       address: '456 High Street',
       suburb: 'Castlemaine',
       postcode: '3450',
-    })).toContain(encodeURIComponent('456 High Street, Castlemaine VIC 3450'))
+    })).toBe('https://www.openstreetmap.org/search?query=456%20High%20Street%2C%20Castlemaine%20VIC%203450')
   })
 })
 

@@ -1,6 +1,6 @@
 import { Clock, Heart, Info, MapPin, NavigationArrow, ShieldCheck, WifiHigh } from '@phosphor-icons/react'
 import { useMemo, useState } from 'react'
-import { Link, Navigate, useParams } from 'react-router-dom'
+import { Link, Navigate, useLocation, useParams } from 'react-router-dom'
 import { appRoutes } from '../../../app/config/product'
 import { useRepositoryData } from '../../../data/useRepositoryData'
 import { getWifiRepository } from '../../../data/wifiRepository'
@@ -16,8 +16,10 @@ import { wifiAreaLabel, wifiMapsUrl } from '../utils/wifiMapsUrl'
 import { WifiVerificationBadge } from '../components/WifiVerificationBadge'
 
 export function WifiDetailPage() {
+  const routeLocation = useLocation()
   const { id } = useParams()
-  const postcode = getSearchPostcode()
+  const navigationPostcode = (routeLocation.state as { searchPostcode?: unknown } | null)?.searchPostcode
+  const postcode = typeof navigationPostcode === 'string' ? navigationPostcode : getSearchPostcode()
   const repository = useMemo(
     () => getWifiRepository(postcode),
     [postcode],

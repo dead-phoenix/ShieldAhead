@@ -116,6 +116,10 @@ def get_wifi():
                     }), 503
 
 
+        # Distances belong to the current postcode request. Do not mutate the
+        # shared source-cache records used by concurrent requests.
+        all_records = [dict(record) for record in all_records]
+
          # Calculate distance for all records
         for record in all_records:
             if record["latitude"] is not None and record["longitude"] is not None:
@@ -129,23 +133,19 @@ def get_wifi():
         # Filter to search radius
         within_radius = [r for r in all_with_distance if r["distanceKm"] <= SEARCH_RADIUS_KM]
 
-        used_fallback = False
-        if within_radius:
-            all_records = within_radius
-        else:
-            # Fallback: nothing within radius, show nearest results anyway
-            all_records = all_with_distance[:FALLBACK_RESULT_COUNT]
-            used_fallback = True
+        # Never present distant records from another area as local coverage.
+        within_radius.sort(key=lambda record: record["distanceKm"])
+        all_records = within_radius
 
         # Build limitations
         limitations = [
             "VicFreeWiFi covers pilot areas only",
             "Regional public spaces are inferred to have wifi based on facility type",
         ]
-        if used_fallback:
+        if not within_radius:
             limitations.append(
                 f"No wifi locations found within {SEARCH_RADIUS_KM}km of postcode {postcode} — "
-                f"showing the {len(all_records)} nearest known locations, which may be far away"
+                "no local locations are currently listed"
             )
         if wifi_error:
             limitations.append("VicFreeWiFi data unavailable: showing regional public spaces only")
