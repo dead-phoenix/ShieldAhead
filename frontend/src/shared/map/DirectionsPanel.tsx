@@ -1,4 +1,4 @@
-import { Car, Crosshair, CursorClick, MapPin, PersonSimpleWalk } from '@phosphor-icons/react'
+import { Car, Crosshair, CursorClick, MapPin, PersonSimpleWalk, Warning } from '@phosphor-icons/react'
 import { useEffect, useState } from 'react'
 import {
   getDirections,
@@ -26,6 +26,11 @@ function formatDuration(seconds: number): string {
   return minutes < 60 ? `${minutes} min` : `${Math.floor(minutes / 60)} hr ${minutes % 60} min`
 }
 
+const FALLBACK_DISCLAIMER = (
+  'This is a standard route calculation, not a verified emergency evacuation route. '
+  + 'Always follow official CFA/VicSES guidance during an active emergency.'
+)
+
 export function DirectionsPanel({ destination, onRouteChange, destinationIsApproximate = false, selectedMapStart, isSelectingMapStart = false, onRequestMapStart }: DirectionsPanelProps) {
   const [profile, setProfile] = useState<DirectionsProfile>('foot-walking')
   const [origin, setOrigin] = useState<RoutePoint>()
@@ -42,10 +47,7 @@ export function DirectionsPanel({ destination, onRouteChange, destinationIsAppro
       setRoute(nextRoute)
       onRouteChange(nextRoute)
     } catch (reason) {
-      const message = reason instanceof Error ? reason.message : 'A route could not be calculated.'
-      setError(message === 'routing service unavailable'
-        ? 'Route preview is temporarily unavailable. Try again later.'
-        : message)
+      setError(reason instanceof Error ? reason.message : 'A route could not be calculated.')
       setRoute(undefined)
       onRouteChange(undefined)
     } finally {
@@ -124,9 +126,20 @@ export function DirectionsPanel({ destination, onRouteChange, destinationIsAppro
         </div>
       </div>
       {isLoading ? <p className="directions-status" role="status">Calculating route…</p> : null}
-      {route && !isLoading ? <p className="directions-summary" role="status"><strong>{formatDuration(route.durationSeconds)}</strong><span>{formatDistance(route.distanceMeters)}</span></p> : null}
+      {route && !isLoading ? (
+        <>
+          <p className="directions-summary" role="status">
+            <strong>{formatDuration(route.durationSeconds)}</strong>
+            <span>{formatDistance(route.distanceMeters)}</span>
+          </p>
+          <p className="directions-disclaimer" role="note">
+            <Warning aria-hidden="true" size={22} weight="fill" />
+            <span>{route.disclaimer || FALLBACK_DISCLAIMER}</span>
+          </p>
+        </>
+      ) : null}
       {error ? <p className="directions-error" role="alert">{error}</p> : null}
-      <p className="directions-note">Your location is used only to calculate this route and is not saved. This is a standard route preview, not emergency navigation.</p>
+      <p className="directions-note">Your location is used only to calculate this route and is not saved.</p>
       {destinationIsApproximate ? <p className="directions-warning">The destination is a postcode-area point, not a confirmed street location. Check the service address before travelling.</p> : null}
     </section>
   )

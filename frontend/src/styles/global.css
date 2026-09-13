@@ -2051,6 +2051,18 @@ input[type='checkbox'] {
 .directions-summary strong { color: var(--color-accent); font-size: 1.25rem; }
 .directions-status, .directions-error, .directions-note { font-size: var(--text-sm); }
 .directions-status, .directions-note { color: var(--color-text-muted); }
+.directions-disclaimer {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 0.65rem;
+  padding: 0.85rem 0.9rem;
+  border-radius: var(--radius-sm);
+  background: var(--color-warning-bg);
+  color: var(--color-warning-text);
+  font-size: var(--text-sm);
+  font-weight: 600;
+}
+.directions-disclaimer svg { flex-shrink: 0; margin-top: 0.1rem; }
 .directions-warning {
   padding: 0.75rem;
   border-radius: var(--radius-sm);
