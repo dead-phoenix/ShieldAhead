@@ -13,6 +13,14 @@ vi.mock('../../../data/supportServiceRepository', () => ({
   getSupportServiceRepository: repositoryMocks.getSupportServiceRepository,
 }))
 
+vi.mock('../../../shared/map/LazyMapView', () => ({
+  LazyMapView: ({ ariaLabel, markers, onSelect }: { ariaLabel: string; markers: Array<{ id: string; name: string }>; onSelect: (ids: string[]) => void }) => (
+    <div aria-label={ariaLabel} role="region">
+      {markers.map((marker) => <button key={marker.id} type="button" onClick={() => onSelect([marker.id])}>{marker.name}</button>)}
+    </div>
+  ),
+}))
+
 function renderList(path: string, fixture: Parameters<typeof getMockSupportServiceRepository>[0]) {
   repositoryMocks.getSupportServiceRepository.mockReturnValue(getMockSupportServiceRepository(fixture))
   return render(
@@ -34,6 +42,21 @@ function renderDetail(path: string, fixture: Parameters<typeof getMockSupportSer
 }
 
 describe('Epic 3 support-service states', () => {
+  it('switches to an embedded map and shows in-app service details', async () => {
+    renderList('/support', 'default')
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Map' }))
+
+    expect(await screen.findByRole('region', { name: /map of nearby support services/i })).toBeVisible()
+    expect(screen.queryByRole('heading', { name: 'Example Food Relief Service' })).not.toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Example Food Relief Service' }))
+    expect(screen.getByRole('heading', { name: 'Example Food Relief Service' })).toBeVisible()
+    expect(screen.getByRole('heading', { name: 'Eligibility' })).toBeVisible()
+    expect(screen.getByRole('heading', { name: 'Services offered' })).toBeVisible()
+    fireEvent.click(screen.getByRole('button', { name: 'Close service details' }))
+    expect(screen.queryByRole('heading', { name: 'Example Food Relief Service' })).not.toBeInTheDocument()
+  })
+
   it('shows a distinct no-nearby state with a postcode recovery action', async () => {
     renderList('/support', 'no-nearby')
 
