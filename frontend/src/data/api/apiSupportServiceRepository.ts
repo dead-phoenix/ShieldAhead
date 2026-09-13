@@ -138,11 +138,13 @@ export function createApiSupportServiceRepository({
   return {
     async list() {
       const url = resolveApiUrl(baseUrl, '/api/charities', postcode)
+      url.searchParams.set('_refresh', Date.now().toString())
       const controller = new AbortController()
       const timeout = window.setTimeout(() => controller.abort(), timeoutMs)
 
       try {
         const response = await fetcher(url, {
+          cache: 'no-store',
           headers: { Accept: 'application/json' },
           signal: controller.signal,
         })

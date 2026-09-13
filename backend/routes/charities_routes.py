@@ -96,6 +96,11 @@ def get_charities():
                         if acnc_service.is_victorian_charity(charity) and acnc_service.is_relevant_support_charity(charity)
                     ]
                     all_records = [acnc_service.charity_to_support_service(c, last_updated) for c in raw_charities]
+                    # Prefer address-level points so separate charities do not
+                    # collapse into one postcode-centroid marker on the map.
+                    acnc_service.geocode_charities(all_records)
+                    # Keep the postcode centroid only for records that could
+                    # not be resolved to a street address.
                     acnc_service.attach_charity_coordinates(all_records)
                 except Exception as e:
                     fetch_error = str(e)
@@ -130,6 +135,11 @@ def get_charities():
                     return jsonify({
                         "error": "The charity data source is currently unavailable. Please try again later."
                     }), 503
+
+                # Cached records may contain only postcode-centroid coordinates from
+                # an earlier refresh. Resolve their addresses before building map data.
+                acnc_service.geocode_charities(all_records, refresh_existing=True)
+                acnc_service.attach_charity_coordinates(all_records)
 
         for record in all_records:
             if record.get("latitude") is not None and record.get("longitude") is not None:

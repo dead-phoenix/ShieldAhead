@@ -58,7 +58,9 @@ describe('API support-service repository', () => {
     await repository.list()
 
     const requestedUrl = fetchMock.mock.calls[0][0] as URL
-    expect(requestedUrl.toString()).toBe('http://127.0.0.1:5001/api/charities?postcode=3453')
+    expect(requestedUrl.origin + requestedUrl.pathname).toBe('http://127.0.0.1:5001/api/charities')
+    expect(requestedUrl.searchParams.get('postcode')).toBe('3453')
+    expect(requestedUrl.searchParams.get('_refresh')).toBeTruthy()
   })
 
   it('normalizes missing fields and repairs a website without a protocol', () => {
