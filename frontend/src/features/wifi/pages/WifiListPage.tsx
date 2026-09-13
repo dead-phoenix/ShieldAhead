@@ -80,7 +80,12 @@ export function WifiListPage() {
     setSelectedMapIds([id])
     setRoutePreview(undefined)
     setView('map')
-    window.requestAnimationFrame(() => document.querySelector('.map-results')?.scrollIntoView({ behavior: 'smooth', block: 'start' }))
+    window.requestAnimationFrame(() => {
+      const mapResults = document.querySelector<HTMLElement>('.map-results')
+      if (mapResults && typeof mapResults.scrollIntoView === 'function') {
+        mapResults.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      }
+    })
   }
 
   return (
