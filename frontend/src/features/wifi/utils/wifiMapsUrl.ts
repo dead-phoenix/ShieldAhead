@@ -1,7 +1,9 @@
 import type { WifiLocation } from '../../../data/contracts'
 import { openMapUrl } from '../../../shared/utils/openMapUrl'
 
-export function wifiAreaLabel(location: Pick<WifiLocation, 'address' | 'suburb' | 'postcode' | 'latitude' | 'longitude'>): string {
+type WifiMapLocation = Partial<Pick<WifiLocation, 'address' | 'suburb' | 'postcode' | 'latitude' | 'longitude'>>
+
+export function wifiAreaLabel(location: WifiMapLocation): string {
   if (location.address) {
     const suburb = location.suburb ? `, ${location.suburb}` : ''
     const postcode = location.postcode ? ` VIC ${location.postcode}` : ''
@@ -17,7 +19,7 @@ export function wifiAreaLabel(location: Pick<WifiLocation, 'address' | 'suburb' 
   )
 }
 
-export function wifiMapsUrl(location: Pick<WifiLocation, 'latitude' | 'longitude' | 'address' | 'suburb' | 'postcode'>): string {
+export function wifiMapsUrl(location: WifiMapLocation): string {
   return openMapUrl({
     latitude: location.latitude,
     longitude: location.longitude,

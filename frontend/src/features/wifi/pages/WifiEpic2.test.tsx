@@ -14,6 +14,14 @@ vi.mock('../../../data/wifiRepository', () => ({
   getWifiRepository: repositoryMocks.getWifiRepository,
 }))
 
+vi.mock('../../../shared/map/LazyMapView', () => ({
+  LazyMapView: ({ ariaLabel, markers, onSelect }: { ariaLabel: string; markers: Array<{ id: string; name: string }>; onSelect: (ids: string[]) => void }) => (
+    <div aria-label={ariaLabel} role="region">
+      {markers.map((marker) => <button key={marker.id} type="button" onClick={() => onSelect([marker.id])}>{marker.name}</button>)}
+    </div>
+  ),
+}))
+
 function renderList(path: string, fixture: Parameters<typeof getMockWifiRepository>[0]) {
   repositoryMocks.getWifiRepository.mockReturnValue(getMockWifiRepository(fixture))
   return render(
@@ -35,6 +43,21 @@ function renderDetail(path: string, fixture: Parameters<typeof getMockWifiReposi
 }
 
 describe('Epic 2 Wi-Fi states', () => {
+  it('switches to an embedded map and shows in-app marker details', async () => {
+    renderList('/wifi', 'default')
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Map' }))
+
+    expect(await screen.findByRole('region', { name: /map of nearby free wi-fi/i })).toBeVisible()
+    expect(screen.queryByRole('heading', { name: 'Example Harcourt Wi-Fi point' })).not.toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Example Harcourt Wi-Fi point' }))
+    expect(screen.getByRole('heading', { name: 'Example Harcourt Wi-Fi point' })).toBeVisible()
+    expect(screen.getByText('Distance')).toBeVisible()
+    expect(screen.getByText('Access conditions')).toBeVisible()
+    fireEvent.click(screen.getByRole('button', { name: 'Close Wi-Fi details' }))
+    expect(screen.queryByRole('heading', { name: 'Example Harcourt Wi-Fi point' })).not.toBeInTheDocument()
+  })
+
   it('explains unverified coverage and points to a library fallback', async () => {
     renderList('/wifi', 'no-coverage')
 

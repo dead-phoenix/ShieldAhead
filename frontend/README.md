@@ -53,6 +53,7 @@ The supported environment variables are:
 ```env
 VITE_API_BASE_URL=http://127.0.0.1:5001
 VITE_API_TIMEOUT_MS=20000
+VITE_MAP_STYLE_URL=https://tiles.openfreemap.org/styles/liberty
 ```
 
 Start the backend according to its README, then start the frontend:
@@ -71,6 +72,8 @@ The application now uses the backend API as its only runtime data source:
 - `GET /api/charities?postcode={postcode}` for nearby support services
 
 There is no runtime Mock/API switch and URL fixture parameters are not part of the production flow. Test fixtures remain in the test suite so automated tests can run predictably; they are not used as production data.
+
+Wi-Fi and Support each provide a separate embedded MapLibre map. The default online map style is served by OpenFreeMap and can be replaced with `VITE_MAP_STYLE_URL`. Maps need a network connection in Iteration 2; the list and saved record details remain the fallback when offline. Epic 4 includes in-app marker previews, details and walking/driving route previews through the backend `/api/directions` endpoint. Route previews require location permission or a starting point selected on the map, plus a configured backend `ORS_API_KEY`.
 
 ## Offline behaviour
 

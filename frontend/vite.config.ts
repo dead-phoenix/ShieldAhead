@@ -10,7 +10,7 @@ function writeCoverageCount(fileUrl: URL, count: number) {
   try {
     previous = readFileSync(filePath, 'utf8')
   } catch {
-    previous = ''
+    // A missing snapshot is equivalent to an empty previous value.
   }
   if (previous !== next) writeFileSync(filePath, next)
 }
