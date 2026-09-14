@@ -12,10 +12,39 @@ export interface RoutePreview {
   disclaimer: string
 }
 
+export const DIRECTIONS_ERROR = {
+  invalidInput: 'That start or end point is not valid for routing. Choose two points in Victoria.',
+  rateLimited: 'Too many route requests, please wait a moment',
+  unavailable: 'Routing is temporarily unavailable',
+  invalidRoute: 'The routing service returned an invalid route.',
+  incompleteRoute: 'The routing service returned an incomplete route.',
+  timeout: 'The route took too long to calculate. Try again.',
+  unreachable: 'The routing service could not be reached. Check your connection and try again.',
+  generic: 'A route could not be calculated.',
+} as const
+
 function apiUrl(): URL {
   const configuredOrigin = String(import.meta.env.VITE_API_BASE_URL ?? '').trim().replace(/\/$/, '')
   const origin = configuredOrigin || window.location.origin
   return new URL('/api/directions', `${origin}/`)
+}
+
+function messageForStatus(status: number): string {
+  if (status === 400) return DIRECTIONS_ERROR.invalidInput
+  if (status === 429) return DIRECTIONS_ERROR.rateLimited
+  if (status === 502) return DIRECTIONS_ERROR.unavailable
+  return DIRECTIONS_ERROR.generic
+}
+
+async function readJson(response: Response): Promise<Record<string, unknown> | null> {
+  try {
+    const payload = await response.json() as unknown
+    return typeof payload === 'object' && payload !== null && !Array.isArray(payload)
+      ? payload as Record<string, unknown>
+      : null
+  } catch {
+    return null
+  }
 }
 
 export async function getDirections(
@@ -37,15 +66,17 @@ export async function getDirections(
       }),
       signal: controller.signal,
     })
-    const payload = await response.json() as Record<string, unknown>
+    const payload = await readJson(response)
     if (!response.ok) {
-      if (response.status === 429) throw new Error('Too many route requests were made. Wait a moment and try again.')
-      throw new Error(typeof payload.error === 'string' ? payload.error : 'A route could not be calculated.')
+      throw new Error(messageForStatus(response.status))
+    }
+    if (!payload) {
+      throw new Error(DIRECTIONS_ERROR.invalidRoute)
     }
 
     const geometry = payload.geometry as { type?: unknown; coordinates?: unknown } | undefined
     if (geometry?.type !== 'LineString' || !Array.isArray(geometry.coordinates)) {
-      throw new Error('The routing service returned an invalid route.')
+      throw new Error(DIRECTIONS_ERROR.invalidRoute)
     }
     const coordinates = geometry.coordinates.filter((point): point is [number, number] => (
       Array.isArray(point)
@@ -53,7 +84,7 @@ export async function getDirections(
       && typeof point[0] === 'number'
       && typeof point[1] === 'number'
     ))
-    if (coordinates.length < 2) throw new Error('The routing service returned an incomplete route.')
+    if (coordinates.length < 2) throw new Error(DIRECTIONS_ERROR.incompleteRoute)
 
     return {
       distanceMeters: Number(payload.distance_meters),
@@ -63,10 +94,10 @@ export async function getDirections(
     }
   } catch (reason) {
     if (reason instanceof DOMException && reason.name === 'AbortError') {
-      throw new Error('The route took too long to calculate. Try again.', { cause: reason })
+      throw new Error(DIRECTIONS_ERROR.timeout, { cause: reason })
     }
     if (reason instanceof TypeError) {
-      throw new Error('The routing service could not be reached. Check your connection and try again.', { cause: reason })
+      throw new Error(DIRECTIONS_ERROR.unreachable, { cause: reason })
     }
     throw reason
   } finally {

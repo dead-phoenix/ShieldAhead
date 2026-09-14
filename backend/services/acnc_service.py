@@ -172,11 +172,11 @@ def attach_charity_coordinates(records):
     return records
 
 
-def geocode_charities(records):
+def geocode_charities(records, refresh_existing=False):
     """Attach latitude/longitude to as many charity records as this refresh's cap allows."""
     geocoded_this_refresh = 0
     for record in records:
-        if record.get("latitude") is not None:
+        if record.get("latitude") is not None and not refresh_existing:
             continue  # already geocoded in a previous refresh
         if geocoded_this_refresh >= MAX_ADDRESSES_TO_GEOCODE_PER_REFRESH:
             break

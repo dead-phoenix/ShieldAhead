@@ -90,10 +90,13 @@ export function ChooseLocationPage() {
     <section className="location-page" aria-labelledby="location-title">
       <h1 id="location-title">Find places near you</h1>
       <p className="lead">Choose a search area for nearby Wi-Fi or support services.</p>
-      <fieldset className="location-destination">
+      <fieldset className={`location-destination${destination === 'support' ? ' is-support' : ''}`}>
         <legend>Show nearby</legend>
-        <label><input type="radio" name="location-destination" value="wifi" checked={destination === 'wifi'} onChange={() => setDestination('wifi')} disabled={busy !== null} /> <span>Wi-Fi</span></label>
-        <label><input type="radio" name="location-destination" value="support" checked={destination === 'support'} onChange={() => setDestination('support')} disabled={busy !== null} /> <span>Support services</span></label>
+        <div className="location-destination__track">
+          <span className="location-destination__thumb" aria-hidden="true" />
+          <label><input type="radio" name="location-destination" value="wifi" checked={destination === 'wifi'} onChange={() => setDestination('wifi')} disabled={busy !== null} /><span>Wi-Fi</span></label>
+          <label><input type="radio" name="location-destination" value="support" checked={destination === 'support'} onChange={() => setDestination('support')} disabled={busy !== null} /><span>Support services</span></label>
+        </div>
       </fieldset>
       {currentPostcode ? (
         <p className="current-search-location" role="status">

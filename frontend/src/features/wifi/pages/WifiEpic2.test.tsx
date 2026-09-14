@@ -43,6 +43,14 @@ function renderDetail(path: string, fixture: Parameters<typeof getMockWifiReposi
 }
 
 describe('Epic 2 Wi-Fi states', () => {
+  it('switches from a list row to the map when Show on map is pressed', async () => {
+    renderList('/wifi', 'default')
+
+    fireEvent.click((await screen.findAllByRole('button', { name: 'Show on map' }))[0])
+
+    expect(await screen.findByRole('region', { name: /map of nearby free wi-fi/i })).toBeVisible()
+  })
+
   it('switches to an embedded map and shows in-app marker details', async () => {
     renderList('/wifi', 'default')
 

@@ -8,6 +8,7 @@ Flask API providing nearby free wifi/connectivity locations for Epic 2 (US 2.1).
 
 - Python 3.10+ recommended 
 - **Internet connection required for uncached requests** — the API uses Nominatim, Zippopotam/GeoNames, VicFreeWiFi, Vicmap and ACNC. Cached data can avoid repeat source calls for a short period, but the backend is not an offline data store.
+- **Neon persistence is enabled when `DATABASE_URL` is configured.** The backend creates the tables from `schema.sql` automatically on startup. Without `DATABASE_URL`, it uses process memory only and data is lost on restart.
   
 ## Setup 
 
@@ -25,6 +26,30 @@ python3 app.py
 ```
 
 Server starts at `http://127.0.0.1:5001`.
+
+## Neon database setup
+
+Add the Neon connection string to the deployed backend environment as
+`DATABASE_URL`. Use the pooled connection for normal application traffic.
+For a manual schema migration, use the direct, non-pooled connection string
+and run `schema.sql` in the Neon SQL Editor or with `psql`:
+
+```bash
+psql "$DATABASE_URL_UNPOOLED" -f backend/schema.sql
+```
+
+The backend initializes the same schema automatically when `app.py` starts:
+
+1. `wifi_locations` stores Wi-Fi records and coordinates.
+2. `charities` stores ACNC support-service records and coordinates.
+3. `cache_meta` stores freshness timestamps for persistent cache decisions.
+4. `postcode_requests` stores aggregate postcode/API request events.
+
+The API reads a fresh persistent database cache before calling the external
+Wi-Fi, Vicmap, ACNC, and geocoding sources. Successful source responses are
+written back to Neon for later requests and process restarts. Household
+profiles and private user details remain in the browser and are not stored in
+these tables.
 
 
 ---
