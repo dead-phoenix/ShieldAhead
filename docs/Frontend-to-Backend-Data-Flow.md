@@ -222,10 +222,11 @@ The backend route performs these steps:
 2. Rejects a missing postcode with HTTP `400`.
 3. Rejects a non-Victorian postcode with HTTP `400`.
 4. Converts the postcode to coordinates using `postcode_to_coords`.
-5. Loads the shared Wi-Fi source cache or database cache.
-6. Fetches VicFreeWiFi data when the cache is stale.
-7. Fetches Vicmap public-space data when the cache is stale.
-8. Combines the source records.
+5. Checks the in-process Wi-Fi cache first; this is the fastest copy of the dataset.
+6. If memory is empty, loads the shared Wi-Fi source dataset and freshness metadata from Neon/PostgreSQL.
+7. If Neon has records, uses them immediately and schedules a background refresh when stale.
+8. Only when neither memory nor Neon has records does it fetch VicFreeWiFi and Vicmap data.
+9. Combines the source records and stores the refreshed statewide dataset in Neon.
 9. Copies records for the current request so distance values are not shared between concurrent requests.
 10. Calculates distance from the requested postcode.
 11. Sorts by distance.
@@ -583,9 +584,9 @@ The execution sequence is:
 6. `postcode_to_coords()` checks the postcode coordinate cache.
 7. If absent, Python calls Zippopotam and then Nominatim as a fallback.
 8. The route checks the in-memory Wi-Fi cache.
-9. If memory is stale, it checks Neon/PostgreSQL `cache_meta`.
-10. If persistent data is fresh, `load_wifi_records_from_db()` reads `wifi_locations`.
-11. If no usable cache exists, `fetch_wifi_csv()` calls the VicFreeWiFi source.
+9. If memory is empty, it checks Neon/PostgreSQL `cache_meta` and reads `wifi_locations`.
+10. If Neon has records, uses them immediately; stale records trigger a background source refresh.
+11. Only when both memory and Neon have no records does `fetch_wifi_csv()` call VicFreeWiFi.
 12. `csv.DictReader` converts the CSV response into Python dictionaries.
 13. `csv_to_wifi_locations()` filters active rows and converts field names into the application contract.
 14. `fetch_public_spaces()` calls the Vicmap ArcGIS endpoint.
@@ -597,6 +598,24 @@ The execution sequence is:
 20. Python builds a dictionary containing `records` and `metadata`.
 21. Flask's `jsonify()` serializes that Python dictionary to JSON bytes.
 22. Gunicorn or Flask writes the HTTP status, headers, and JSON body to the browser.
+
+### Important Wi-Fi postcode distinction
+
+`wifi_locations` is a shared statewide source table, not a separate table for
+each searched postcode. The requested postcode is used after loading the source
+records:
+
+```text
+Neon wifi_locations source records
+  -> requested postcode converted to coordinates
+  -> distance calculated for every source record
+  -> records inside the search radius returned
+```
+
+A request for `3064` does not require a database row whose source postcode is
+exactly `3064`. Vicmap records may have no source postcode at all. Their
+latitude/longitude is what allows the backend to decide whether they are near
+the requested postcode.
 
 ### What happens when `/api/charities` is requested
 
