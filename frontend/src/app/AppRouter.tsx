@@ -2,6 +2,8 @@ import { useEffect, useRef } from 'react'
 import { BrowserRouter, Navigate, Outlet, Route, Routes } from 'react-router-dom'
 import { useLocation } from 'react-router-dom'
 import { HomePage } from '../features/home/pages/HomePage'
+import { CrisisLandingPage } from '../features/crisis/pages/CrisisLandingPage'
+import { CrisisDetailPage } from '../features/crisis/pages/CrisisDetailPage'
 import { ChooseLocationPage } from '../features/location/pages/ChooseLocationPage'
 import { HouseholdBasicsPage } from '../features/onboarding/pages/HouseholdBasicsPage'
 import { HouseholdNeedsPage } from '../features/onboarding/pages/HouseholdNeedsPage'
@@ -66,6 +68,8 @@ export function AppRouter() {
           <Route path={appRoutes.consentChoices} element={<ConsentChoicesPage />} />
           <Route path={appRoutes.setupComplete} element={<SetupCompletePage />} />
           <Route path={appRoutes.location} element={<ChooseLocationPage />} />
+          <Route path={appRoutes.crisis} element={<CrisisLandingPage />} />
+          <Route path="/crisis/:kind" element={<CrisisDetailPage />} />
           <Route element={<RequireSearchLocation />}>
             <Route path={appRoutes.wifi} element={<WifiListPage />} />
             <Route path="/wifi/:id" element={<WifiDetailPage />} />

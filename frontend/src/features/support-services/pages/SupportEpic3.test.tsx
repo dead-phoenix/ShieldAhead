@@ -135,4 +135,60 @@ describe('Epic 3 support-service states', () => {
     expect(screen.getByRole('heading', { name: 'Example Community Support Service' })).toBeVisible()
     expect(screen.queryByRole('heading', { name: 'No nearby support services are listed' })).not.toBeInTheDocument()
   })
+
+  it('supports multiple service filters and keeps the active filters visible', async () => {
+    renderList('/support', 'default')
+
+    const foodFilter = await screen.findByRole('button', { name: 'Food' })
+    const emergencyFilter = screen.getByRole('button', { name: 'Emergency' })
+    fireEvent.click(foodFilter)
+    fireEvent.click(emergencyFilter)
+
+    expect(foodFilter).toHaveAttribute('aria-pressed', 'true')
+    expect(emergencyFilter).toHaveAttribute('aria-pressed', 'true')
+    const filterStatus = screen.getByRole('status')
+    expect(filterStatus).toHaveTextContent('Food, Emergency')
+    expect(filterStatus).toHaveTextContent('Showing 2 of 3 services')
+    expect(screen.getByRole('heading', { name: 'Example Food Relief Service' })).toBeVisible()
+    expect(screen.getByRole('heading', { name: 'Example Community Support Service' })).toBeVisible()
+    expect(screen.queryByRole('heading', { name: 'Example Housing Support Service' })).not.toBeInTheDocument()
+  })
+
+  it('applies the same filters to map markers and clears them in one action', async () => {
+    renderList('/support', 'default')
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Food' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Map' }))
+
+    const map = await screen.findByRole('region', { name: /map of nearby support services/i })
+    expect(map).toHaveTextContent('Example Food Relief Service')
+    expect(map).not.toHaveTextContent('Example Community Support Service')
+
+    fireEvent.click(screen.getByRole('button', { name: 'Clear all' }))
+
+    expect(map).toHaveTextContent('Example Food Relief Service')
+    expect(map).toHaveTextContent('Example Community Support Service')
+    expect(map).toHaveTextContent('Example Housing Support Service')
+    expect(screen.getByRole('button', { name: 'All services' })).toHaveAttribute('aria-pressed', 'true')
+    expect(screen.queryByText(/Active filters:/)).not.toBeInTheDocument()
+  })
+
+  it('filters housing and homelessness classifications consistently in list and map views', async () => {
+    renderList('/support', 'default')
+
+    const housingFilter = await screen.findByRole('button', { name: 'Housing' })
+    fireEvent.click(housingFilter)
+
+    expect(housingFilter).toHaveAttribute('aria-pressed', 'true')
+    expect(screen.getByRole('heading', { name: 'Example Housing Support Service' })).toBeVisible()
+    expect(screen.queryByRole('heading', { name: 'Example Food Relief Service' })).not.toBeInTheDocument()
+    expect(screen.getByRole('status')).toHaveTextContent('Showing 1 of 3 services')
+
+    fireEvent.click(screen.getByRole('button', { name: 'Map' }))
+
+    const map = await screen.findByRole('region', { name: /map of nearby support services/i })
+    expect(map).toHaveTextContent('Example Housing Support Service')
+    expect(map).not.toHaveTextContent('Example Food Relief Service')
+    expect(map).not.toHaveTextContent('Example Community Support Service')
+  })
 })

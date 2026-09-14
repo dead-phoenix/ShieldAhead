@@ -1,10 +1,12 @@
 import {
   HandHeart,
   House,
+  Lifebuoy,
   ShieldCheck,
   UserCircle,
   WifiHigh,
 } from '@phosphor-icons/react'
+import type { CSSProperties } from 'react'
 import { Link, NavLink, Outlet, useLocation } from 'react-router-dom'
 import { appRoutes, productConfig } from '../../app/config/product'
 import { hasCompletedSetup } from '../../storage/onboardingDraftStorage'
@@ -14,13 +16,19 @@ const primaryNavigation = [
   { to: appRoutes.home, label: 'Home', end: true, icon: House },
   { to: appRoutes.wifi, label: 'Wi-Fi', icon: WifiHigh },
   { to: appRoutes.support, label: 'Support', icon: HandHeart },
-  { to: appRoutes.settings, label: 'Profile', icon: UserCircle },
+  { to: appRoutes.crisis, label: 'Crisis', icon: Lifebuoy },
 ]
 
 export function AppShell() {
   const { pathname } = useLocation()
   const isSetupFlow = pathname.startsWith(appRoutes.setup)
   const showAuthActions = !isSetupFlow && !hasCompletedSetup()
+  const activeNavigationIndex = primaryNavigation.findIndex((item) =>
+    item.end ? pathname === item.to : pathname.startsWith(item.to),
+  )
+  const navigationStyle = {
+    '--nav-active-index': Math.max(activeNavigationIndex, 0),
+  } as CSSProperties
 
   return (
     <div className={`app-shell${isSetupFlow ? ' app-shell--flow' : ''}`}>
@@ -37,7 +45,7 @@ export function AppShell() {
           </span>
         </NavLink>
         {!isSetupFlow ? (
-          <nav className="desktop-nav" aria-label="Primary navigation">
+          <nav className="desktop-nav nav-flow" aria-label="Primary navigation" style={navigationStyle}>
             {primaryNavigation.map((item) => {
               const Icon = item.icon
               return (
@@ -63,6 +71,14 @@ export function AppShell() {
                 <Link className="header-auth__signup" to={appRoutes.setup}>Sign up</Link>
               </>
             ) : null}
+            <NavLink
+              aria-label="Profile"
+              className={({ isActive }) => `header-profile-link${isActive ? ' is-active' : ''}`}
+              title="Profile"
+              to={appRoutes.settings}
+            >
+              <UserCircle aria-hidden="true" size={25} weight="regular" />
+            </NavLink>
           </nav>
         ) : null}
       </header>
@@ -72,7 +88,7 @@ export function AppShell() {
       </main>
 
       {!isSetupFlow ? (
-        <nav className="mobile-nav" aria-label="Primary navigation">
+        <nav className="mobile-nav nav-flow" aria-label="Primary navigation" style={navigationStyle}>
           {primaryNavigation.map((item) => {
             const Icon = item.icon
             return (

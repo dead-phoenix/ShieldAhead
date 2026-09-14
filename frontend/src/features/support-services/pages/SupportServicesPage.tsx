@@ -37,7 +37,15 @@ import { SupportDatasetDisclosure } from '../components/SupportDatasetDisclosure
 import { DirectionsPanel } from '../../../shared/map/DirectionsPanel'
 import type { RoutePoint, RoutePreview } from '../../../data/api/directionsApi'
 
-const filters = ['All services', 'Food', 'Financial', 'Emergency'] as const
+const serviceFilters = ['Food', 'Financial', 'Emergency', 'Housing'] as const
+type ServiceFilter = (typeof serviceFilters)[number]
+
+const serviceFilterTerms: Record<ServiceFilter, string[]> = {
+  Food: ['food'],
+  Financial: ['financial'],
+  Emergency: ['emergency'],
+  Housing: ['housing', 'homeless'],
+}
 
 function AvailabilityIcon({ tone }: { tone: AvailabilityTone }) {
   if (tone === 'normal') return <CheckCircle aria-hidden="true" size={19} weight="fill" />
@@ -53,7 +61,7 @@ export function SupportServicesPage() {
     [postcode],
   )
   const { data, isLoading, error, retry } = useRepositoryData(repository.list)
-  const [filter, setFilter] = useState<(typeof filters)[number]>('All services')
+  const [activeFilters, setActiveFilters] = useState<ServiceFilter[]>([])
   const [view, setView] = useState<ResultsView>('list')
   const [selectedMapIds, setSelectedMapIds] = useState<string[]>([])
   const [routePreview, setRoutePreview] = useState<RoutePreview>()
@@ -69,13 +77,15 @@ export function SupportServicesPage() {
     [data?.records],
   )
   const services = useMemo(() => {
-    if (filter === 'All services') return allServices
+    if (activeFilters.length === 0) return allServices
     return allServices.filter((service) =>
-      service.serviceTypes.some((type) =>
-        type.toLowerCase().includes(filter.toLowerCase()),
+      activeFilters.some((filter) =>
+        service.serviceTypes.some((type) =>
+          serviceFilterTerms[filter].some((term) => type.toLowerCase().includes(term)),
+        ),
       ),
     )
-  }, [allServices, filter])
+  }, [activeFilters, allServices])
   const mapRecords = useMemo(() => supportMapRecords(services), [services])
   const effectiveView = isOnline ? view : 'list'
   const effectiveSelectedMapIds = selectedMapIds.filter((id) => mapRecords.some((record) => record.id === id))
@@ -99,6 +109,20 @@ export function SupportServicesPage() {
     setView('map')
     window.requestAnimationFrame(() => document.querySelector('.map-results')?.scrollIntoView({ behavior: 'smooth', block: 'start' }))
   }
+
+  function clearFilters() {
+    setActiveFilters([])
+    setSelectedMapIds([])
+    setRoutePreview(undefined)
+  }
+
+  function toggleFilter(filter: ServiceFilter) {
+    setActiveFilters((current) => current.includes(filter)
+      ? current.filter((item) => item !== filter)
+      : [...current, filter])
+    setSelectedMapIds([])
+    setRoutePreview(undefined)
+  }
   return (
     <section className="content-page" aria-labelledby="support-title">
       <div className="connectivity-strip"><CloudSlash aria-hidden="true" size={21} /><span><strong>{isOnline ? (data?.metadata.cachedAt ? 'Saved for offline use' : offline.supportSaved ? 'Preparing offline copy' : 'Online — not saved for offline use') : isSavedCopy ? 'You are offline — showing saved copy' : 'You are offline'}</strong><small>{canReadRecords ? `Showing ${isSavedCopy ? 'saved' : 'current'} information near ${postcode}. ${data?.metadata.cachedAt ? `Saved on this device: ${formatSavedDate(data.metadata.cachedAt)}.` : ''}` : noOfflineCopy ? 'No Support information is saved for this postcode.' : 'Loading Support information…'}</small></span></div>
@@ -119,9 +143,26 @@ export function SupportServicesPage() {
           {!isOnline ? <small>Map view needs an internet connection.</small> : null}
         </div>
       ) : null}
-      {data && allServices.length > 0 ? <div className="filter-row" aria-label="Filter support services">
-        {filters.map((item) => <button aria-pressed={filter === item} className={filter === item ? 'filter-chip is-active' : 'filter-chip'} key={item} type="button" onClick={() => { setFilter(item); setSelectedMapIds([]); setRoutePreview(undefined) }}>{item}</button>)}
-      </div> : null}
+      {data && allServices.length > 0 ? (
+        <section className="support-filters" aria-labelledby="support-filter-title">
+          <div className="support-filters__heading">
+            <div>
+              <h2 id="support-filter-title">Filter by service type</h2>
+              <p>Select one or more options. Results matching any selected type will be shown.</p>
+            </div>
+            {activeFilters.length > 0 ? <button className="support-filters__clear" type="button" onClick={clearFilters}>Clear all</button> : null}
+          </div>
+          <div className="filter-row" aria-label="Service type filters">
+            <button aria-pressed={activeFilters.length === 0} className={activeFilters.length === 0 ? 'filter-chip is-active' : 'filter-chip'} type="button" onClick={clearFilters}>All services</button>
+            {serviceFilters.map((item) => <button aria-pressed={activeFilters.includes(item)} className={activeFilters.includes(item) ? 'filter-chip is-active' : 'filter-chip'} key={item} type="button" onClick={() => toggleFilter(item)}>{item}</button>)}
+          </div>
+          {activeFilters.length > 0 ? (
+            <p className="support-filters__status" role="status">
+              <strong>Active filters:</strong> {activeFilters.join(', ')}. Showing {services.length} of {allServices.length} services.
+            </p>
+          ) : null}
+        </section>
+      ) : null}
       {isLoading ? <LoadingState /> : null}
       {error && !noOfflineCopy ? <div className="error-state" role="alert"><p>{error}</p><button className="button button--quiet" type="button" onClick={retry}>Try again</button></div> : null}
       {noOfflineCopy ? <EmptyState title="No saved support information available offline" action={<Link className="button button--primary" to={appRoutes.offlineInformation}>Choose offline information</Link>}><p>Connect to the internet and download Support information before the next disruption.</p></EmptyState> : null}
@@ -148,7 +189,7 @@ export function SupportServicesPage() {
               </article>
             )
           })}
-          {!services.length ? <p className="empty-filter" role="status">No services match this filter. Try another category.</p> : null}
+          {!services.length ? <p className="empty-filter" role="status">No services match the selected filters. Try another category or clear all filters.</p> : null}
         </div>
       ) : null}
       {data && canReadRecords && allServices.length > 0 && effectiveView === 'map' ? (
@@ -246,8 +287,8 @@ export function SupportServicesPage() {
               ) : null}
             </>
           ) : services.length === 0 ? (
-            <EmptyState title="No services match this filter" action={<button className="button button--quiet" type="button" onClick={() => setFilter('All services')}>Show all services</button>}>
-              <p>Try another category or show all nearby support services.</p>
+            <EmptyState title="No services match the selected filters" action={<button className="button button--quiet" type="button" onClick={clearFilters}>Clear all filters</button>}>
+              <p>Try another category or clear all filters to show every nearby support service.</p>
             </EmptyState>
           ) : (
             <EmptyState title="These results cannot be placed on the map" action={<button className="button button--quiet" type="button" onClick={() => setView('list')}>Return to list</button>}>

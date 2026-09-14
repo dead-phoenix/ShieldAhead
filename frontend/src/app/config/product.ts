@@ -21,6 +21,8 @@ export const appRoutes = {
   wifiDetail: (id: string) => `/wifi/${id}`,
   support: '/support',
   supportDetail: (id: string) => `/support/${id}`,
+  crisis: '/crisis',
+  crisisDetail: (kind: string) => `/crisis/${kind}`,
   settings: '/settings',
   editProfile: '/settings/edit-profile',
   consentSettings: '/settings/consent',
@@ -35,4 +37,5 @@ export const storageKeys = {
   offlinePreferences: 'shieldahead.offline-preferences.v1',
   usualWifiSpot: 'shieldahead.usual-wifi-spot.v1',
   searchLocation: 'shieldahead.search-location.v1',
+  crisisChecklist: 'shieldahead.crisis-checklist.v1',
 } as const

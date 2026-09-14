@@ -53,4 +53,27 @@ describe('first-run routing', () => {
     expect(window.location.pathname).toBe('/')
     expect(screen.queryByRole('link', { name: 'Sign up' })).not.toBeInTheDocument()
   })
+
+  it('keeps profile in the header and exposes Crisis in primary navigation', async () => {
+    render(<AppRouter />)
+
+    const primaryNavigation = screen.getAllByRole('navigation', { name: 'Primary navigation' })
+    primaryNavigation.forEach((navigation) => {
+      expect(navigation).toHaveTextContent('Home')
+      expect(navigation).toHaveTextContent('Wi-Fi')
+      expect(navigation).toHaveTextContent('Support')
+      expect(navigation).toHaveTextContent('Crisis')
+      expect(navigation).not.toHaveTextContent('Profile')
+    })
+    expect(screen.getByRole('link', { name: 'Profile' })).toHaveAttribute('href', '/settings')
+  })
+
+  it('opens the Crisis section from its new route', async () => {
+    window.history.replaceState({}, '', '/crisis')
+
+    render(<AppRouter />)
+
+    expect(await screen.findByRole('heading', { name: 'Pre-crisis guidance' })).toBeVisible()
+    expect(window.location.pathname).toBe('/crisis')
+  })
 })
