@@ -155,6 +155,23 @@ const prototypeSupportRecords: SupportService[] = [
     availabilityFreshness: 'current',
     dataUpdatedAt: '2026-08-27T09:42:00.000Z',
   },
+  {
+    id: 'example-housing-support',
+    name: 'Example Housing Support Service',
+    serviceTypes: ['Housing support', 'Homelessness support'],
+    address: '245 Example Street',
+    suburb: 'Harcourt',
+    postcode: '3453',
+    latitude: -37.008,
+    longitude: 144.276,
+    distanceKm: 4.1,
+    phone: '03 5XXX XXXX',
+    eligibility: 'Housing assistance depends on individual circumstances. Contact the service before visiting.',
+    partnerStatus: 'unknown',
+    availabilityStatus: 'not-confirmed',
+    availabilityFreshness: 'current',
+    dataUpdatedAt: '2026-08-27T09:42:00.000Z',
+  },
 ]
 
 function createSupportRepository(
