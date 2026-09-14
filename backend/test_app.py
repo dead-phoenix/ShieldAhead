@@ -1,3 +1,4 @@
+import time
 import pytest
 from unittest.mock import Mock, patch
 from app import app
@@ -33,6 +34,10 @@ def reset_caches():
     _address_cache.clear()
     _postcode_cache.clear()
     _reverse_geocode_cache.clear()
+    _cache["data"] = None
+    _cache["timestamp"] = None
+    _cache["removed_ids"] = []
+    _cache["freshness_status"] = None
     limiter.reset()
     with patch(
         "services.geocoding.reverse_geocode_locality",
@@ -444,6 +449,56 @@ def test_charity_cache_is_per_postcode(client):
                 assert mock_fetch.call_count == 2
 
 
+def test_expired_charity_cache_is_served_without_live_fetch(client):
+    _charity_cache["3550"] = {
+        "data": [{
+            "id": "acnc-stale",
+            "name": "Stale Relief",
+            "serviceTypes": ["Food relief"],
+            "postcode": "3550",
+            "latitude": -36.757,
+            "longitude": 144.279,
+            "dataUpdatedAt": "2026-01-01",
+        }],
+        "timestamp": time.time() - 90_000,
+        "freshness_status": "current",
+        "removed_ids": [],
+    }
+    with patch("services.geocoding.postcode_to_coords", return_value=(-36.757, 144.279)):
+        with patch("services.acnc_service.fetch_charities_for_region") as mock_fetch:
+            with patch("routes.charities_routes.schedule_charity_refresh") as mock_schedule:
+                response = client.get("/api/charities?postcode=3550")
+
+    assert response.status_code == 200
+    assert response.json["records"][0]["name"] == "Stale Relief"
+    assert response.json["metadata"]["freshnessStatus"] == "stale"
+    mock_fetch.assert_not_called()
+    mock_schedule.assert_called_once()
+
+
+def test_expired_wifi_cache_is_served_without_live_fetch(client):
+    _cache["data"] = [{
+        "id": "wifi-stale",
+        "name": "Stale hotspot",
+        "latitude": -36.757,
+        "longitude": 144.279,
+        "dataUpdatedAt": "2026-01-01",
+    }]
+    _cache["timestamp"] = time.time() - 90_000
+    _cache["freshness_status"] = "current"
+    _cache["removed_ids"] = []
+    with patch("routes.wifi_routes.postcode_to_coords", return_value=(-36.757, 144.279)):
+        with patch("services.vicfreewifi_service.fetch_wifi_csv") as mock_wifi:
+            with patch("routes.wifi_routes.schedule_wifi_refresh") as mock_schedule:
+                response = client.get("/api/wifi?postcode=3550")
+
+    assert response.status_code == 200
+    assert response.json["records"][0]["name"] == "Stale hotspot"
+    assert response.json["metadata"]["freshnessStatus"] == "stale"
+    mock_wifi.assert_not_called()
+    mock_schedule.assert_called_once()
+
+
 def test_spa_serves_index_for_client_routes(tmp_path, monkeypatch, client):
     dist = tmp_path / "dist"
     dist.mkdir()
@@ -568,3 +623,54 @@ def test_real_no_record_has_fabricated_eligibility(client):
     response = client.get("/api/charities?postcode=3450")
     for record in response.json["records"]:
         assert record["eligibility"] is None
+
+
+# ============================================================
+# Internal refresh endpoint
+# ============================================================
+
+REFRESH_HEADERS = {"X-Refresh-Secret": "test-secret"}
+
+
+def test_refresh_missing_or_wrong_secret_returns_401(client, monkeypatch):
+    monkeypatch.setattr("routes.refresh_routes.get_refresh_secret", lambda: "test-secret")
+    missing = client.get("/api/internal/refresh")
+    wrong = client.get("/api/internal/refresh", headers={"X-Refresh-Secret": "nope"})
+    assert missing.status_code == 401
+    assert wrong.status_code == 401
+
+
+def test_refresh_unset_secret_returns_503(client, monkeypatch):
+    monkeypatch.setattr("routes.refresh_routes.get_refresh_secret", lambda: "")
+    response = client.get("/api/internal/refresh", headers=REFRESH_HEADERS)
+    assert response.status_code == 503
+
+
+def test_refresh_ping_returns_200_without_external_calls(client, monkeypatch):
+    monkeypatch.setattr("routes.refresh_routes.get_refresh_secret", lambda: "test-secret")
+    with patch("services.vicfreewifi_service.fetch_wifi_csv") as fetch_wifi:
+        with patch("services.vicmap_service.fetch_public_spaces") as fetch_spaces:
+            with patch("services.acnc_service.fetch_charities_for_region") as fetch_charities:
+                with patch("services.refresh_service.refresh_all") as refresh_all:
+                    response = client.get("/api/internal/refresh?mode=ping", headers=REFRESH_HEADERS)
+    assert response.status_code == 200
+    assert response.json["status"] == "ok"
+    fetch_wifi.assert_not_called()
+    fetch_spaces.assert_not_called()
+    fetch_charities.assert_not_called()
+    refresh_all.assert_not_called()
+
+
+def test_refresh_full_returns_202_without_blocking(client, monkeypatch):
+    monkeypatch.setattr("routes.refresh_routes.get_refresh_secret", lambda: "test-secret")
+
+    def slow_refresh():
+        time.sleep(2)
+
+    monkeypatch.setattr("services.refresh_service.refresh_all", slow_refresh)
+    started = time.perf_counter()
+    response = client.get("/api/internal/refresh?mode=full", headers=REFRESH_HEADERS)
+    elapsed = time.perf_counter() - started
+    assert response.status_code == 202
+    assert response.json["status"] == "refresh started"
+    assert elapsed < 0.5

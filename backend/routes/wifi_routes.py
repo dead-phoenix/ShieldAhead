@@ -1,14 +1,14 @@
+import threading
 import time
 from datetime import datetime, timezone
 from flask import Blueprint, jsonify, request
 
 from cache import _cache
-from config import CACHE_TTL_SECONDS, FALLBACK_RESULT_COUNT, SEARCH_RADIUS_KM
-from db import load_cache_meta, load_wifi_records_from_db, log_postcode_request, save_cache_meta, save_wifi_records_to_db
+from config import CACHE_TTL_SECONDS, SEARCH_RADIUS_KM
+from db import load_cache_meta, load_wifi_records_from_db, log_postcode_request
 from extensions import limiter
 from services.geocoding import postcode_to_coords
-from services.vicfreewifi_service import csv_to_wifi_locations, fetch_wifi_csv
-from services.vicmap_service import fetch_public_spaces, public_spaces_to_wifi_locations
+from services.refresh_service import refresh_wifi, schedule_wifi_refresh
 from utils import haversine_km, is_valid_vic_postcode
 
 
@@ -32,7 +32,11 @@ def get_wifi():
     if not is_valid_vic_postcode(postcode):
         return jsonify({"error": f"Invalid Victorian postcode: {postcode}"}), 400
 
-    log_postcode_request(postcode, "wifi")
+    threading.Thread(
+        target=log_postcode_request,
+        args=(postcode, "wifi"),
+        daemon=True,
+    ).start()
 
     user_lat, user_lng = postcode_to_coords(postcode)
 
@@ -47,74 +51,44 @@ def get_wifi():
             and (now - _cache["timestamp"]) < CACHE_TTL_SECONDS
         )
 
+        wifi_error = None
+        public_error = None
+
         if cache_fresh:
             all_records = _cache["data"]
-            wifi_error = None
-            public_error = None
             freshness_status = _cache["freshness_status"] or "current"
         else:
-            # In-memory cache is empty or stale — most often right after a
-            # cold start (Render wiped the previous process's memory).
-            # Before re-hitting both external sources, check whether Mongo
-            # already has a still-fresh copy from before the restart.
-            db_meta = load_cache_meta("wifi")
-            db_fresh = (
-                db_meta is not None
-                and (now - db_meta.get("timestamp", 0)) < CACHE_TTL_SECONDS
-            )
+            memory_records = _cache.get("data") or []
+            stale_timestamp = _cache.get("timestamp") if memory_records else None
+            all_records = memory_records
+            freshness_status = _cache.get("freshness_status") or "current"
 
-            if db_fresh:
-                all_records = load_wifi_records_from_db()
-                wifi_error = None
-                public_error = None
-                freshness_status = db_meta.get("freshnessStatus") or "current"
-                _cache["data"] = all_records
-                _cache["timestamp"] = db_meta["timestamp"]
-                _cache["freshness_status"] = freshness_status
-                _cache["removed_ids"] = db_meta.get("removedIds", [])
-            else:
-                # Remember the previous snapshot's IDs before overwriting
-                previous_ids = {r["id"] for r in _cache["data"]} if _cache["data"] else set()
-
-                # Source 1: VicFreeWiFi (confirmed wifi)
-                wifi_records = []
-                wifi_error = None
-                try:
-                    rows, last_modified = fetch_wifi_csv()
-                    wifi_records = csv_to_wifi_locations(rows, last_modified)
-                except Exception as e:
-                    wifi_error = str(e)
-
-                # Source 2: Regional public spaces (likely wifi)
-                public_records = []
-                public_error = None
-                try:
-                    public_features = fetch_public_spaces()
-                    public_records = public_spaces_to_wifi_locations(public_features)
-                except Exception as e:
-                    public_error = str(e)
-
-                all_records = wifi_records + public_records
-                all_records = [r for r in all_records if r.get("id") and r.get("name")]
-                freshness_status = "current" if not (wifi_error or public_error) else "stale"
-
-                if all_records:
-                    if not wifi_error and not public_error and previous_ids:
-                        new_ids = {r["id"] for r in all_records}
-                        _cache["removed_ids"] = sorted(previous_ids - new_ids)
-                    else:
-                        _cache["removed_ids"] = []
-
+            if not all_records:
+                db_meta = load_cache_meta("wifi")
+                db_records = load_wifi_records_from_db()
+                if db_records:
+                    all_records = db_records
+                    stale_timestamp = (db_meta or {}).get("timestamp")
+                    freshness_status = (db_meta or {}).get("freshnessStatus") or "current"
                     _cache["data"] = all_records
-                    _cache["timestamp"] = now
+                    _cache["timestamp"] = stale_timestamp
                     _cache["freshness_status"] = freshness_status
-                    save_wifi_records_to_db(all_records)
-                    save_cache_meta("wifi", now, freshness_status, _cache["removed_ids"])
-                elif wifi_error and public_error:
+                    _cache["removed_ids"] = (db_meta or {}).get("removedIds", [])
+
+            if all_records:
+                expired = stale_timestamp is None or (now - stale_timestamp) >= CACHE_TTL_SECONDS
+                if expired:
+                    freshness_status = "stale"
+                    schedule_wifi_refresh()
+            else:
+                all_records, wifi_error, public_error = refresh_wifi()
+                freshness_status = _cache.get("freshness_status") or (
+                    "current" if not (wifi_error or public_error) else "stale"
+                )
+                if not all_records and wifi_error and public_error:
                     return jsonify({
                         "error": "Both data sources are currently unavailable. Please try again later."
                     }), 503
-
 
         # Distances belong to the current postcode request. Do not mutate the
         # shared source-cache records used by concurrent requests.

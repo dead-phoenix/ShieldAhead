@@ -2,9 +2,12 @@ import os
 import sys
 from pathlib import Path
 
-CACHE_TTL_SECONDS = 300  # 5 minutes
-CHARITY_CACHE_TTL_SECONDS = 3600  # 1 hour
-EXTRA_POSTCODE_CACHE_TTL_SECONDS = 3600  # 1 hour, same as the main charity cache
+CACHE_TTL_SECONDS = 86400  # 24 hours
+CHARITY_CACHE_TTL_SECONDS = 86400  # 24 hours
+EXTRA_POSTCODE_CACHE_TTL_SECONDS = 86400  # 24 hours, same as the main charity cache
+
+# Harcourt, Castlemaine, Bendigo — pre-seeded on a full refresh.
+PRIORITY_REFRESH_POSTCODES = ("3453", "3450", "3550")
 
 #  Config
 
@@ -111,3 +114,23 @@ def _load_ors_api_key():
 
 
 ORS_API_KEY = _load_ors_api_key()
+
+
+def get_refresh_secret():
+    """Shared secret for GET /api/internal/refresh. Empty means the endpoint is disabled."""
+    key = os.environ.get("REFRESH_SECRET", "").strip()
+    if not key and "pytest" not in sys.modules:
+        for candidate in (
+            Path(__file__).resolve().parent / ".env",
+            Path(__file__).resolve().parent.parent / ".env.local",
+            Path(__file__).resolve().parent.parent / ".env",
+        ):
+            if not candidate.is_file():
+                continue
+            for line in candidate.read_text(encoding="utf-8").splitlines():
+                if line.startswith("REFRESH_SECRET="):
+                    key = line.split("=", 1)[1].strip().strip('"').strip("'")
+                    break
+            if key:
+                break
+    return key

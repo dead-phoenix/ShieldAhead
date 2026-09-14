@@ -176,6 +176,35 @@ def save_cache_meta(key, timestamp, freshness_status, removed_ids):
         _flask_app().logger.error(f"Postgres write failed for cache_meta '{key}': {e}")
 
 
+def list_charity_refresh_postcodes():
+    """Postcodes previously cached or searched, used to prioritize a full refresh."""
+    if not db_available():
+        return []
+    postcodes = set()
+    try:
+        with _engine.connect() as conn:
+            meta_rows = conn.execute(
+                text("SELECT key FROM cache_meta WHERE key LIKE 'postcode:%'"),
+            ).mappings().all()
+            for row in meta_rows:
+                key = str(row["key"] or "")
+                if key.startswith("postcode:"):
+                    value = key.split(":", 1)[1].strip()
+                    if value:
+                        postcodes.add(value)
+            request_rows = conn.execute(
+                text("SELECT DISTINCT postcode FROM postcode_requests"),
+            ).mappings().all()
+            for row in request_rows:
+                value = str(row["postcode"] or "").strip()
+                if value:
+                    postcodes.add(value)
+    except Exception as e:
+        _flask_app().logger.error(f"Postgres read failed for charity refresh postcodes: {e}")
+        return []
+    return sorted(postcodes)
+
+
 def log_postcode_request(postcode, endpoint):
     """Records that a postcode was searched — no name, no device/session
     id, nothing that identifies which household it was. Just "postcode X

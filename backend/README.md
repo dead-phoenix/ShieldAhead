@@ -45,10 +45,10 @@ The backend initializes the same schema automatically when `app.py` starts:
 3. `cache_meta` stores freshness timestamps for persistent cache decisions.
 4. `postcode_requests` stores aggregate postcode/API request events.
 
-The API reads a fresh persistent database cache before calling the external
-Wi-Fi, Vicmap, ACNC, and geocoding sources. Successful source responses are
-written back to Neon for later requests and process restarts. Household
-profiles and private user details remain in the browser and are not stored in
+The API serves a still-valid Neon or in-memory copy immediately. Live VicFreeWiFi,
+Vicmap, ACNC, and Nominatim fetches run in the background when that copy is older
+than 24 hours, or on the request only when Neon and memory are both empty.
+Household profiles and private user details remain in the browser and are not stored in
 these tables.
 
 
@@ -124,11 +124,24 @@ Results are combined, deduplicated, filtered to a 30km radius of the given postc
 
 ---
 
-## Caching 
+## Caching
 
-- Wifi/library data is cached in memory for 5 minutes to avoid re-fetching both external sources on every request.
-  
-- Postcode-to-coordinates lookups (via Nominatim with a Zippopotam/GeoNames fallback) are cached for the lifetime of the backend process. Restarting the server clears this in-memory cache.
+- Wifi and charity datasets are cached in memory and Neon for 24 hours.
+- If that copy is older than 24 hours, the API still returns it immediately (`freshnessStatus: "stale"`) and refreshes VicFreeWiFi / Vicmap / ACNC in a background thread.
+- Postcode-to-coordinates lookups (via Nominatim with a Zippopotam/GeoNames fallback) are cached for the lifetime of the backend process.
+
+## Internal refresh (keep-alive + daily full refresh)
+
+`GET /api/internal/refresh` is guarded by `REFRESH_SECRET` (header `X-Refresh-Secret`) and rate-limited to 5 requests/hour.
+
+| Mode | URL | Response |
+|---|---|---|
+| Keep-alive | `/api/internal/refresh?mode=ping` | 200, no source fetch |
+| Full refresh | `/api/internal/refresh?mode=full` | 202, wifi + charities refresh on a background thread |
+
+Register these against the deployed origin (for example `https://shieldahead.onrender.com`) in an external ping service. Ping every 10 minutes to reduce Render free-tier sleep; run `mode=full` once daily. A local `python app.py` start kicks a refresh if Neon metadata is missing or stale.
+
+Set `REFRESH_SECRET` in `.env.local` and in the Render dashboard. Do not send it to the frontend.
   
 
 ---
