@@ -24,13 +24,23 @@ describe('Epic 5 crisis preparation pages', () => {
 
     expect(await screen.findByRole('heading', { name: 'Prepare for flood' })).toBeVisible()
     expect(screen.getByRole('heading', { name: 'Household preparation checklist' })).toBeVisible()
-    expect(screen.getByText('0 of 5 complete')).toBeVisible()
+    expect(screen.getByText('0 of 8 complete')).toBeVisible()
+    fireEvent.click(screen.getByRole('button', { name: 'Open during a flood guide' }))
+    expect(screen.getByRole('dialog')).toBeVisible()
+    expect(screen.getByRole('heading', { name: 'Never enter floodwater' })).toBeVisible()
+    expect(screen.getAllByRole('link', { name: /VICSES/i }).length).toBeGreaterThan(0)
+    fireEvent.click(screen.getByRole('button', { name: 'Close guide' }))
 
-    fireEvent.click(screen.getByRole('checkbox', { name: /Local flood information reviewed/i }))
-    expect(screen.getByText('1 of 5 complete')).toBeVisible()
+    expect(screen.getByText('Your next step')).toBeVisible()
+    expect(screen.getByText('Check whether your home and usual routes are flood-prone.')).not.toBeVisible()
+    fireEvent.click(screen.getAllByText('How to complete this')[0])
+    expect(screen.getByText('Check whether your home and usual routes are flood-prone.')).toBeVisible()
+
+    fireEvent.click(screen.getByRole('checkbox', { name: /Check your local flood risk/i }))
+    expect(screen.getByText('1 of 8 complete')).toBeVisible()
 
     unmount()
     render(<AppRouter />)
-    expect(await screen.findByRole('checkbox', { name: /Local flood information reviewed/i })).toBeChecked()
+    expect(await screen.findByRole('checkbox', { name: /Check your local flood risk/i })).toBeChecked()
   })
 })
