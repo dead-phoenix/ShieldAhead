@@ -116,14 +116,37 @@ def reverse_geocode_locality(latitude, longitude):
 
 
 def geocode_address(address):
-    """Convert a street address to (lat, lng) using Nominatim, cached for this process's lifetime."""
+    """Convert a street address to coordinates, cached for this process."""
     if not address:
         return None, None
-    if address in _address_cache:
+    if address in _address_cache and _address_cache[address] != (None, None):
         return _address_cache[address]
 
     try:
-        # Nominatim's usage policy asks for ~1 request/second from scripted callers.
+        # Photon is a public OSM geocoder that works for server-side address
+        # lookups without requiring an API key.
+        resp = http_requests.get(
+            "https://photon.komoot.io/api/",
+            params={
+                "q": f"{address}, Australia",
+                "limit": 1,
+            },
+            headers={"User-Agent": "ShieldAhead/1.0"},
+            timeout=8,
+        )
+        resp.raise_for_status()
+        features = (resp.json() or {}).get("features") or []
+        if features:
+            coordinates = features[0].get("geometry", {}).get("coordinates") or []
+            if len(coordinates) >= 2:
+                result = (float(coordinates[1]), float(coordinates[0]))
+                _address_cache[address] = result
+                return result
+    except Exception:
+        pass
+
+    try:
+        # Nominatim remains a fallback when Photon has no result.
         time.sleep(1)
         resp = http_requests.get(
             "https://nominatim.openstreetmap.org/search",

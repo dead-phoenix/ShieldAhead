@@ -538,3 +538,195 @@ Filters operate on inferred `serviceTypes`. The filter does not search the ACNC 
 - Offline data is stored per dataset type and postcode.
 - Wi-Fi OpenStreetMap links use record coordinates when available.
 - External data source limitations are returned in `metadata.limitations` and exposed through the UI.
+
+## 15. Detailed Python Execution Trace
+
+This section follows one request at interpreter level. Python does not run the
+whole backend file again for every browser request. It imports the modules once
+when the process starts, creates the Flask application, and then repeatedly
+executes the matching route function for each HTTP request.
+
+### Backend startup
+
+When `python app.py` runs:
+
+1. The Python interpreter loads `backend/app.py`.
+2. `app.py` imports the Flask application object from `extensions.py`.
+3. `extensions.py` creates the Flask app, enables CORS, and configures the rate limiter.
+4. `app.py` imports `init_db` from `db.py`.
+5. `db.py` reads `DATABASE_URL` from the process environment or `backend/.env`.
+6. SQLAlchemy creates a PostgreSQL engine when `DATABASE_URL` exists.
+7. `init_db()` executes the `CREATE TABLE IF NOT EXISTS` statements.
+8. Startup refresh logic may refresh persistent data according to its freshness rules.
+9. Flask registers the Wi-Fi, charities, stats, refresh, SPA, and directions blueprints.
+10. `app.run(...)` starts the development HTTP server on port `5001`.
+
+The important point is that table creation happens before the first API request.
+If `DATABASE_URL` is absent, `_engine` is `None`, database operations become
+no-ops, and the process uses in-memory caches only.
+
+### What happens when `/api/wifi` is requested
+
+Example browser request:
+
+```http
+GET /api/wifi?postcode=3064&_refresh=1730000000000
+```
+
+The execution sequence is:
+
+1. Flask matches `/api/wifi` to `get_wifi()` in `backend/routes/wifi_routes.py`.
+2. The limiter checks the client request rate.
+3. `request.args.get("postcode", "")` reads the query-string value.
+4. `.strip()` removes accidental surrounding spaces.
+5. `is_valid_vic_postcode()` checks the `3xxx` format.
+6. `postcode_to_coords()` checks the postcode coordinate cache.
+7. If absent, Python calls Zippopotam and then Nominatim as a fallback.
+8. The route checks the in-memory Wi-Fi cache.
+9. If memory is stale, it checks Neon/PostgreSQL `cache_meta`.
+10. If persistent data is fresh, `load_wifi_records_from_db()` reads `wifi_locations`.
+11. If no usable cache exists, `fetch_wifi_csv()` calls the VicFreeWiFi source.
+12. `csv.DictReader` converts the CSV response into Python dictionaries.
+13. `csv_to_wifi_locations()` filters active rows and converts field names into the application contract.
+14. `fetch_public_spaces()` calls the Vicmap ArcGIS endpoint.
+15. `public_spaces_to_wifi_locations()` converts facility features into likely Wi-Fi records.
+16. The records are combined and saved to the in-memory cache and Neon.
+17. The route copies records so one postcode request cannot mutate another request's distance values.
+18. `haversine_km()` calculates distance from the requested postcode to every record with coordinates.
+19. Records are sorted by distance and filtered to `SEARCH_RADIUS_KM`.
+20. Python builds a dictionary containing `records` and `metadata`.
+21. Flask's `jsonify()` serializes that Python dictionary to JSON bytes.
+22. Gunicorn or Flask writes the HTTP status, headers, and JSON body to the browser.
+
+### What happens when `/api/charities` is requested
+
+Example:
+
+```http
+GET /api/charities?postcode=3064&_refresh=1730000000000
+```
+
+The execution sequence is:
+
+1. Flask matches the route to `get_charities()` in `backend/routes/charities_routes.py`.
+2. The postcode is validated and logged in `postcode_requests` asynchronously.
+3. `postcode_to_coords()` obtains the requested area's coordinates.
+4. `reverse_geocode_locality()` obtains nearby suburb/place names for ACNC matching.
+5. The route checks the per-postcode in-memory charity cache.
+6. If needed, it checks `cache_meta` and `charities` in Neon/PostgreSQL.
+7. If no usable stored data exists, `acnc_service.fetch_charities_for_region()` queries ACNC.
+8. Records are filtered to Victorian and relevant support organisations.
+9. `charity_to_support_service()` maps ACNC field names to the frontend contract.
+10. `geocode_charities()` attempts address-level Nominatim coordinates.
+11. `attach_charity_coordinates()` uses a postcode centroid only when address geocoding fails.
+12. The records and freshness metadata are saved to cache and Neon.
+13. Distances are calculated from the requested postcode.
+14. Results are sorted and returned as JSON.
+
+Some charities can still share a point when they have a PO Box, incomplete
+address, or an address Nominatim cannot resolve. Those records are intentionally
+placed at the postcode centroid as an approximate fallback.
+
+## 16. Exact Frontend Return Path
+
+After Flask returns JSON, the browser-side sequence is:
+
+```text
+fetch()
+  -> Response.ok check
+  -> response.json()
+  -> normalizeWifiDataset() or normalizeSupportServiceDataset()
+  -> repository.list() resolves
+  -> useRepositoryData().then()
+  -> setData(result)
+  -> React re-render
+  -> sorting/filtering/map adapters
+  -> visible HTML and map markers
+```
+
+### Normalization
+
+The normalizer is a contract boundary. It prevents malformed external values
+from reaching components:
+
+- Required strings are rejected if missing.
+- Nullable strings become `undefined`.
+- Nullable numbers become `undefined` unless finite.
+- Missing arrays become empty arrays.
+- Unknown status values are removed or converted to conservative defaults.
+
+This means a backend response is not rendered blindly. It must first pass the
+frontend's expected data contract.
+
+### Rendering the Wi-Fi list
+
+`WifiListPage.tsx` receives `data.records` and calls
+`selectWifiLocationsForList()`. Each record renders its name, verification
+badge, area/address text, distance, opening hours, detail action, and map action.
+
+### Rendering support services
+
+`SupportServicesPage.tsx` sorts the returned services, applies the selected
+frontend-only filter, and renders service cards. Changing `Food`, `Financial`,
+or `Emergency` filters does not call Python again; it filters the already loaded
+array in React.
+
+### Rendering maps
+
+The map adapter removes records without valid latitude/longitude values. Valid
+records become `MapRecord` objects, then MapLibre creates markers. Markers with
+identical coordinates are grouped intentionally and show a picker so the user
+can choose among services sharing an approximate point.
+
+## 17. Database Read/Write Timeline
+
+For a fresh request with local PostgreSQL or Neon:
+
+```text
+Browser sends postcode
+  -> Flask route
+  -> SELECT cache_meta
+  -> SELECT wifi_locations or charities
+  -> If data is fresh: return stored records
+  -> If data is missing/stale: call external provider
+  -> INSERT/UPDATE records
+  -> UPDATE cache_meta
+  -> return response
+```
+
+The application code is unchanged between local PostgreSQL, Neon PostgreSQL,
+and deployment. Only the existing `DATABASE_URL` connection string selects
+where persistence occurs.
+
+Useful inspection queries:
+
+```sql
+SELECT count(*) FROM wifi_locations;
+SELECT count(*) FROM charities;
+SELECT postcode, endpoint, requested_at
+FROM postcode_requests
+ORDER BY requested_at DESC
+LIMIT 20;
+SELECT key, timestamp, freshness_status FROM cache_meta;
+```
+
+## 18. Where to Debug Each Stage
+
+| Stage | File to inspect | What to check |
+| --- | --- | --- |
+| User input | `ChooseLocationPage.tsx` | `query`, destination, submit handlers |
+| Location resolution | `resolveSearchLocation.ts` | Parsed postcode and resolved label |
+| Saved postcode | `searchLocationStorage.ts` | LocalStorage value |
+| Page request | `WifiListPage.tsx` or `SupportServicesPage.tsx` | Active postcode and repository |
+| URL construction | `resolveApiUrl.ts` | API origin and query string |
+| HTTP adapter | `apiWifiRepository.ts` or `apiSupportServiceRepository.ts` | Fetch, timeout, status, normalization |
+| Request state | `useRepositoryData.ts` | Loading, success, error, retry |
+| Flask startup | `app.py` and `extensions.py` | Blueprint registration and DB initialization |
+| Wi-Fi route | `routes/wifi_routes.py` | Cache, source fetch, distance, radius |
+| Charity route | `routes/charities_routes.py` | ACNC filtering and coordinate enrichment |
+| Database | `db.py` | Connection, schema, reads, writes |
+| Geocoding | `services/geocoding.py` | Postcode/address coordinates and cache |
+| Visible map | `shared/map/MapView.tsx` | Marker creation and coordinate grouping |
+
+This is the complete path from a value typed by the user to the final list,
+map marker, loading state, or error message visible in the browser.

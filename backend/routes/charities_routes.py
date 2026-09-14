@@ -24,6 +24,19 @@ def _flask_app():
     return app
 
 
+def _needs_address_coordinate_refresh(records):
+    """Detect old postcode-centroid-only charity data in a stored response."""
+    with_addresses = [record for record in records if record.get("address")]
+    if len(with_addresses) < 2:
+        return False
+    coordinates = {
+        (record.get("latitude"), record.get("longitude"))
+        for record in with_addresses
+        if record.get("latitude") is not None and record.get("longitude") is not None
+    }
+    return len(coordinates) <= 1
+
+
 @charities_bp.route("/api/charities")
 @limiter.limit("20 per minute")
 def get_charities():
@@ -83,7 +96,7 @@ def get_charities():
 
             if all_records:
                 expired = stale_timestamp is None or (now - stale_timestamp) >= CHARITY_CACHE_TTL_SECONDS
-                if expired:
+                if expired or _needs_address_coordinate_refresh(all_records):
                     freshness_status = "stale"
                     schedule_charity_refresh(postcode, place_names)
             else:
@@ -99,6 +112,10 @@ def get_charities():
                     return jsonify({
                         "error": "The charity data source is currently unavailable. Please try again later."
                     }), 503
+
+        if all_records and _needs_address_coordinate_refresh(all_records):
+            freshness_status = "stale"
+            schedule_charity_refresh(postcode, place_names)
 
         all_records = [dict(record) for record in all_records]
 
@@ -136,6 +153,8 @@ def get_charities():
             )
         if fetch_error:
             limitations.append("ACNC charity data unavailable this refresh — showing the last successfully cached results")
+        if _needs_address_coordinate_refresh(all_records):
+            limitations.append("Some map points are approximate while street addresses are being geocoded")
 
         coverage = ["Victoria"]
         if locality.get("suburb"):
