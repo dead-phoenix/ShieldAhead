@@ -1,0 +1,61 @@
+{
+  "_comment": "Helplines shown on each crisis page. Scoped per crisisType  add entries here (one hazard page at a time) only after manually verifying the phone number against its official source. This file is read directly by backend/routes/helplines_routes.py on every request  no database or seed step is involved; edits take effect immediately after saving (Flask dev server picks them up on next request).",
+  "records": [
+    {
+      "id": "bushfire-triple-zero",
+      "crisisType": "bushfire",
+      "displayOrder": 0,
+      "name": "Triple Zero (000)",
+      "serviceType": "Emergency",
+      "phone": "000",
+      "website": "https://www.triplezero.gov.au/",
+      "description": "Call for police, fire or ambulance when life, property or the environment is in immediate danger.",
+      "availability": "24/7",
+      "coverageArea": "Australia-wide",
+      "verifiedAgainst": "https://www.cfa.vic.gov.au/",
+      "verifiedOn": "2026-09-15"
+    },
+    {
+      "id": "bushfire-vicemergency-hotline",
+      "crisisType": "bushfire",
+      "displayOrder": 1,
+      "name": "VicEmergency Hotline",
+      "serviceType": "Emergency information",
+      "phone": "1800 226 226",
+      "website": "https://www.emergency.vic.gov.au/",
+      "description": "Current emergency warnings and incident information for Victoria.",
+      "availability": "24/7",
+      "coverageArea": "Victoria",
+      "verifiedAgainst": "https://www.cfa.vic.gov.au/",
+      "verifiedOn": "2026-09-15"
+    },
+    {
+      "id": "bushfire-burn-off-notification",
+      "crisisType": "bushfire",
+      "displayOrder": 2,
+      "name": "Burn-off notification",
+      "serviceType": "Fire safety",
+      "phone": "1800 668 511",
+      "website": "https://www.cfa.vic.gov.au/",
+      "description": "Register a permitted burn-off so nearby residents and emergency services aren't alarmed by the smoke.",
+      "availability": null,
+      "coverageArea": "Victoria",
+      "verifiedAgainst": "https://www.cfa.vic.gov.au/",
+      "verifiedOn": "2026-09-15"
+    },
+    {
+      "id": "bushfire-cfa-headquarters",
+      "crisisType": "bushfire",
+      "displayOrder": 3,
+      "name": "CFA Headquarters",
+      "serviceType": "Fire safety",
+      "phone": "(03) 9262 8444",
+      "website": "https://www.cfa.vic.gov.au/",
+      "description": "Country Fire Authority head office.",
+      "availability": "Business hours",
+      "coverageArea": "Victoria",
+      "verifiedAgainst": "https://www.cfa.vic.gov.au/",
+      "verifiedOn": "2026-09-15"
+    }
+  ]
+}

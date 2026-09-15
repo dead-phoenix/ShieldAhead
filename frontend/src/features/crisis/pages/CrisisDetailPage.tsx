@@ -1,19 +1,22 @@
-import { ArrowLeft, ArrowSquareOut, CalendarBlank, CaretDown, Check, CheckCircle, CloudCheck, Info, ShieldWarning, X } from '@phosphor-icons/react'
+import { ArrowLeft, ArrowSquareOut, CalendarBlank, CaretDown, Check, CheckCircle, CloudCheck, Info, Phone, ShieldWarning, X } from '@phosphor-icons/react'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link, Navigate, useParams } from 'react-router-dom'
 import { appRoutes } from '../../../app/config/product'
+import { getChecklistGroups, getHelplines } from '../../../data/crisis/crisisStaticContent'
 import { getCrisisContent } from '../crisisContent'
 import { readCrisisChecklist, saveCrisisChecklist } from '../crisisChecklistStorage'
 
 export function CrisisDetailPage() {
   const { kind } = useParams()
   const content = getCrisisContent(kind)
+  const checklistGroups = useMemo(() => getChecklistGroups(kind ?? ''), [kind])
+  const helplines = useMemo(() => getHelplines(kind ?? ''), [kind])
   const [checked, setChecked] = useState(() => readCrisisChecklist(kind ?? ''))
   const [selectedStageId, setSelectedStageId] = useState<string | null>(null)
   const guidanceDialogRef = useRef<HTMLDialogElement>(null)
-  const itemIds = useMemo(() => content?.checklist.flatMap((group) => group.items.map((item) => `${group.id}.${item.id}`)) ?? [], [content])
+  const itemIds = useMemo(() => checklistGroups.flatMap((group) => group.items.map((item) => `${group.id}.${item.id}`)), [checklistGroups])
   const completed = itemIds.filter((id) => checked[id]).length
-  const nextItem = content?.checklist.flatMap((group) => group.items.map((item) => ({ ...item, fullId: `${group.id}.${item.id}` }))).find((item) => !checked[item.fullId])
+  const nextItem = checklistGroups.flatMap((group) => group.items.map((item) => ({ ...item, fullId: `${group.id}.${item.id}` }))).find((item) => !checked[item.fullId])
   const selectedStage = content?.guidance.find((stage) => stage.id === selectedStageId)
   const selectedStageIndex = content?.guidance.findIndex((stage) => stage.id === selectedStageId) ?? -1
 
@@ -84,6 +87,20 @@ export function CrisisDetailPage() {
         </div>}
       </dialog>
     </section>
+    {helplines.length > 0 && <section className="crisis-helplines" aria-labelledby="helplines-title">
+      <div className="crisis-section-heading"><div><h2 id="helplines-title">Helpline numbers</h2><p>Save these numbers before you need them — some services may be unreachable during an outage.</p></div></div>
+      <ul className="crisis-helplines__list">
+        {helplines.map((helpline) => <li className="crisis-helplines__item" key={helpline.id}>
+          <div>
+            <strong>{helpline.name}</strong>
+            {helpline.description && <p>{helpline.description}</p>}
+            <span className="crisis-helplines__meta">{helpline.serviceType}{helpline.availability ? ` · ${helpline.availability}` : ''}{helpline.coverageArea ? ` · ${helpline.coverageArea}` : ''}</span>
+          </div>
+          <a className="crisis-helplines__phone" href={`tel:${helpline.phone.replace(/\s+/g, '')}`}><Phone aria-hidden="true" size={18} weight="fill" /> {helpline.phone}</a>
+        </li>)}
+      </ul>
+      <p className="crisis-helplines__source"><Info aria-hidden="true" size={18} /> Source: <a href="https://www.cfa.vic.gov.au/" rel="noreferrer" target="_blank">CFA (Country Fire Authority) <ArrowSquareOut aria-hidden="true" size={15} /></a></p>
+    </section>}
     <section className="crisis-checklist" aria-labelledby="checklist-title">
       <div className="crisis-checklist__summary"><div><h2 id="checklist-title">Household preparation checklist</h2><p>This checklist belongs only to this hazard page.</p></div><strong>{completed} of {itemIds.length} complete</strong></div>
       <progress aria-label="Checklist progress" max={itemIds.length} value={completed}>{completed} of {itemIds.length}</progress>
@@ -96,7 +113,7 @@ export function CrisisDetailPage() {
         {nextItem ? <a href={`#checklist-${nextItem.fullId}`}>Go to this task</a> : <CheckCircle aria-hidden="true" size={30} weight="fill" />}
       </div>
       <div className="crisis-checklist__groups">
-        {content.checklist.map((group) => {
+        {checklistGroups.map((group) => {
           const groupIds = group.items.map((item) => `${group.id}.${item.id}`)
           const groupCompleted = groupIds.filter((id) => checked[id]).length
           return <fieldset key={group.id}><legend>{group.title} <span>{groupCompleted} of {group.items.length}</span></legend>

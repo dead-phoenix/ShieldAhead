@@ -1,0 +1,308 @@
+{
+  "_comment": "Pre-crisis checklist items shown on each crisis page, grouped by crisisType. categoryId/itemId must exactly match frontend/src/features/crisis/crisisContent.ts group/item ids, because the frontend saves checklist tick state in localStorage keyed as `${categoryId}.${itemId}`. This file is read directly by backend/routes/helplines_routes.py on every request  no database or seed step is involved; edits take effect immediately after saving (Flask dev server picks them up on next request).",
+  "groups": [
+    {
+      "crisisType": "bushfire",
+      "categoryId": "household-plan",
+      "category": "Household plan and essentials",
+      "items": [
+        {
+          "itemId": "plan-reviewed",
+          "task": "Write down your bushfire plan",
+          "description": "Complete this when your household has a written plan everyone can follow.",
+          "steps": [
+            "Choose the conditions that will prompt you to leave early.",
+            "Write down where you will go and your main and alternative routes.",
+            "Give each household member a clear responsibility."
+          ]
+        },
+        {
+          "itemId": "leave-destination",
+          "task": "Confirm your early-leaving destination",
+          "description": "Complete this when everyone knows the destination and how to get there.",
+          "steps": [
+            "Choose a suitable place in a lower-risk area.",
+            "Check that the destination will be available when you need it.",
+            "Share the address and travel plan with the household."
+          ]
+        },
+        {
+          "itemId": "kit-ready",
+          "task": "Pack an emergency kit",
+          "description": "Complete this when essential supplies are together and easy to take.",
+          "steps": [
+            "Pack water, a torch, batteries, first-aid items and a charged power bank.",
+            "Add essential medication and suitable food.",
+            "Store the kit somewhere everyone can reach quickly."
+          ]
+        },
+        {
+          "itemId": "documents-ready",
+          "task": "Keep important documents ready",
+          "description": "Complete this when essential copies are protected and easy to take.",
+          "steps": [
+            "Collect identification, insurance details and prescriptions.",
+            "Place copies in a protective folder or waterproof bag.",
+            "Tell another household member where they are stored."
+          ]
+        }
+      ]
+    },
+    {
+      "crisisType": "bushfire",
+      "categoryId": "children-pets",
+      "category": "Children and pets",
+      "items": [
+        {
+          "itemId": "dependants-plan",
+          "task": "Plan support for children and dependants",
+          "description": "Complete this when each dependant has a named person to help them leave.",
+          "steps": [
+            "Write down who will help each person.",
+            "Pack medication, clothing and comfort items they may need.",
+            "Practise how you will leave together."
+          ]
+        },
+        {
+          "itemId": "pet-plan",
+          "task": "Prepare to transport your pets",
+          "description": "Complete this when pet transport and essential supplies are ready.",
+          "steps": [
+            "Keep a carrier, cage or lead where it is easy to reach.",
+            "Pack pet food, water and medication.",
+            "Include your pets in the household leaving plan."
+          ]
+        }
+      ]
+    },
+    {
+      "crisisType": "bushfire",
+      "categoryId": "health-access",
+      "category": "Health and accessibility",
+      "items": [
+        {
+          "itemId": "health-needs",
+          "task": "Prepare medication and accessibility support",
+          "description": "Complete this when essential health items and assistance are organised.",
+          "steps": [
+            "List medication and equipment that must travel with you.",
+            "Arrange help for mobility, communication or other access needs.",
+            "Keep the plan with your emergency kit."
+          ]
+        },
+        {
+          "itemId": "contacts-ready",
+          "task": "Write down important contact details",
+          "description": "Complete this when contacts are available without internet access.",
+          "steps": [
+            "Write down household, carer and support-service numbers.",
+            "Keep a paper copy with the emergency kit.",
+            "Make sure at least one other person has a copy."
+          ]
+        }
+      ]
+    },
+    {
+      "crisisType": "flood",
+      "categoryId": "household-plan",
+      "category": "Household plan and essentials",
+      "items": [
+        {
+          "itemId": "local-information",
+          "task": "Check your local flood risk",
+          "description": "Complete this when you know the safer places and routes near you.",
+          "steps": [
+            "Check whether your home and usual routes are flood-prone.",
+            "Choose a safer place on higher ground.",
+            "Write down a route that avoids low-lying roads and crossings."
+          ]
+        },
+        {
+          "itemId": "contact-plan",
+          "task": "Write down your household contact plan",
+          "description": "Complete this when everyone knows how to reconnect if separated.",
+          "steps": [
+            "Choose one household contact and one contact outside the area.",
+            "Write down their phone numbers.",
+            "Agree where you will meet if phone services fail."
+          ]
+        },
+        {
+          "itemId": "kit-ready",
+          "task": "Pack an emergency kit",
+          "description": "Complete this when essential supplies are together and easy to take.",
+          "steps": [
+            "Pack water, a torch, batteries and a charged power bank.",
+            "Add medication, first-aid items and suitable food.",
+            "Store the kit above likely flood level."
+          ]
+        },
+        {
+          "itemId": "items-lifted",
+          "task": "Plan which items to move higher",
+          "description": "Complete this when important belongings can be protected before water rises.",
+          "steps": [
+            "Identify documents, medicines and valuables that must be moved.",
+            "Choose a higher storage place.",
+            "Prepare waterproof bags or containers where practical."
+          ]
+        }
+      ]
+    },
+    {
+      "crisisType": "flood",
+      "categoryId": "children-pets",
+      "category": "Children and pets",
+      "items": [
+        {
+          "itemId": "dependants-plan",
+          "task": "Plan support for children and dependants",
+          "description": "Complete this when each dependant has a named person to help them.",
+          "steps": [
+            "Write down who will help each person.",
+            "Pack medication, clothing and comfort items.",
+            "Explain the safer place in calm, simple language."
+          ]
+        },
+        {
+          "itemId": "pet-plan",
+          "task": "Prepare to move your pets safely",
+          "description": "Complete this when pet transport and essential supplies are ready.",
+          "steps": [
+            "Keep a carrier, cage or lead ready.",
+            "Pack pet food, water and medication.",
+            "Identify a safer destination that accepts pets."
+          ]
+        }
+      ]
+    },
+    {
+      "crisisType": "flood",
+      "categoryId": "health-access",
+      "category": "Health and accessibility",
+      "items": [
+        {
+          "itemId": "medicine-plan",
+          "task": "Prepare medication and accessibility support",
+          "description": "Complete this when health items and assistance can move with you.",
+          "steps": [
+            "Keep medication and prescriptions ready to take.",
+            "Arrange help for mobility, communication or other access needs.",
+            "Store important instructions in a waterproof bag."
+          ]
+        },
+        {
+          "itemId": "contacts-ready",
+          "task": "Write down flood emergency contacts",
+          "description": "Complete this when important numbers are available without internet.",
+          "steps": [
+            "Write down VICSES 132 500 and household contacts.",
+            "Keep a paper copy with your emergency kit.",
+            "Remember that Triple Zero (000) is for life-threatening danger."
+          ]
+        }
+      ]
+    },
+    {
+      "crisisType": "power-outage",
+      "categoryId": "household-plan",
+      "category": "Household essentials",
+      "items": [
+        {
+          "itemId": "outage-plan",
+          "task": "Prepare essential supplies for 72 hours",
+          "description": "Complete this when your household can manage basic needs for at least three days.",
+          "steps": [
+            "Set aside drinking water and non-perishable food.",
+            "Prepare safe lighting, batteries and a battery-powered radio if available.",
+            "Check the supplies regularly and replace expired items."
+          ]
+        },
+        {
+          "itemId": "lighting-plan",
+          "task": "Put backup lighting somewhere easy to find",
+          "description": "Complete this when safe lighting is ready before the power fails.",
+          "steps": [
+            "Place torches or battery-operated lights in known locations.",
+            "Check that they work.",
+            "Store compatible spare batteries nearby."
+          ]
+        },
+        {
+          "itemId": "power-bank",
+          "task": "Charge your phone and power bank",
+          "description": "Complete this when the devices and correct cables are together.",
+          "steps": [
+            "Fully charge the phone and power bank.",
+            "Check that the cable fits your phone.",
+            "Store them somewhere easy to reach."
+          ]
+        },
+        {
+          "itemId": "distributor-ready",
+          "task": "Write down your energy distributor details",
+          "description": "Complete this when you can report an outage without internet.",
+          "steps": [
+            "Find the distributor name and faults number on your energy bill.",
+            "Write the details on paper.",
+            "Keep the paper with your household plan."
+          ]
+        }
+      ]
+    },
+    {
+      "crisisType": "power-outage",
+      "categoryId": "children-pets",
+      "category": "Children and pets",
+      "items": [
+        {
+          "itemId": "dependants-plan",
+          "task": "Prepare supplies for children and dependants",
+          "description": "Complete this when essential care items are ready.",
+          "steps": [
+            "Pack suitable food, clothing and comfort items.",
+            "Add required medication and care instructions.",
+            "Plan activities or support that do not require electricity."
+          ]
+        },
+        {
+          "itemId": "pet-plan",
+          "task": "Prepare essential supplies for pets",
+          "description": "Complete this when food, water and medication are available.",
+          "steps": [
+            "Set aside enough pet food and water.",
+            "Check that required medication is available.",
+            "Keep a carrier, cage or lead accessible if you may need to leave."
+          ]
+        }
+      ]
+    },
+    {
+      "crisisType": "power-outage",
+      "categoryId": "health-access",
+      "category": "Health and accessibility",
+      "items": [
+        {
+          "itemId": "powered-equipment",
+          "task": "Make a backup plan for powered medical equipment",
+          "description": "Complete this when the equipment, backup time and contacts are written down.",
+          "steps": [
+            "Write down each device and how long its battery lasts.",
+            "Ask the equipment provider what to do during a long outage.",
+            "Keep the provider and emergency contact numbers available offline."
+          ]
+        },
+        {
+          "itemId": "medicine-plan",
+          "task": "Ask how to protect refrigerated medicine",
+          "description": "Complete this after receiving advice for your specific medicine.",
+          "steps": [
+            "Ask a pharmacist or healthcare professional how long the medicine can be unrefrigerated.",
+            "Write down the safe storage instructions.",
+            "Prepare an appropriate backup storage plan if advised."
+          ]
+        }
+      ]
+    }
+  ]
+}
