@@ -1,5 +1,5 @@
 {
-  "_comment": "Helplines shown on each crisis page. Scoped per crisisType  add entries here (one hazard page at a time) only after manually verifying the phone number against its official source. This file is read directly by backend/routes/helplines_routes.py on every request  no database or seed step is involved; edits take effect immediately after saving (Flask dev server picks them up on next request).",
+  "_comment": "Helplines shown on each crisis page. Scoped per crisisType  add entries here (one hazard page at a time) only after manually verifying the phone number against its official source. This file is bundled directly into the frontend (see frontend/src/data/crisis/crisisStaticContent.ts)  no backend or API call is involved.",
   "records": [
     {
       "id": "bushfire-triple-zero",
@@ -83,6 +83,20 @@
       "availability": "24/7",
       "coverageArea": "Victoria",
       "verifiedAgainst": "https://www.ses.vic.gov.au/when-to-call",
+      "verifiedOn": "2026-09-16"
+    },
+    {
+      "id": "power-outage-vicemergency-hotline",
+      "crisisType": "power-outage",
+      "displayOrder": 0,
+      "name": "VicEmergency Hotline",
+      "serviceType": "Emergency information",
+      "phone": "1800 226 226",
+      "website": "https://www.energy.vic.gov.au/about-energy/safety/power-outages",
+      "description": "Current emergency warnings and incident information for Victoria, including major power outage events.",
+      "availability": "24/7",
+      "coverageArea": "Victoria",
+      "verifiedAgainst": "https://www.energy.vic.gov.au/about-energy/safety/power-outages",
       "verifiedOn": "2026-09-16"
     }
   ]

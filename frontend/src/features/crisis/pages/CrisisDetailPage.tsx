@@ -89,7 +89,7 @@ export function CrisisDetailPage() {
       </dialog>
     </section>
     {helplines.length > 0 && <section className="crisis-helplines" aria-labelledby="helplines-title">
-      <div className="crisis-section-heading"><div><h2 id="helplines-title">Helpline numbers</h2><p>Save these numbers before you need them — some services may be unreachable during an outage.</p></div></div>
+      <div className="crisis-section-heading"><div><h2 id="helplines-title">Helpline numbers</h2></div></div>
       <ul className="crisis-helplines__list">
         {helplines.map((helpline) => <li className="crisis-helplines__item" key={helpline.id}>
           <div>
