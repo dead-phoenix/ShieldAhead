@@ -2,7 +2,7 @@ import { ArrowLeft, ArrowSquareOut, CalendarBlank, CaretDown, Check, CheckCircle
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link, Navigate, useParams } from 'react-router-dom'
 import { appRoutes } from '../../../app/config/product'
-import { getChecklistGroups, getHelplines } from '../../../data/crisis/crisisStaticContent'
+import { getChecklistGroups, getHelplineSource, getHelplines } from '../../../data/crisis/crisisStaticContent'
 import { getCrisisContent } from '../crisisContent'
 import { readCrisisChecklist, saveCrisisChecklist } from '../crisisChecklistStorage'
 
@@ -11,6 +11,7 @@ export function CrisisDetailPage() {
   const content = getCrisisContent(kind)
   const checklistGroups = useMemo(() => getChecklistGroups(kind ?? ''), [kind])
   const helplines = useMemo(() => getHelplines(kind ?? ''), [kind])
+  const helplineSource = useMemo(() => getHelplineSource(kind ?? ''), [kind])
   const [checked, setChecked] = useState(() => readCrisisChecklist(kind ?? ''))
   const [selectedStageId, setSelectedStageId] = useState<string | null>(null)
   const guidanceDialogRef = useRef<HTMLDialogElement>(null)
@@ -99,7 +100,7 @@ export function CrisisDetailPage() {
           <a className="crisis-helplines__phone" href={`tel:${helpline.phone.replace(/\s+/g, '')}`}><Phone aria-hidden="true" size={18} weight="fill" /> {helpline.phone}</a>
         </li>)}
       </ul>
-      <p className="crisis-helplines__source"><Info aria-hidden="true" size={18} /> Source: <a href="https://www.cfa.vic.gov.au/" rel="noreferrer" target="_blank">CFA (Country Fire Authority) <ArrowSquareOut aria-hidden="true" size={15} /></a></p>
+      {helplineSource && <p className="crisis-helplines__source"><Info aria-hidden="true" size={18} /> Source: <a href={helplineSource.url} rel="noreferrer" target="_blank">{helplineSource.label} <ArrowSquareOut aria-hidden="true" size={15} /></a></p>}
     </section>}
     <section className="crisis-checklist" aria-labelledby="checklist-title">
       <div className="crisis-checklist__summary"><div><h2 id="checklist-title">Household preparation checklist</h2><p>This checklist belongs only to this hazard page.</p></div><strong>{completed} of {itemIds.length} complete</strong></div>

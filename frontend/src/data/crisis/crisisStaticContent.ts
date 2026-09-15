@@ -24,6 +24,7 @@ interface HelplineRecord {
   description?: string
   availability?: string | null
   coverageArea?: string
+  verifiedAgainst?: string
 }
 
 interface ChecklistGroupRecord {
@@ -52,6 +53,16 @@ export function getHelplines(crisisType: string): Helpline[] {
       availability: record.availability ?? undefined,
       coverageArea: record.coverageArea,
     }))
+}
+
+/** Where the helpline numbers for one hazard page were verified against,
+ * e.g. to credit the source in the UI. Undefined if the page has no
+ * helplines yet. */
+export function getHelplineSource(crisisType: string): { label: string; url: string } | undefined {
+  const url = helplineRecords.find((record) => record.crisisType === crisisType)?.verifiedAgainst
+  if (!url) return undefined
+  const label = new URL(url).hostname.replace(/^www\./, '')
+  return { label, url }
 }
 
 /** Pre-crisis checklist groups for one hazard page, bundled straight from
