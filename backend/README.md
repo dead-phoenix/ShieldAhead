@@ -44,12 +44,18 @@ The backend initializes the same schema automatically when `app.py` starts:
 2. `charities` stores ACNC support-service records and coordinates.
 3. `cache_meta` stores freshness timestamps for persistent cache decisions.
 4. `postcode_requests` stores aggregate postcode/API request events.
+5. `helplines` stores verified emergency and support contact numbers.
+6. `pre_crisis_checklist_items` stores checklist content, categories, and ordering.
 
 The API serves a still-valid Neon or in-memory copy immediately. Live VicFreeWiFi,
 Vicmap, ACNC, and Nominatim fetches run in the background when that copy is older
 than 24 hours, or on the request only when Neon and memory are both empty.
 Household profiles and private user details remain in the browser and are not stored in
 these tables.
+
+Checklist item definitions can be managed in Neon, but a user's checked or
+unchecked progress remains on the device and should not be stored in Neon.
+That keeps checklist progress account-free and private.
 
 
 ---

@@ -9,7 +9,7 @@ from routes.directions_routes import directions_bp
 from services.refresh_service import maybe_refresh_on_startup
 
 init_db()
-maybe_refresh_on_startup()
+maybe_refresh_on_startup() # checks refresh timestamps and refreshes if needed 
 
 app.register_blueprint(wifi_bp)
 app.register_blueprint(charities_bp)
