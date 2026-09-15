@@ -1,0 +1,3880 @@
+{
+  "metadata": {
+    "version": "local-json-seed-v1",
+    "generatedAt": "2026-09-15T08:04:43.056314Z",
+    "source": "local backend API snapshot",
+    "coverageAreas": [
+      "Bendigo",
+      "Castlemaine",
+      "Ballarat",
+      "Harcourt",
+      "Melbourne CBD",
+      "Clayton"
+    ],
+    "limitations": [
+      "Local JSON snapshot generated from live backend API for rapid local testing",
+      "Not an authoritative live dataset",
+      "User progress stays in browser storage"
+    ]
+  },
+  "areas": [
+    {
+      "name": "Bendigo",
+      "postcode": "3550",
+      "wifi": [
+        {
+          "accessConditions": [
+            "VicFreeWiFi access point"
+          ],
+          "address": null,
+          "dataUpdatedAt": "2019-04-25T12:52:19.803232",
+          "distanceKm": 0.4,
+          "id": "vicfreewifi-BD-25-JaaraBuilding",
+          "latitude": -36.758753,
+          "longitude": 144.283923,
+          "name": "Jaara Building",
+          "openingHours": null,
+          "postcode": "3550",
+          "suburb": "Bendigo",
+          "verificationStatus": "confirmed"
+        },
+        {
+          "accessConditions": [
+            "VicFreeWiFi access point"
+          ],
+          "address": null,
+          "dataUpdatedAt": "2019-04-25T12:52:19.803232",
+          "distanceKm": 0.5,
+          "id": "vicfreewifi-BD-22-CnrHargreavesMundy",
+          "latitude": -36.757639,
+          "longitude": 144.283333,
+          "name": "Corner of Hargreaves and Mundy",
+          "openingHours": null,
+          "postcode": "3550",
+          "suburb": "Bendigo",
+          "verificationStatus": "confirmed"
+        },
+        {
+          "accessConditions": [
+            "VicFreeWiFi access point"
+          ],
+          "address": null,
+          "dataUpdatedAt": "2019-04-25T12:52:19.803232",
+          "distanceKm": 0.6,
+          "id": "vicfreewifi-BD-23-TownHall",
+          "latitude": -36.758533,
+          "longitude": 144.282397,
+          "name": "Town Hall",
+          "openingHours": null,
+          "postcode": "3550",
+          "suburb": "Bendigo",
+          "verificationStatus": "confirmed"
+        },
+        {
+          "accessConditions": [
+            "VicFreeWiFi access point"
+          ],
+          "address": "Town Hall 02",
+          "dataUpdatedAt": "2019-04-25T12:52:19.803232",
+          "distanceKm": 0.6,
+          "id": "vicfreewifi-BD-24-TownHall02",
+          "latitude": -36.75883,
+          "longitude": 144.281994,
+          "name": "Town Hall 02",
+          "openingHours": null,
+          "postcode": "3550",
+          "suburb": "Bendigo",
+          "verificationStatus": "confirmed"
+        },
+        {
+          "accessConditions": [
+            "VicFreeWiFi access point"
+          ],
+          "address": null,
+          "dataUpdatedAt": "2019-04-25T12:52:19.803232",
+          "distanceKm": 0.6,
+          "id": "vicfreewifi-BD-26-RoundQueenWilliam",
+          "latitude": -36.760197,
+          "longitude": 144.281943,
+          "name": "Round Queen William",
+          "openingHours": null,
+          "postcode": "3550",
+          "suburb": "Bendigo",
+          "verificationStatus": "confirmed"
+        },
+        {
+          "accessConditions": [
+            "VicFreeWiFi access point"
+          ],
+          "address": null,
+          "dataUpdatedAt": "2019-04-25T12:52:19.803232",
+          "distanceKm": 0.6,
+          "id": "vicfreewifi-BD-27-QueenStreet",
+          "latitude": -36.760681,
+          "longitude": 144.281349,
+          "name": "Queen Street",
+          "openingHours": null,
+          "postcode": "3550",
+          "suburb": "Bendigo",
+          "verificationStatus": "confirmed"
+        },
+        {
+          "accessConditions": [
+            "VicFreeWiFi access point"
+          ],
+          "address": "Lyttleton Terrace 01",
+          "dataUpdatedAt": "2019-04-25T12:52:19.803232",
+          "distanceKm": 0.6,
+          "id": "vicfreewifi-BD-28-LyttletonTerrace01",
+          "latitude": -36.761008,
+          "longitude": 144.281864,
+          "name": "Lyttleton Terrace 01",
+          "openingHours": null,
+          "postcode": "3550",
+          "suburb": "Bendigo",
+          "verificationStatus": "confirmed"
+        },
+        {
+          "accessConditions": [
+            "VicFreeWiFi access point"
+          ],
+          "address": "Lyttleton Terrace 02",
+          "dataUpdatedAt": "2019-04-25T12:52:19.803232",
+          "distanceKm": 0.6,
+          "id": "vicfreewifi-BD-29-LyttletonTerrace02",
+          "latitude": -36.761877,
+          "longitude": 144.281678,
+          "name": "Lyttleton Terrace 02",
+          "openingHours": null,
+          "postcode": "3550",
+          "suburb": "Bendigo",
+          "verificationStatus": "confirmed"
+        },
+        {
+          "accessConditions": [
+            "VicFreeWiFi access point"
+          ],
+          "address": null,
+          "dataUpdatedAt": "2019-04-25T12:52:19.803232",
+          "distanceKm": 0.6,
+          "id": "vicfreewifi-BD-46-BullStreet",
+          "latitude": -36.75828,
+          "longitude": 144.281862,
+          "name": "Bull Street",
+          "openingHours": null,
+          "postcode": "3550",
+          "suburb": "Bendigo",
+          "verificationStatus": "confirmed"
+        },
+        {
+          "accessConditions": [
+            "Facility type: library",
+            "Free wifi likely but not confirmed — check with staff"
+          ],
+          "address": null,
+          "dataUpdatedAt": "2026-09-14T08:40:21.143384+00:00",
+          "distanceKm": 0.6,
+          "id": "vicmap-30790",
+          "latitude": -36.75909378311442,
+          "longitude": 144.2819001600257,
+          "name": "BENDIGO LIBRARY",
+          "openingHours": null,
+          "postcode": null,
+          "suburb": null,
+          "verificationStatus": "likely"
+        },
+        {
+          "accessConditions": [
+            "VicFreeWiFi access point"
+          ],
+          "address": null,
+          "dataUpdatedAt": "2019-04-25T12:52:19.803232",
+          "distanceKm": 0.7,
+          "id": "vicfreewifi-BD-20-CnrBullHigh",
+          "latitude": -36.757783,
+          "longitude": 144.281317,
+          "name": "Corner of Bull and High",
+          "openingHours": null,
+          "postcode": "3550",
+          "suburb": "Bendigo",
+          "verificationStatus": "confirmed"
+        },
+        {
+          "accessConditions": [
+            "VicFreeWiFi access point"
+          ],
+          "address": null,
+          "dataUpdatedAt": "2019-04-25T12:52:19.803232",
+          "distanceKm": 0.7,
+          "id": "vicfreewifi-BD-21-TaxiRank",
+          "latitude": -36.756847,
+          "longitude": 144.282031,
+          "name": "Taxi Rank",
+          "openingHours": null,
+          "postcode": "3550",
+          "suburb": "Bendigo",
+          "verificationStatus": "confirmed"
+        },
+        {
+          "accessConditions": [
+            "VicFreeWiFi access point"
+          ],
+          "address": null,
+          "dataUpdatedAt": "2019-04-25T12:52:19.803232",
+          "distanceKm": 0.7,
+          "id": "vicfreewifi-BD-32-HargreavesMid_RAP",
+          "latitude": -36.7599,
+          "longitude": 144.28038,
+          "name": "Hargreaves Mid",
+          "openingHours": null,
+          "postcode": "3550",
+          "suburb": "Bendigo",
+          "verificationStatus": "confirmed"
+        },
+        {
+          "accessConditions": [
+            "VicFreeWiFi access point"
+          ],
+          "address": null,
+          "dataUpdatedAt": "2019-04-25T12:52:19.803232",
+          "distanceKm": 0.7,
+          "id": "vicfreewifi-BD-33-HargreavesWilliamson",
+          "latitude": -36.759551,
+          "longitude": 144.281052,
+          "name": "Hargreaves Williamson",
+          "openingHours": null,
+          "postcode": "3550",
+          "suburb": "Bendigo",
+          "verificationStatus": "confirmed"
+        },
+        {
+          "accessConditions": [
+            "VicFreeWiFi access point"
+          ],
+          "address": null,
+          "dataUpdatedAt": "2019-04-25T12:52:19.803232",
+          "distanceKm": 0.7,
+          "id": "vicfreewifi-BD-45-CnrQueenMitchell",
+          "latitude": -36.761452,
+          "longitude": 144.280305,
+          "name": "Corner of Queen and Mitchell",
+          "openingHours": null,
+          "postcode": "3550",
+          "suburb": "Bendigo",
+          "verificationStatus": "confirmed"
+        },
+        {
+          "accessConditions": [
+            "VicFreeWiFi access point"
+          ],
+          "address": null,
+          "dataUpdatedAt": "2019-04-25T12:52:19.803232",
+          "distanceKm": 0.7,
+          "id": "vicfreewifi-BD-50-ShamrockHotel",
+          "latitude": -36.758581,
+          "longitude": 144.280343,
+          "name": "Shamrock Hotel",
+          "openingHours": null,
+          "postcode": "3550",
+          "suburb": "Bendigo",
+          "verificationStatus": "confirmed"
+        },
+        {
+          "accessConditions": [
+            "VicFreeWiFi access point"
+          ],
+          "address": null,
+          "dataUpdatedAt": "2019-04-25T12:52:19.803232",
+          "distanceKm": 0.8,
+          "id": "vicfreewifi-BD-03-Goldendragon01",
+          "latitude": -36.755124,
+          "longitude": 144.282438,
+          "name": "Golden Dragon Foyer",
+          "openingHours": null,
+          "postcode": "3550",
+          "suburb": "Bendigo",
+          "verificationStatus": "confirmed"
+        },
+        {
+          "accessConditions": [
+            "VicFreeWiFi access point"
+          ],
+          "address": null,
+          "dataUpdatedAt": "2019-04-25T12:52:19.803232",
+          "distanceKm": 0.8,
+          "id": "vicfreewifi-BD-04-Goldendragon02",
+          "latitude": -36.754979,
+          "longitude": 144.282467,
+          "name": "GoldenDragon- Outdoor Entrance",
+          "openingHours": null,
+          "postcode": "3550",
+          "suburb": "Bendigo",
+          "verificationStatus": "confirmed"
+        },
+        {
+          "accessConditions": [
+            "VicFreeWiFi access point"
+          ],
+          "address": "Railway Station 01",
+          "dataUpdatedAt": "2019-04-25T12:52:19.803232",
+          "distanceKm": 0.8,
+          "id": "vicfreewifi-BD-13-RailwayStation01",
+          "latitude": -36.765756,
+          "longitude": 144.282784,
+          "name": "Railway Station 01",
+          "openingHours": null,
+          "postcode": "3550",
+          "suburb": "Bendigo",
+          "verificationStatus": "confirmed"
+        },
+        {
+          "accessConditions": [
+            "VicFreeWiFi access point"
+          ],
+          "address": "Railway Station 02",
+          "dataUpdatedAt": "2019-04-25T12:52:19.803232",
+          "distanceKm": 0.8,
+          "id": "vicfreewifi-BD-14-RailwayStation02",
+          "latitude": -36.765562,
+          "longitude": 144.282943,
+          "name": "Railway Station 02",
+          "openingHours": null,
+          "postcode": "3550",
+          "suburb": "Bendigo",
+          "verificationStatus": "confirmed"
+        }
+      ],
+      "support": [
+        {
+          "address": "PO Box 220, Strathdale, VIC, 3550",
+          "availabilityFreshness": null,
+          "availabilityStatus": "not-confirmed",
+          "availabilityUpdatedAt": null,
+          "dataUpdatedAt": "2026-09-13T19:00:54.497199",
+          "distanceKm": 0.0,
+          "eligibility": null,
+          "id": "acnc-86528391351",
+          "latitude": -36.760059999999996,
+          "longitude": 144.2885,
+          "name": "Disaster Recovery Army Incorporated",
+          "partnerStatus": "unknown",
+          "phone": null,
+          "postcode": "3550",
+          "serviceTypes": [
+            "Community support services"
+          ],
+          "suburb": "Strathdale",
+          "website": "www.disaster.org.au"
+        },
+        {
+          "address": "L1, Fountain Court, 2-18 Bath Lane, Bendigo, VIC, 3550",
+          "availabilityFreshness": null,
+          "availabilityStatus": "not-confirmed",
+          "availabilityUpdatedAt": null,
+          "dataUpdatedAt": "2026-09-13T19:00:54.497199",
+          "distanceKm": 0.0,
+          "eligibility": null,
+          "id": "acnc-98643978205",
+          "latitude": -36.760059999999996,
+          "longitude": 144.2885,
+          "name": "Sandhurst Catholic Early Childhood Education & Care Limited",
+          "partnerStatus": "unknown",
+          "phone": null,
+          "postcode": "3550",
+          "serviceTypes": [
+            "Community support services"
+          ],
+          "suburb": "Bendigo",
+          "website": "scecec.org.au"
+        },
+        {
+          "address": "Corner Jackson & Stanfield Streets, LONG GULLY, VIC, 3550",
+          "availabilityFreshness": null,
+          "availabilityStatus": "not-confirmed",
+          "availabilityUpdatedAt": null,
+          "dataUpdatedAt": "2026-09-13T19:00:54.497199",
+          "distanceKm": 0.0,
+          "eligibility": null,
+          "id": "acnc-46006178641",
+          "latitude": -36.760059999999996,
+          "longitude": 144.2885,
+          "name": "Cvgt Australia Limited",
+          "partnerStatus": "unknown",
+          "phone": null,
+          "postcode": "3550",
+          "serviceTypes": [
+            "Community support services"
+          ],
+          "suburb": "LONG GULLY",
+          "website": "www.cvgt.com.au"
+        },
+        {
+          "address": "48 Mundy Street, Bendigo, VIC, 3550",
+          "availabilityFreshness": null,
+          "availabilityStatus": "not-confirmed",
+          "availabilityUpdatedAt": null,
+          "dataUpdatedAt": "2026-09-13T19:00:54.497199",
+          "distanceKm": 0.3,
+          "eligibility": null,
+          "id": "acnc-86303632761",
+          "latitude": -36.7594943,
+          "longitude": 144.2847356,
+          "name": "GOLDFIELDS LOCAL LEARNING AND EMPLOYMENT NETWORK INCORPORATED",
+          "partnerStatus": "unknown",
+          "phone": null,
+          "postcode": "3550",
+          "serviceTypes": [
+            "Community support services"
+          ],
+          "suburb": "Bendigo",
+          "website": "www.gllen.org.au"
+        },
+        {
+          "address": "33 Myers St, Bendigo, VIC, 3550",
+          "availabilityFreshness": null,
+          "availabilityStatus": "not-confirmed",
+          "availabilityUpdatedAt": null,
+          "dataUpdatedAt": "2026-09-13T19:00:54.497199",
+          "distanceKm": 0.3,
+          "eligibility": null,
+          "id": "acnc-79805679834",
+          "latitude": -36.7602391,
+          "longitude": 144.2847039,
+          "name": "Bendigo Youth Choir Inc",
+          "partnerStatus": "unknown",
+          "phone": null,
+          "postcode": "3550",
+          "serviceTypes": [
+            "Youth services"
+          ],
+          "suburb": "Bendigo",
+          "website": "https://www.bendigoyouthchoir.org.au"
+        },
+        {
+          "address": "47 Myers St, Bendigo, VIC, 3550",
+          "availabilityFreshness": null,
+          "availabilityStatus": "not-confirmed",
+          "availabilityUpdatedAt": null,
+          "dataUpdatedAt": "2026-09-13T19:00:54.497199",
+          "distanceKm": 0.3,
+          "eligibility": null,
+          "id": "acnc-21794157588",
+          "latitude": -36.7593887,
+          "longitude": 144.285811,
+          "name": "Womens Health Loddon Mallee Inc",
+          "partnerStatus": "unknown",
+          "phone": null,
+          "postcode": "3550",
+          "serviceTypes": [
+            "Community support services"
+          ],
+          "suburb": "Bendigo",
+          "website": "www.whlm.org.au"
+        },
+        {
+          "address": "165-171 Hargreaves St, Bendigo, VIC, 3550",
+          "availabilityFreshness": null,
+          "availabilityStatus": "not-confirmed",
+          "availabilityUpdatedAt": null,
+          "dataUpdatedAt": "2026-09-13T19:00:54.497199",
+          "distanceKm": 0.4,
+          "eligibility": null,
+          "id": "acnc-23082541240",
+          "latitude": -36.7578241,
+          "longitude": 144.2847289,
+          "name": "Advocacy And Rights Centre Limited",
+          "partnerStatus": "unknown",
+          "phone": null,
+          "postcode": "3550",
+          "serviceTypes": [
+            "Community support services"
+          ],
+          "suburb": "Bendigo",
+          "website": "www.arcjustice.org.au"
+        },
+        {
+          "address": "132 McCrae Street, Bendigo, VIC, 3550",
+          "availabilityFreshness": null,
+          "availabilityStatus": "not-confirmed",
+          "availabilityUpdatedAt": null,
+          "dataUpdatedAt": "2026-09-13T19:00:54.497199",
+          "distanceKm": 0.6,
+          "eligibility": null,
+          "id": "acnc-95004952505",
+          "latitude": -36.7562212,
+          "longitude": 144.2831934,
+          "name": "Arena Theatre Company Limited",
+          "partnerStatus": "unknown",
+          "phone": null,
+          "postcode": "3550",
+          "serviceTypes": [
+            "Community support services"
+          ],
+          "suburb": "Bendigo",
+          "website": "www.wearearena.org.au"
+        },
+        {
+          "address": "214 Hargreaves St, Bendigo, VIC, 3550",
+          "availabilityFreshness": null,
+          "availabilityStatus": "not-confirmed",
+          "availabilityUpdatedAt": null,
+          "dataUpdatedAt": "2026-09-13T19:00:54.497199",
+          "distanceKm": 0.6,
+          "eligibility": null,
+          "id": "acnc-26724921970",
+          "latitude": -36.7581181,
+          "longitude": 144.2823828,
+          "name": "Bendigo Baptist Community Care Incorporated",
+          "partnerStatus": "unknown",
+          "phone": null,
+          "postcode": "3550",
+          "serviceTypes": [
+            "Community support services"
+          ],
+          "suburb": "Bendigo",
+          "website": "www.madcow.org.au"
+        },
+        {
+          "address": "251-259 Hargreaves St, Bendigo, VIC, 3550",
+          "availabilityFreshness": null,
+          "availabilityStatus": "not-confirmed",
+          "availabilityUpdatedAt": null,
+          "dataUpdatedAt": "2026-09-13T19:00:54.497199",
+          "distanceKm": 0.6,
+          "eligibility": null,
+          "id": "acnc-18178701032",
+          "latitude": -36.7591479,
+          "longitude": 144.281744,
+          "name": "Bendigo Volunteer Resource Centre Inc",
+          "partnerStatus": "unknown",
+          "phone": null,
+          "postcode": "3550",
+          "serviceTypes": [
+            "Community support services"
+          ],
+          "suburb": "Bendigo",
+          "website": "www.bgovolunteers.org.au"
+        },
+        {
+          "address": "127 Mitchell St, Bendigo, VIC, 3550",
+          "availabilityFreshness": null,
+          "availabilityStatus": "not-confirmed",
+          "availabilityUpdatedAt": null,
+          "dataUpdatedAt": "2026-09-13T19:00:54.497199",
+          "distanceKm": 0.7,
+          "eligibility": null,
+          "id": "acnc-75413657328",
+          "latitude": -36.7654727,
+          "longitude": 144.2846926,
+          "name": "Interchange Loddon Mallee Region Limited",
+          "partnerStatus": "unknown",
+          "phone": null,
+          "postcode": "3550",
+          "serviceTypes": [
+            "Community support services"
+          ],
+          "suburb": "Bendigo",
+          "website": "http://www.lifely.org.au"
+        },
+        {
+          "address": "Office 6, 21 Killians Walk, Bendigo, VIC, 3550",
+          "availabilityFreshness": null,
+          "availabilityStatus": "not-confirmed",
+          "availabilityUpdatedAt": null,
+          "dataUpdatedAt": "2026-09-13T19:00:54.497199",
+          "distanceKm": 0.7,
+          "eligibility": null,
+          "id": "acnc-13196056495",
+          "latitude": -36.7601316,
+          "longitude": 144.2807859,
+          "name": "Permaculture International Ltd",
+          "partnerStatus": "unknown",
+          "phone": null,
+          "postcode": "3550",
+          "serviceTypes": [
+            "Community support services"
+          ],
+          "suburb": "Bendigo",
+          "website": "http://www.permacultureaustralia.org.au"
+        },
+        {
+          "address": "96 Pall Mall, Bendigo, VIC, 3550",
+          "availabilityFreshness": null,
+          "availabilityStatus": "not-confirmed",
+          "availabilityUpdatedAt": null,
+          "dataUpdatedAt": "2026-09-13T19:00:54.497199",
+          "distanceKm": 0.7,
+          "eligibility": null,
+          "id": "acnc-12974015985",
+          "latitude": -36.7575798,
+          "longitude": 144.2817199,
+          "name": "Centre For Non-Violence",
+          "partnerStatus": "unknown",
+          "phone": null,
+          "postcode": "3550",
+          "serviceTypes": [
+            "Community support services"
+          ],
+          "suburb": "Bendigo",
+          "website": "http://cnv.org.au"
+        },
+        {
+          "address": "181 Mccrae St, Bendigo, 3550",
+          "availabilityFreshness": null,
+          "availabilityStatus": "not-confirmed",
+          "availabilityUpdatedAt": null,
+          "dataUpdatedAt": "2026-09-13T19:00:54.497199",
+          "distanceKm": 0.8,
+          "eligibility": null,
+          "id": "acnc-77648015070",
+          "latitude": -36.7528834,
+          "longitude": 144.2876656,
+          "name": "FRG MINISTRY AUSTRALIA",
+          "partnerStatus": "unknown",
+          "phone": null,
+          "postcode": "3550",
+          "serviceTypes": [
+            "Community support services"
+          ],
+          "suburb": "Bendigo",
+          "website": "www.frgministry.com"
+        },
+        {
+          "address": "21-23 Condon St, Kennington, VIC, 3550",
+          "availabilityFreshness": null,
+          "availabilityStatus": "not-confirmed",
+          "availabilityUpdatedAt": null,
+          "dataUpdatedAt": "2026-09-13T19:00:54.497199",
+          "distanceKm": 1.0,
+          "eligibility": null,
+          "id": "acnc-58167238550",
+          "latitude": -36.7677937,
+          "longitude": 144.2941761,
+          "name": "GBI ENSAMPLE BENDIGO Incorporated",
+          "partnerStatus": "unknown",
+          "phone": null,
+          "postcode": "3550",
+          "serviceTypes": [
+            "Community support services"
+          ],
+          "suburb": "Kennington",
+          "website": "www.ensamplechurch.org"
+        },
+        {
+          "address": "10 Forest St, Bendigo, VIC, 3550",
+          "availabilityFreshness": null,
+          "availabilityStatus": "not-confirmed",
+          "availabilityUpdatedAt": null,
+          "dataUpdatedAt": "2026-09-13T19:00:54.497199",
+          "distanceKm": 1.0,
+          "eligibility": null,
+          "id": "acnc-53109450811",
+          "latitude": -36.759549,
+          "longitude": 144.2767884,
+          "name": "The Bendigo Affordable Housing Company Ltd.",
+          "partnerStatus": "unknown",
+          "phone": null,
+          "postcode": "3550",
+          "serviceTypes": [
+            "Housing support"
+          ],
+          "suburb": "Bendigo",
+          "website": null
+        },
+        {
+          "address": "24-30 View Street, Bendigo, VIC, 3550",
+          "availabilityFreshness": null,
+          "availabilityStatus": "not-confirmed",
+          "availabilityUpdatedAt": null,
+          "dataUpdatedAt": "2026-09-13T19:00:54.497199",
+          "distanceKm": 1.0,
+          "eligibility": null,
+          "id": "acnc-54710906309",
+          "latitude": -36.7582604,
+          "longitude": 144.2772515,
+          "name": "Meals @ The Bridge Lifeline Inc",
+          "partnerStatus": "unknown",
+          "phone": null,
+          "postcode": "3550",
+          "serviceTypes": [
+            "Community support services"
+          ],
+          "suburb": "Bendigo",
+          "website": "https://mealsatthebridge.org"
+        },
+        {
+          "address": "71 Bridge St, Bendigo, VIC, 3550",
+          "availabilityFreshness": null,
+          "availabilityStatus": "not-confirmed",
+          "availabilityUpdatedAt": null,
+          "dataUpdatedAt": "2026-09-13T19:00:54.497199",
+          "distanceKm": 1.0,
+          "eligibility": null,
+          "id": "acnc-52744070271",
+          "latitude": -36.7513835,
+          "longitude": 144.2841353,
+          "name": "Centre Against Sexual Assault Central Victoria Inc",
+          "partnerStatus": "unknown",
+          "phone": null,
+          "postcode": "3550",
+          "serviceTypes": [
+            "Community support services"
+          ],
+          "suburb": "Bendigo",
+          "website": "www.casacv.org.au"
+        },
+        {
+          "address": "6 Nolan Street, Bendigo, VIC, 3550",
+          "availabilityFreshness": null,
+          "availabilityStatus": "not-confirmed",
+          "availabilityUpdatedAt": null,
+          "dataUpdatedAt": "2026-09-13T19:00:54.497199",
+          "distanceKm": 1.1,
+          "eligibility": null,
+          "id": "acnc-58946454004",
+          "latitude": -36.7513722,
+          "longitude": 144.2933859,
+          "name": "Sunshine Bendigo Inc",
+          "partnerStatus": "unknown",
+          "phone": null,
+          "postcode": "3550",
+          "serviceTypes": [
+            "Community support services"
+          ],
+          "suburb": "Bendigo",
+          "website": "www.sunshinebendigo.org.au"
+        },
+        {
+          "address": "118 King St, Bendigo, VIC, 3550",
+          "availabilityFreshness": null,
+          "availabilityStatus": "not-confirmed",
+          "availabilityUpdatedAt": null,
+          "dataUpdatedAt": "2026-09-13T19:00:54.497199",
+          "distanceKm": 1.3,
+          "eligibility": null,
+          "id": "acnc-40360571780",
+          "latitude": -36.7657455,
+          "longitude": 144.2752165,
+          "name": "Workspace Australia Limited",
+          "partnerStatus": "unknown",
+          "phone": null,
+          "postcode": "3550",
+          "serviceTypes": [
+            "Community support services"
+          ],
+          "suburb": "Bendigo",
+          "website": "www.workspaceaustralia.com"
+        }
+      ]
+    },
+    {
+      "name": "Castlemaine",
+      "postcode": "3450",
+      "wifi": [
+        {
+          "accessConditions": [
+            "Facility type: library",
+            "Free wifi likely but not confirmed — check with staff"
+          ],
+          "address": null,
+          "dataUpdatedAt": "2026-09-14T08:40:21.121694+00:00",
+          "distanceKm": 0.3,
+          "id": "vicmap-2287",
+          "latitude": -37.06378143633531,
+          "longitude": 144.21759333963885,
+          "name": "CASTLEMAINE LIBRARY",
+          "openingHours": null,
+          "postcode": null,
+          "suburb": null,
+          "verificationStatus": "likely"
+        },
+        {
+          "accessConditions": [
+            "Facility type: neighbourhood safer place",
+            "Free wifi likely but not confirmed — check with staff"
+          ],
+          "address": null,
+          "dataUpdatedAt": "2026-09-14T08:40:21.134100+00:00",
+          "distanceKm": 14.6,
+          "id": "vicmap-18847",
+          "latitude": -37.10686977223641,
+          "longitude": 144.06039819640472,
+          "name": "NEWSTEAD (NEWSTEAD COMMUNITY CENTRE) NSP",
+          "openingHours": null,
+          "postcode": null,
+          "suburb": null,
+          "verificationStatus": "likely"
+        },
+        {
+          "accessConditions": [
+            "Facility type: hall",
+            "Free wifi likely but not confirmed — check with staff"
+          ],
+          "address": null,
+          "dataUpdatedAt": "2026-09-14T08:40:21.125102+00:00",
+          "distanceKm": 20.9,
+          "id": "vicmap-10196",
+          "latitude": -37.23596368021944,
+          "longitude": 144.11540762877243,
+          "name": "FRANKLINFORD COMMUNITY CENTRE",
+          "openingHours": null,
+          "postcode": null,
+          "suburb": null,
+          "verificationStatus": "likely"
+        },
+        {
+          "accessConditions": [
+            "Facility type: community centre",
+            "Free wifi likely but not confirmed — check with staff"
+          ],
+          "address": null,
+          "dataUpdatedAt": "2026-09-14T08:40:21.136386+00:00",
+          "distanceKm": 23.8,
+          "id": "vicmap-20285",
+          "latitude": -37.23920355791209,
+          "longitude": 144.37615861220894,
+          "name": "LAURISTON HALL",
+          "openingHours": null,
+          "postcode": null,
+          "suburb": null,
+          "verificationStatus": "likely"
+        },
+        {
+          "accessConditions": [
+            "Facility type: library",
+            "Free wifi likely but not confirmed — check with staff"
+          ],
+          "address": null,
+          "dataUpdatedAt": "2026-09-14T08:40:21.122330+00:00",
+          "distanceKm": 28.7,
+          "id": "vicmap-2386",
+          "latitude": -36.80949477899523,
+          "longitude": 144.24094216455242,
+          "name": "KANGAROO FLAT LIBRARY",
+          "openingHours": null,
+          "postcode": null,
+          "suburb": null,
+          "verificationStatus": "likely"
+        },
+        {
+          "accessConditions": [
+            "Facility type: library",
+            "Free wifi likely but not confirmed — check with staff"
+          ],
+          "address": null,
+          "dataUpdatedAt": "2026-09-14T08:40:21.121552+00:00",
+          "distanceKm": 29.1,
+          "id": "vicmap-2267",
+          "latitude": -37.249292092026856,
+          "longitude": 144.45237569997627,
+          "name": "KYNETON LIBRARY",
+          "openingHours": null,
+          "postcode": null,
+          "suburb": null,
+          "verificationStatus": "likely"
+        }
+      ],
+      "support": [
+        {
+          "address": "PO BOX 638, CASTLEMAINE, VIC, 3450",
+          "availabilityFreshness": null,
+          "availabilityStatus": "not-confirmed",
+          "availabilityUpdatedAt": null,
+          "dataUpdatedAt": "2026-09-13T19:00:54.497199",
+          "distanceKm": 0.0,
+          "eligibility": null,
+          "id": "acnc-87950201949",
+          "latitude": -37.0667,
+          "longitude": 144.2167,
+          "name": "Forest Creek Common Equity Rental Housing Co-operative Limited",
+          "partnerStatus": "unknown",
+          "phone": null,
+          "postcode": "3450",
+          "serviceTypes": [
+            "Housing support"
+          ],
+          "suburb": "CASTLEMAINE",
+          "website": null
+        },
+        {
+          "address": "347 Barker St, Castlemaine, VIC, 3450",
+          "availabilityFreshness": null,
+          "availabilityStatus": "not-confirmed",
+          "availabilityUpdatedAt": null,
+          "dataUpdatedAt": "2026-09-13T19:00:54.497199",
+          "distanceKm": 0.0,
+          "eligibility": null,
+          "id": "acnc-47592247655",
+          "latitude": -37.0667,
+          "longitude": 144.2167,
+          "name": "Thompson’s Foundry Band Incorporated",
+          "partnerStatus": "unknown",
+          "phone": null,
+          "postcode": "3450",
+          "serviceTypes": [
+            "Community support services"
+          ],
+          "suburb": "Castlemaine",
+          "website": null
+        },
+        {
+          "address": "212 Barker Street, Castlemaine, VIC, 3450",
+          "availabilityFreshness": null,
+          "availabilityStatus": "not-confirmed",
+          "availabilityUpdatedAt": null,
+          "dataUpdatedAt": "2026-09-13T19:00:54.497199",
+          "distanceKm": 0.0,
+          "eligibility": null,
+          "id": "acnc-91959409475",
+          "latitude": -37.0667,
+          "longitude": 144.2167,
+          "name": "Castlemaine Seed Library",
+          "partnerStatus": "unknown",
+          "phone": null,
+          "postcode": "3450",
+          "serviceTypes": [
+            "Community support services"
+          ],
+          "suburb": "Castlemaine",
+          "website": "castlemaineseedlibrary.org.au"
+        },
+        {
+          "address": "6 Lewis Drive, Castlemaine, VIC, 3450",
+          "availabilityFreshness": null,
+          "availabilityStatus": "not-confirmed",
+          "availabilityUpdatedAt": null,
+          "dataUpdatedAt": "2026-09-13T19:00:54.497199",
+          "distanceKm": 0.0,
+          "eligibility": null,
+          "id": "acnc-87632913912",
+          "latitude": -37.0667,
+          "longitude": 144.2167,
+          "name": "Australian Professional Association for Trans Health",
+          "partnerStatus": "unknown",
+          "phone": null,
+          "postcode": "3450",
+          "serviceTypes": [
+            "Community support services"
+          ],
+          "suburb": "Castlemaine",
+          "website": "https://auspath.org.au/"
+        },
+        {
+          "address": "346 Barker St, Castlemaine, VIC, 3450",
+          "availabilityFreshness": null,
+          "availabilityStatus": "not-confirmed",
+          "availabilityUpdatedAt": null,
+          "dataUpdatedAt": "2026-09-13T19:00:54.497199",
+          "distanceKm": 0.0,
+          "eligibility": null,
+          "id": "acnc-47629871405",
+          "latitude": -37.0667,
+          "longitude": 144.2167,
+          "name": "THE HEAD AND NECK CANCER FOUNDATION LTD",
+          "partnerStatus": "unknown",
+          "phone": null,
+          "postcode": "3450",
+          "serviceTypes": [
+            "Community support services"
+          ],
+          "suburb": "Castlemaine",
+          "website": "www.headandneckfoundation.com.au"
+        },
+        {
+          "address": "1 Halford St, Castlemaine, VIC, 3450",
+          "availabilityFreshness": null,
+          "availabilityStatus": "not-confirmed",
+          "availabilityUpdatedAt": null,
+          "dataUpdatedAt": "2026-09-13T19:00:54.497199",
+          "distanceKm": 0.0,
+          "eligibility": null,
+          "id": "acnc-39729215897",
+          "latitude": -37.0667,
+          "longitude": 144.2167,
+          "name": "THE FRINGE THING INC",
+          "partnerStatus": "unknown",
+          "phone": null,
+          "postcode": "3450",
+          "serviceTypes": [
+            "Community support services"
+          ],
+          "suburb": "Castlemaine",
+          "website": "www.castlemainefringe.org.au"
+        },
+        {
+          "address": "220 Barker St, Castlemaine, VIC, 3450",
+          "availabilityFreshness": null,
+          "availabilityStatus": "not-confirmed",
+          "availabilityUpdatedAt": null,
+          "dataUpdatedAt": "2026-09-13T19:00:54.497199",
+          "distanceKm": 0.0,
+          "eligibility": null,
+          "id": "acnc-55275789919",
+          "latitude": -37.0667,
+          "longitude": 144.2167,
+          "name": "Friends of Castlemaine Library",
+          "partnerStatus": "unknown",
+          "phone": null,
+          "postcode": "3450",
+          "serviceTypes": [
+            "Community support services"
+          ],
+          "suburb": "Castlemaine",
+          "website": null
+        },
+        {
+          "address": "Lot19 Mcshanag Road (off Langslow Street), Castlemaine, VIC, 3450",
+          "availabilityFreshness": null,
+          "availabilityStatus": "not-confirmed",
+          "availabilityUpdatedAt": null,
+          "dataUpdatedAt": "2026-09-13T19:00:54.497199",
+          "distanceKm": 0.0,
+          "eligibility": null,
+          "id": "acnc-59643570594",
+          "latitude": -37.0667,
+          "longitude": 144.2167,
+          "name": "LOT19 CREATIONS LIMITED",
+          "partnerStatus": "unknown",
+          "phone": null,
+          "postcode": "3450",
+          "serviceTypes": [
+            "Community support services"
+          ],
+          "suburb": "Castlemaine",
+          "website": "http://www.lot19art.com"
+        },
+        {
+          "address": "P.O.Box 466, Castlemaine, VIC, 3450",
+          "availabilityFreshness": null,
+          "availabilityStatus": "not-confirmed",
+          "availabilityUpdatedAt": null,
+          "dataUpdatedAt": "2026-09-13T19:00:54.497199",
+          "distanceKm": 0.0,
+          "eligibility": null,
+          "id": "acnc-86180301065",
+          "latitude": -37.0667,
+          "longitude": 144.2167,
+          "name": "Mt Alexander Shire Accommodation And Respite Group Inc",
+          "partnerStatus": "unknown",
+          "phone": null,
+          "postcode": "3450",
+          "serviceTypes": [
+            "Community support services"
+          ],
+          "suburb": "Castlemaine",
+          "website": "www.masarg.org.au"
+        },
+        {
+          "address": "30 Templeton St, Castlemaine, VIC, 3450",
+          "availabilityFreshness": null,
+          "availabilityStatus": "not-confirmed",
+          "availabilityUpdatedAt": null,
+          "dataUpdatedAt": "2026-09-13T19:00:54.497199",
+          "distanceKm": 0.4,
+          "eligibility": null,
+          "id": "acnc-77650287120",
+          "latitude": -37.0636168,
+          "longitude": 144.2185018,
+          "name": "CASTLEMAINE INSTITUTE LTD",
+          "partnerStatus": "unknown",
+          "phone": null,
+          "postcode": "3450",
+          "serviceTypes": [
+            "Community support services"
+          ],
+          "suburb": "Castlemaine",
+          "website": "https://ci.org.au/"
+        },
+        {
+          "address": "30 Templeton St, Castlemaine, VIC, 3450",
+          "availabilityFreshness": null,
+          "availabilityStatus": "not-confirmed",
+          "availabilityUpdatedAt": null,
+          "dataUpdatedAt": "2026-09-13T19:00:54.497199",
+          "distanceKm": 0.4,
+          "eligibility": null,
+          "id": "acnc-55855358544",
+          "latitude": -37.0636168,
+          "longitude": 144.2185018,
+          "name": "Castlemaine Safe Space Inc.",
+          "partnerStatus": "unknown",
+          "phone": null,
+          "postcode": "3450",
+          "serviceTypes": [
+            "Community support services"
+          ],
+          "suburb": "Castlemaine",
+          "website": "https://www.castlemainesafespace.org"
+        },
+        {
+          "address": "30 Templeton St, Castlemaine, VIC, 3450",
+          "availabilityFreshness": null,
+          "availabilityStatus": "not-confirmed",
+          "availabilityUpdatedAt": null,
+          "dataUpdatedAt": "2026-09-13T19:00:54.497199",
+          "distanceKm": 0.4,
+          "eligibility": null,
+          "id": "acnc-20112806357",
+          "latitude": -37.0636168,
+          "longitude": 144.2185018,
+          "name": "Castlemaine Community House Incorporated",
+          "partnerStatus": "unknown",
+          "phone": null,
+          "postcode": "3450",
+          "serviceTypes": [
+            "Community support services"
+          ],
+          "suburb": "Castlemaine",
+          "website": "www.cch.org.au"
+        },
+        {
+          "address": "4 Lewis Dr, Castlemaine, VIC, 3450",
+          "availabilityFreshness": null,
+          "availabilityStatus": "not-confirmed",
+          "availabilityUpdatedAt": null,
+          "dataUpdatedAt": "2026-09-13T19:00:54.497199",
+          "distanceKm": 1.5,
+          "eligibility": null,
+          "id": "acnc-65655589423",
+          "latitude": -37.0747838,
+          "longitude": 144.2028344,
+          "name": "THE GOOD OP SHOP - CASTLEMAINE LTD",
+          "partnerStatus": "unknown",
+          "phone": null,
+          "postcode": "3450",
+          "serviceTypes": [
+            "Community support services"
+          ],
+          "suburb": "Castlemaine",
+          "website": "https://www.goodopshop.com.au"
+        },
+        {
+          "address": "76 Hargraves Street, Castlemaine, VIC, 3450",
+          "availabilityFreshness": null,
+          "availabilityStatus": "not-confirmed",
+          "availabilityUpdatedAt": null,
+          "dataUpdatedAt": "2026-09-13T19:00:54.497199",
+          "distanceKm": 1.9,
+          "eligibility": null,
+          "id": "acnc-64275776930",
+          "latitude": -37.049857,
+          "longitude": 144.2222144,
+          "name": "St Mary's Catholic Church Castlemaine",
+          "partnerStatus": "unknown",
+          "phone": null,
+          "postcode": "3450",
+          "serviceTypes": [
+            "Community support services"
+          ],
+          "suburb": "Castlemaine",
+          "website": null
+        },
+        {
+          "address": "9 Langslow St, Castlemaine, VIC, 3450",
+          "availabilityFreshness": null,
+          "availabilityStatus": "not-confirmed",
+          "availabilityUpdatedAt": null,
+          "dataUpdatedAt": "2026-09-13T19:00:54.497199",
+          "distanceKm": 2.2,
+          "eligibility": null,
+          "id": "acnc-69548314029",
+          "latitude": -37.0750009,
+          "longitude": 144.1946086,
+          "name": "Mt Alexander Animal Welfare Inc",
+          "partnerStatus": "unknown",
+          "phone": null,
+          "postcode": "3450",
+          "serviceTypes": [
+            "Community support services"
+          ],
+          "suburb": "Castlemaine",
+          "website": "maaw.org.au"
+        }
+      ]
+    },
+    {
+      "name": "Ballarat",
+      "postcode": "3350",
+      "wifi": [
+        {
+          "accessConditions": [
+            "VicFreeWiFi access point"
+          ],
+          "address": null,
+          "dataUpdatedAt": "2019-04-25T12:52:19.803232",
+          "distanceKm": 1.3,
+          "id": "vicfreewifi-BR-50-HFC-E",
+          "latitude": -37.56313,
+          "longitude": 143.864945,
+          "name": "Corner of Main and Ltlbridge",
+          "openingHours": null,
+          "postcode": "3350",
+          "suburb": "Ballarat",
+          "verificationStatus": "confirmed"
+        },
+        {
+          "accessConditions": [
+            "VicFreeWiFi access point"
+          ],
+          "address": null,
+          "dataUpdatedAt": "2019-04-25T12:52:19.803232",
+          "distanceKm": 1.4,
+          "id": "vicfreewifi-BR-43-HFC-E",
+          "latitude": -37.562491,
+          "longitude": 143.864685,
+          "name": "Mc Donalds Curtis",
+          "openingHours": null,
+          "postcode": "3350",
+          "suburb": "Ballarat",
+          "verificationStatus": "confirmed"
+        },
+        {
+          "accessConditions": [
+            "VicFreeWiFi access point"
+          ],
+          "address": null,
+          "dataUpdatedAt": "2019-04-25T12:52:19.803232",
+          "distanceKm": 1.4,
+          "id": "vicfreewifi-BR-49-HFC-E",
+          "latitude": -37.56336,
+          "longitude": 143.863572,
+          "name": "Corner of Peel and Ltlbridge",
+          "openingHours": null,
+          "postcode": "3350",
+          "suburb": "Ballarat",
+          "verificationStatus": "confirmed"
+        },
+        {
+          "accessConditions": [
+            "Facility type: tourist attraction",
+            "Free wifi likely but not confirmed — check with staff"
+          ],
+          "address": null,
+          "dataUpdatedAt": "2026-09-14T08:40:21.143222+00:00",
+          "distanceKm": 1.4,
+          "id": "vicmap-27496",
+          "latitude": -37.57676703486541,
+          "longitude": 143.86583907162196,
+          "name": "MECHANICS INSTITUTE AND FREE LIBRARY",
+          "openingHours": null,
+          "postcode": null,
+          "suburb": null,
+          "verificationStatus": "likely"
+        },
+        {
+          "accessConditions": [
+            "VicFreeWiFi access point"
+          ],
+          "address": null,
+          "dataUpdatedAt": "2019-04-25T12:52:19.803232",
+          "distanceKm": 1.5,
+          "id": "vicfreewifi-BR-42-HFC-I",
+          "latitude": -37.562069,
+          "longitude": 143.863697,
+          "name": "Corner of Peel and Curtis",
+          "openingHours": null,
+          "postcode": "3350",
+          "suburb": "Ballarat",
+          "verificationStatus": "confirmed"
+        },
+        {
+          "accessConditions": [
+            "Facility type: community centre",
+            "Free wifi likely but not confirmed — check with staff"
+          ],
+          "address": null,
+          "dataUpdatedAt": "2026-09-14T08:40:21.137777+00:00",
+          "distanceKm": 1.5,
+          "id": "vicmap-20422",
+          "latitude": -37.56520803086335,
+          "longitude": 143.86234241081956,
+          "name": "EASTWOOD LEISURE COMPLEX",
+          "openingHours": null,
+          "postcode": null,
+          "suburb": null,
+          "verificationStatus": "likely"
+        },
+        {
+          "accessConditions": [
+            "VicFreeWiFi access point"
+          ],
+          "address": "46 Curtis",
+          "dataUpdatedAt": "2019-04-25T12:52:19.803232",
+          "distanceKm": 1.6,
+          "id": "vicfreewifi-BR-41-HFC-I",
+          "latitude": -37.561952,
+          "longitude": 143.86262,
+          "name": "46 Curtis",
+          "openingHours": null,
+          "postcode": "3350",
+          "suburb": "Ballarat",
+          "verificationStatus": "confirmed"
+        },
+        {
+          "accessConditions": [
+            "VicFreeWiFi access point"
+          ],
+          "address": null,
+          "dataUpdatedAt": "2019-04-25T12:52:19.803232",
+          "distanceKm": 1.6,
+          "id": "vicfreewifi-BR-48-HFC-E",
+          "latitude": -37.563135,
+          "longitude": 143.86131,
+          "name": "Senior Citizens Centre",
+          "openingHours": null,
+          "postcode": "3350",
+          "suburb": "Ballarat",
+          "verificationStatus": "confirmed"
+        },
+        {
+          "accessConditions": [
+            "VicFreeWiFi access point"
+          ],
+          "address": "Bridge Mall 01",
+          "dataUpdatedAt": "2019-04-25T12:52:19.803232",
+          "distanceKm": 1.6,
+          "id": "vicfreewifi-BR-59-MESH",
+          "latitude": -37.562455,
+          "longitude": 143.86261,
+          "name": "Bridge Mall 01",
+          "openingHours": null,
+          "postcode": "3350",
+          "suburb": "Ballarat",
+          "verificationStatus": "confirmed"
+        },
+        {
+          "accessConditions": [
+            "VicFreeWiFi access point"
+          ],
+          "address": "Bridge Mall 01 Slave",
+          "dataUpdatedAt": "2019-04-25T12:52:19.803232",
+          "distanceKm": 1.6,
+          "id": "vicfreewifi-BR-59-MESH-S",
+          "latitude": -37.562457,
+          "longitude": 143.86263,
+          "name": "Bridge Mall 01 Slave",
+          "openingHours": null,
+          "postcode": "3350",
+          "suburb": "Ballarat",
+          "verificationStatus": "confirmed"
+        },
+        {
+          "accessConditions": [
+            "VicFreeWiFi access point"
+          ],
+          "address": "Bridge Mall 02",
+          "dataUpdatedAt": "2019-04-25T12:52:19.803232",
+          "distanceKm": 1.6,
+          "id": "vicfreewifi-BR-60-MESH",
+          "latitude": -37.562422,
+          "longitude": 143.861506,
+          "name": "Bridge Mall 02",
+          "openingHours": null,
+          "postcode": "3350",
+          "suburb": "Ballarat",
+          "verificationStatus": "confirmed"
+        },
+        {
+          "accessConditions": [
+            "VicFreeWiFi access point"
+          ],
+          "address": "Bridge Mall 02 Slave",
+          "dataUpdatedAt": "2019-04-25T12:52:19.803232",
+          "distanceKm": 1.6,
+          "id": "vicfreewifi-BR-60-MESH-S",
+          "latitude": -37.562424,
+          "longitude": 143.861508,
+          "name": "Bridge Mall 02 Slave",
+          "openingHours": null,
+          "postcode": "3350",
+          "suburb": "Ballarat",
+          "verificationStatus": "confirmed"
+        },
+        {
+          "accessConditions": [
+            "VicFreeWiFi access point"
+          ],
+          "address": null,
+          "dataUpdatedAt": "2019-04-25T12:52:19.803232",
+          "distanceKm": 1.6,
+          "id": "vicfreewifi-BR-68-MESH",
+          "latitude": -37.563211,
+          "longitude": 143.861997,
+          "name": "Ltl Bridge",
+          "openingHours": null,
+          "postcode": "3350",
+          "suburb": "Ballarat",
+          "verificationStatus": "confirmed"
+        },
+        {
+          "accessConditions": [
+            "VicFreeWiFi access point"
+          ],
+          "address": null,
+          "dataUpdatedAt": "2019-04-25T12:52:19.803232",
+          "distanceKm": 1.7,
+          "id": "vicfreewifi-BR-47-HFC-I",
+          "latitude": -37.563228,
+          "longitude": 143.860619,
+          "name": "Corner of Greenville and Ltlbridge",
+          "openingHours": null,
+          "postcode": "3350",
+          "suburb": "Ballarat",
+          "verificationStatus": "confirmed"
+        },
+        {
+          "accessConditions": [
+            "VicFreeWiFi access point"
+          ],
+          "address": null,
+          "dataUpdatedAt": "2019-04-25T12:52:19.803232",
+          "distanceKm": 1.8,
+          "id": "vicfreewifi-BR-40-HFC-E",
+          "latitude": -37.561562,
+          "longitude": 143.86069,
+          "name": "Corner of Cattan and Grenville",
+          "openingHours": null,
+          "postcode": "3350",
+          "suburb": "Ballarat",
+          "verificationStatus": "confirmed"
+        },
+        {
+          "accessConditions": [
+            "VicFreeWiFi access point"
+          ],
+          "address": null,
+          "dataUpdatedAt": "2019-04-25T12:52:19.803232",
+          "distanceKm": 1.8,
+          "id": "vicfreewifi-BR-46-HFC-I",
+          "latitude": -37.56304,
+          "longitude": 143.859105,
+          "name": "Corner of Lewis and Albert",
+          "openingHours": null,
+          "postcode": "3350",
+          "suburb": "Ballarat",
+          "verificationStatus": "confirmed"
+        },
+        {
+          "accessConditions": [
+            "VicFreeWiFi access point"
+          ],
+          "address": "11 Sturt Street",
+          "dataUpdatedAt": "2019-04-25T12:52:19.803232",
+          "distanceKm": 1.8,
+          "id": "vicfreewifi-BR-87-MESH",
+          "latitude": -37.56227058,
+          "longitude": 143.8601617,
+          "name": "11 Sturt Street",
+          "openingHours": null,
+          "postcode": "3350",
+          "suburb": "Ballarat",
+          "verificationStatus": "confirmed"
+        },
+        {
+          "accessConditions": [
+            "VicFreeWiFi access point"
+          ],
+          "address": null,
+          "dataUpdatedAt": "2019-04-25T12:52:19.803232",
+          "distanceKm": 1.8,
+          "id": "vicfreewifi-BR-89-MESH",
+          "latitude": -37.5623758,
+          "longitude": 143.8593125,
+          "name": "Corner of Sturt and Albert",
+          "openingHours": null,
+          "postcode": "3350",
+          "suburb": "Ballarat",
+          "verificationStatus": "confirmed"
+        },
+        {
+          "accessConditions": [
+            "Facility type: community centre",
+            "Free wifi likely but not confirmed — check with staff"
+          ],
+          "address": null,
+          "dataUpdatedAt": "2026-09-14T08:40:21.139125+00:00",
+          "distanceKm": 1.8,
+          "id": "vicmap-20571",
+          "latitude": -37.5625365847888,
+          "longitude": 143.8591582415652,
+          "name": "PARENT PLACE",
+          "openingHours": null,
+          "postcode": null,
+          "suburb": null,
+          "verificationStatus": "likely"
+        },
+        {
+          "accessConditions": [
+            "VicFreeWiFi access point"
+          ],
+          "address": null,
+          "dataUpdatedAt": "2019-04-25T12:52:19.803232",
+          "distanceKm": 1.9,
+          "id": "vicfreewifi-BR-52-HFC-E",
+          "latitude": -37.564071,
+          "longitude": 143.857182,
+          "name": "Cn Lydiard Dana",
+          "openingHours": null,
+          "postcode": "3350",
+          "suburb": "Ballarat",
+          "verificationStatus": "confirmed"
+        }
+      ],
+      "support": [
+        {
+          "address": "3 Allenby Ct, Mount Clear, VIC, 3350",
+          "availabilityFreshness": null,
+          "availabilityStatus": "not-confirmed",
+          "availabilityUpdatedAt": null,
+          "dataUpdatedAt": "2026-09-13T19:00:54.497199",
+          "distanceKm": 0.0,
+          "eligibility": null,
+          "id": "acnc-44166800925",
+          "latitude": -37.5690375,
+          "longitude": 143.87825,
+          "name": "Big Al's Walks for Mental Health Incorporated",
+          "partnerStatus": "unknown",
+          "phone": null,
+          "postcode": "3350",
+          "serviceTypes": [
+            "Mental health support"
+          ],
+          "suburb": "Mount Clear",
+          "website": null
+        },
+        {
+          "address": "25 Barkly St, Ballarat East, VIC, 3350",
+          "availabilityFreshness": null,
+          "availabilityStatus": "not-confirmed",
+          "availabilityUpdatedAt": null,
+          "dataUpdatedAt": "2026-09-13T19:00:54.497199",
+          "distanceKm": 0.0,
+          "eligibility": null,
+          "id": "acnc-35704902844",
+          "latitude": -37.5690375,
+          "longitude": 143.87825,
+          "name": "Ballarat Renewable Energy And Zero Emissions Inc.",
+          "partnerStatus": "unknown",
+          "phone": null,
+          "postcode": "3350",
+          "serviceTypes": [
+            "Community support services"
+          ],
+          "suburb": "Ballarat East",
+          "website": "https://breaze.org.au/"
+        },
+        {
+          "address": "C/- Ballarat East Neighbourhood House, 25-29 Barkly St, Ballarat, VIC, 3350",
+          "availabilityFreshness": null,
+          "availabilityStatus": "not-confirmed",
+          "availabilityUpdatedAt": null,
+          "dataUpdatedAt": "2026-09-13T19:00:54.497199",
+          "distanceKm": 0.0,
+          "eligibility": null,
+          "id": "acnc-96376374241",
+          "latitude": -37.5690375,
+          "longitude": 143.87825,
+          "name": "CENTRAL HIGHLANDS ASSOCIATION OF NEIGHBOURHOOD HOUSES INCORPORATED",
+          "partnerStatus": "unknown",
+          "phone": null,
+          "postcode": "3350",
+          "serviceTypes": [
+            "Community support services"
+          ],
+          "suburb": "Ballarat",
+          "website": "chanh.org.au"
+        },
+        {
+          "address": "1220 Sturt St, Ballarat Central, VIC, 3350",
+          "availabilityFreshness": null,
+          "availabilityStatus": "not-confirmed",
+          "availabilityUpdatedAt": null,
+          "dataUpdatedAt": "2026-09-13T19:00:54.497199",
+          "distanceKm": 0.0,
+          "eligibility": null,
+          "id": "acnc-94116282632",
+          "latitude": -37.5690375,
+          "longitude": 143.87825,
+          "name": "The Maguire Foundation",
+          "partnerStatus": "unknown",
+          "phone": null,
+          "postcode": "3350",
+          "serviceTypes": [
+            "Community support services"
+          ],
+          "suburb": "Ballarat Central",
+          "website": null
+        },
+        {
+          "address": "122A Spencer Street, CANADIAN, VIC, 3350",
+          "availabilityFreshness": null,
+          "availabilityStatus": "not-confirmed",
+          "availabilityUpdatedAt": null,
+          "dataUpdatedAt": "2026-09-13T19:00:54.497199",
+          "distanceKm": 0.0,
+          "eligibility": null,
+          "id": "acnc-62157688338",
+          "latitude": -37.5690375,
+          "longitude": 143.87825,
+          "name": "Canadian Place Common Equity Rental Housing Co-operative Ltd",
+          "partnerStatus": "unknown",
+          "phone": null,
+          "postcode": "3350",
+          "serviceTypes": [
+            "Housing support"
+          ],
+          "suburb": "CANADIAN",
+          "website": null
+        },
+        {
+          "address": "25-39 Barkly Street, Ballarat, VIC, 3350",
+          "availabilityFreshness": null,
+          "availabilityStatus": "not-confirmed",
+          "availabilityUpdatedAt": null,
+          "dataUpdatedAt": "2026-09-13T19:00:54.497199",
+          "distanceKm": 0.0,
+          "eligibility": null,
+          "id": "acnc-73288998195",
+          "latitude": -37.5690375,
+          "longitude": 143.87825,
+          "name": "Central Highlands Group Training Incorporated",
+          "partnerStatus": "unknown",
+          "phone": null,
+          "postcode": "3350",
+          "serviceTypes": [
+            "Community support services"
+          ],
+          "suburb": "Ballarat",
+          "website": "www.bgt.org.au"
+        },
+        {
+          "address": "3/616 Skipton Street, Redan, VIC, 3350",
+          "availabilityFreshness": null,
+          "availabilityStatus": "not-confirmed",
+          "availabilityUpdatedAt": null,
+          "dataUpdatedAt": "2026-09-13T19:00:54.497199",
+          "distanceKm": 0.0,
+          "eligibility": null,
+          "id": "acnc-48652460112",
+          "latitude": -37.5690375,
+          "longitude": 143.87825,
+          "name": "Victory Common Equity Rental Housing Co-Operative Ltd",
+          "partnerStatus": "unknown",
+          "phone": null,
+          "postcode": "3350",
+          "serviceTypes": [
+            "Housing support"
+          ],
+          "suburb": "Redan",
+          "website": null
+        },
+        {
+          "address": "PO Box 6023, Brown Hill, VIC, 3350",
+          "availabilityFreshness": null,
+          "availabilityStatus": "not-confirmed",
+          "availabilityUpdatedAt": null,
+          "dataUpdatedAt": "2026-09-13T19:00:54.497199",
+          "distanceKm": 0.0,
+          "eligibility": null,
+          "id": "acnc-68653070234",
+          "latitude": -37.5690375,
+          "longitude": 143.87825,
+          "name": "OCHRE EDUCATION RESOURCE LIBRARY LTD",
+          "partnerStatus": "unknown",
+          "phone": null,
+          "postcode": "3350",
+          "serviceTypes": [
+            "Community support services"
+          ],
+          "suburb": "Brown Hill",
+          "website": "https://ochre.org.au/"
+        },
+        {
+          "address": "108 Armstrong Street, Ballarat, VIC, 3350",
+          "availabilityFreshness": null,
+          "availabilityStatus": "not-confirmed",
+          "availabilityUpdatedAt": null,
+          "dataUpdatedAt": "2026-09-13T19:00:54.497199",
+          "distanceKm": 0.0,
+          "eligibility": null,
+          "id": "acnc-33266090956",
+          "latitude": -37.5690375,
+          "longitude": 143.87825,
+          "name": "Ballarat & District Aboriginal Cooperative Ltd",
+          "partnerStatus": "unknown",
+          "phone": null,
+          "postcode": "3350",
+          "serviceTypes": [
+            "Community support services"
+          ],
+          "suburb": "Ballarat",
+          "website": "www.badac.net.au"
+        },
+        {
+          "address": "613 Otway St S, Canadian, VIC, 3350",
+          "availabilityFreshness": null,
+          "availabilityStatus": "not-confirmed",
+          "availabilityUpdatedAt": null,
+          "dataUpdatedAt": "2026-09-13T19:00:54.497199",
+          "distanceKm": 0.4,
+          "eligibility": null,
+          "id": "acnc-50676128957",
+          "latitude": -37.5729245,
+          "longitude": 143.8769447,
+          "name": "Community Care Centre Ballarat Ltd",
+          "partnerStatus": "unknown",
+          "phone": null,
+          "postcode": "3350",
+          "serviceTypes": [
+            "Community support services"
+          ],
+          "suburb": "Canadian",
+          "website": "https://www.ballaratcommunitycare.org.au/"
+        },
+        {
+          "address": "25-39 Barkly Street, Barkly Square, BALLARAT EAST, VIC, 3350",
+          "availabilityFreshness": null,
+          "availabilityStatus": "not-confirmed",
+          "availabilityUpdatedAt": null,
+          "dataUpdatedAt": "2026-09-13T19:00:54.497199",
+          "distanceKm": 1.0,
+          "eligibility": null,
+          "id": "acnc-55169624154",
+          "latitude": -37.5640337,
+          "longitude": 143.8690501,
+          "name": "Ballarat East Neighbourhood House Inc.",
+          "partnerStatus": "unknown",
+          "phone": null,
+          "postcode": "3350",
+          "serviceTypes": [
+            "Community support services"
+          ],
+          "suburb": "BALLARAT EAST",
+          "website": "https://www.ballarateastnh.org.au/"
+        },
+        {
+          "address": "25 Barkly St, Ballarat East, VIC, 3350",
+          "availabilityFreshness": null,
+          "availabilityStatus": "not-confirmed",
+          "availabilityUpdatedAt": null,
+          "dataUpdatedAt": "2026-09-13T19:00:54.497199",
+          "distanceKm": 1.0,
+          "eligibility": null,
+          "id": "acnc-47539957592",
+          "latitude": -37.5640337,
+          "longitude": 143.8690501,
+          "name": "The Young Men's Christian Association of Ballarat",
+          "partnerStatus": "unknown",
+          "phone": null,
+          "postcode": "3350",
+          "serviceTypes": [
+            "Community support services"
+          ],
+          "suburb": "Ballarat East",
+          "website": "https://yballarat.org.au/"
+        },
+        {
+          "address": "25 Barkly St, Ballarat East, VIC, 3350",
+          "availabilityFreshness": null,
+          "availabilityStatus": "not-confirmed",
+          "availabilityUpdatedAt": null,
+          "dataUpdatedAt": "2026-09-13T19:00:54.497199",
+          "distanceKm": 1.0,
+          "eligibility": null,
+          "id": "acnc-86541900347",
+          "latitude": -37.5640337,
+          "longitude": 143.8690501,
+          "name": "The Young Men's Christian Association Of Ballarat Youth Services Inc",
+          "partnerStatus": "unknown",
+          "phone": null,
+          "postcode": "3350",
+          "serviceTypes": [
+            "Youth services"
+          ],
+          "suburb": "Ballarat East",
+          "website": "https://yballarat.org.au/youth-programs/"
+        },
+        {
+          "address": "25 Barkly St, Ballarat East, VIC, 3350",
+          "availabilityFreshness": null,
+          "availabilityStatus": "not-confirmed",
+          "availabilityUpdatedAt": null,
+          "dataUpdatedAt": "2026-09-13T19:00:54.497199",
+          "distanceKm": 1.0,
+          "eligibility": null,
+          "id": "acnc-24776744519",
+          "latitude": -37.5640337,
+          "longitude": 143.8690501,
+          "name": "Ballarat Regional Multicultural Council Incorporated",
+          "partnerStatus": "unknown",
+          "phone": null,
+          "postcode": "3350",
+          "serviceTypes": [
+            "Community support services"
+          ],
+          "suburb": "Ballarat East",
+          "website": "https://www.brmc.org.au"
+        },
+        {
+          "address": "37-39 Peel Street South, Ballarat, VIC, 3350",
+          "availabilityFreshness": null,
+          "availabilityStatus": "not-confirmed",
+          "availabilityUpdatedAt": null,
+          "dataUpdatedAt": "2026-09-13T19:00:54.497199",
+          "distanceKm": 1.4,
+          "eligibility": null,
+          "id": "acnc-93512668407",
+          "latitude": -37.5651082,
+          "longitude": 143.8636355,
+          "name": "Ballarat Central Church Of Christ",
+          "partnerStatus": "unknown",
+          "phone": null,
+          "postcode": "3350",
+          "serviceTypes": [
+            "Community support services"
+          ],
+          "suburb": "Ballarat",
+          "website": "www.peelst.org.au"
+        },
+        {
+          "address": "216 Humffray Street North, Ballarat East, VIC, 3350",
+          "availabilityFreshness": null,
+          "availabilityStatus": "not-confirmed",
+          "availabilityUpdatedAt": null,
+          "dataUpdatedAt": "2026-09-13T19:00:54.497199",
+          "distanceKm": 1.6,
+          "eligibility": null,
+          "id": "acnc-23279266749",
+          "latitude": -37.5550568,
+          "longitude": 143.8813709,
+          "name": "Ballarat Healing Rooms Inc.",
+          "partnerStatus": "unknown",
+          "phone": null,
+          "postcode": "3350",
+          "serviceTypes": [
+            "Community support services"
+          ],
+          "suburb": "Ballarat East",
+          "website": "ballarathealingrooms.com.au"
+        },
+        {
+          "address": "12 Anderson Street West, Ballarat, VIC, 3350",
+          "availabilityFreshness": null,
+          "availabilityStatus": "not-confirmed",
+          "availabilityUpdatedAt": null,
+          "dataUpdatedAt": "2026-09-13T19:00:54.497199",
+          "distanceKm": 1.7,
+          "eligibility": null,
+          "id": "acnc-83664392189",
+          "latitude": -37.5652896,
+          "longitude": 143.8597645,
+          "name": "THE DV COLLECTIVE LIMITED",
+          "partnerStatus": "unknown",
+          "phone": null,
+          "postcode": "3350",
+          "serviceTypes": [
+            "Community support services"
+          ],
+          "suburb": "Ballarat",
+          "website": "www.dvcollective.org"
+        },
+        {
+          "address": "825 Wilson St, Ballarat East, VIC, 3350",
+          "availabilityFreshness": null,
+          "availabilityStatus": "not-confirmed",
+          "availabilityUpdatedAt": null,
+          "dataUpdatedAt": "2026-09-13T19:00:54.497199",
+          "distanceKm": 1.7,
+          "eligibility": null,
+          "id": "acnc-15573757906",
+          "latitude": -37.5746481,
+          "longitude": 143.8961317,
+          "name": "Upendo Foundation Australia Inc.",
+          "partnerStatus": "unknown",
+          "phone": null,
+          "postcode": "3350",
+          "serviceTypes": [
+            "Community support services"
+          ],
+          "suburb": "Ballarat East",
+          "website": "upendo.org.au"
+        },
+        {
+          "address": "7 Lydiard Street South, BALLARAT CENTRAL, VIC, 3350",
+          "availabilityFreshness": null,
+          "availabilityStatus": "not-confirmed",
+          "availabilityUpdatedAt": null,
+          "dataUpdatedAt": "2026-09-13T19:00:54.497199",
+          "distanceKm": 2.0,
+          "eligibility": null,
+          "id": "acnc-63808876357",
+          "latitude": -37.5657849,
+          "longitude": 143.8562193,
+          "name": "Ballarat North Neighbourhood House Inc.",
+          "partnerStatus": "unknown",
+          "phone": null,
+          "postcode": "3350",
+          "serviceTypes": [
+            "Community support services"
+          ],
+          "suburb": "BALLARAT CENTRAL",
+          "website": "https://www.bnnh.org.au"
+        },
+        {
+          "address": "7 Lydiard St S, Ballarat Central, VIC, 3350",
+          "availabilityFreshness": null,
+          "availabilityStatus": "not-confirmed",
+          "availabilityUpdatedAt": null,
+          "dataUpdatedAt": "2026-09-13T19:00:54.497199",
+          "distanceKm": 2.0,
+          "eligibility": null,
+          "id": "acnc-99072908855",
+          "latitude": -37.5657849,
+          "longitude": 143.8562193,
+          "name": "BALLARAT FOUNDATION TRUST",
+          "partnerStatus": "unknown",
+          "phone": null,
+          "postcode": "3350",
+          "serviceTypes": [
+            "Community support services"
+          ],
+          "suburb": "Ballarat Central",
+          "website": "www.ballaratfoundation.org.au"
+        }
+      ]
+    },
+    {
+      "name": "Harcourt",
+      "postcode": "3453",
+      "wifi": [
+        {
+          "accessConditions": [
+            "Facility type: library",
+            "Free wifi likely but not confirmed — check with staff"
+          ],
+          "address": null,
+          "dataUpdatedAt": "2026-09-14T08:40:21.122330+00:00",
+          "distanceKm": 12.4,
+          "id": "vicmap-2386",
+          "latitude": -36.80949477899523,
+          "longitude": 144.24094216455242,
+          "name": "KANGAROO FLAT LIBRARY",
+          "openingHours": null,
+          "postcode": null,
+          "suburb": null,
+          "verificationStatus": "likely"
+        },
+        {
+          "accessConditions": [
+            "Facility type: library",
+            "Free wifi likely but not confirmed — check with staff"
+          ],
+          "address": null,
+          "dataUpdatedAt": "2026-09-14T08:40:21.143395+00:00",
+          "distanceKm": 13.8,
+          "id": "vicmap-30792",
+          "latitude": -36.79680300108259,
+          "longitude": 144.24081581471108,
+          "name": "KANGAROO FLAT LIBRARY",
+          "openingHours": null,
+          "postcode": null,
+          "suburb": null,
+          "verificationStatus": "likely"
+        },
+        {
+          "accessConditions": [
+            "Facility type: community centre",
+            "Free wifi likely but not confirmed — check with staff"
+          ],
+          "address": null,
+          "dataUpdatedAt": "2026-09-14T08:40:21.138429+00:00",
+          "distanceKm": 15.8,
+          "id": "vicmap-20493",
+          "latitude": -36.78083115032482,
+          "longitude": 144.2608545319573,
+          "name": "LARNANGURRAK",
+          "openingHours": null,
+          "postcode": null,
+          "suburb": null,
+          "verificationStatus": "likely"
+        },
+        {
+          "accessConditions": [
+            "Facility type: library",
+            "Free wifi likely but not confirmed — check with staff"
+          ],
+          "address": null,
+          "dataUpdatedAt": "2026-09-14T08:40:21.121694+00:00",
+          "distanceKm": 16.1,
+          "id": "vicmap-2287",
+          "latitude": -37.06378143633531,
+          "longitude": 144.21759333963885,
+          "name": "CASTLEMAINE LIBRARY",
+          "openingHours": null,
+          "postcode": null,
+          "suburb": null,
+          "verificationStatus": "likely"
+        },
+        {
+          "accessConditions": [
+            "VicFreeWiFi access point"
+          ],
+          "address": null,
+          "dataUpdatedAt": "2019-04-25T12:52:19.803232",
+          "distanceKm": 17.7,
+          "id": "vicfreewifi-BD-44-CentralDeborahGoldMine",
+          "latitude": -36.765075,
+          "longitude": 144.269866,
+          "name": "Central Deborah Gold Mine",
+          "openingHours": null,
+          "postcode": "3550",
+          "suburb": "Bendigo",
+          "verificationStatus": "confirmed"
+        },
+        {
+          "accessConditions": [
+            "VicFreeWiFi access point"
+          ],
+          "address": "Railway Station 01",
+          "dataUpdatedAt": "2019-04-25T12:52:19.803232",
+          "distanceKm": 18.0,
+          "id": "vicfreewifi-BD-13-RailwayStation01",
+          "latitude": -36.765756,
+          "longitude": 144.282784,
+          "name": "Railway Station 01",
+          "openingHours": null,
+          "postcode": "3550",
+          "suburb": "Bendigo",
+          "verificationStatus": "confirmed"
+        },
+        {
+          "accessConditions": [
+            "VicFreeWiFi access point"
+          ],
+          "address": "Railway Station 02",
+          "dataUpdatedAt": "2019-04-25T12:52:19.803232",
+          "distanceKm": 18.0,
+          "id": "vicfreewifi-BD-14-RailwayStation02",
+          "latitude": -36.765562,
+          "longitude": 144.282943,
+          "name": "Railway Station 02",
+          "openingHours": null,
+          "postcode": "3550",
+          "suburb": "Bendigo",
+          "verificationStatus": "confirmed"
+        },
+        {
+          "accessConditions": [
+            "VicFreeWiFi access point"
+          ],
+          "address": "Railway Station 03",
+          "dataUpdatedAt": "2019-04-25T12:52:19.803232",
+          "distanceKm": 18.0,
+          "id": "vicfreewifi-BD-15-RailwayStation03",
+          "latitude": -36.765777,
+          "longitude": 144.282312,
+          "name": "Railway Station 03",
+          "openingHours": null,
+          "postcode": "3550",
+          "suburb": "Bendigo",
+          "verificationStatus": "confirmed"
+        },
+        {
+          "accessConditions": [
+            "VicFreeWiFi access point"
+          ],
+          "address": null,
+          "dataUpdatedAt": "2019-04-25T12:52:19.803232",
+          "distanceKm": 18.2,
+          "id": "vicfreewifi-BD-35-CnrQueenEdwards",
+          "latitude": -36.762673,
+          "longitude": 144.278486,
+          "name": "Corner of Queen and Edwards",
+          "openingHours": null,
+          "postcode": "3550",
+          "suburb": "Bendigo",
+          "verificationStatus": "confirmed"
+        },
+        {
+          "accessConditions": [
+            "VicFreeWiFi access point"
+          ],
+          "address": null,
+          "dataUpdatedAt": "2019-04-25T12:52:19.803232",
+          "distanceKm": 18.2,
+          "id": "vicfreewifi-BD-48-EdwardStreet",
+          "latitude": -36.762152,
+          "longitude": 144.278132,
+          "name": "Edward Street",
+          "openingHours": null,
+          "postcode": "3550",
+          "suburb": "Bendigo",
+          "verificationStatus": "confirmed"
+        },
+        {
+          "accessConditions": [
+            "VicFreeWiFi access point"
+          ],
+          "address": null,
+          "dataUpdatedAt": "2019-04-25T12:52:19.803232",
+          "distanceKm": 18.2,
+          "id": "vicfreewifi-BD-49-CnrKingEdward",
+          "latitude": -36.763203,
+          "longitude": 144.27929,
+          "name": "Corner of King and Edward",
+          "openingHours": null,
+          "postcode": "3550",
+          "suburb": "Bendigo",
+          "verificationStatus": "confirmed"
+        },
+        {
+          "accessConditions": [
+            "VicFreeWiFi access point"
+          ],
+          "address": null,
+          "dataUpdatedAt": "2019-04-25T12:52:19.803232",
+          "distanceKm": 18.3,
+          "id": "vicfreewifi-BD-34-HargreavesEdwards",
+          "latitude": -36.76182,
+          "longitude": 144.277786,
+          "name": "Hargreaves Edwards",
+          "openingHours": null,
+          "postcode": "3550",
+          "suburb": "Bendigo",
+          "verificationStatus": "confirmed"
+        },
+        {
+          "accessConditions": [
+            "VicFreeWiFi access point"
+          ],
+          "address": null,
+          "dataUpdatedAt": "2019-04-25T12:52:19.803232",
+          "distanceKm": 18.3,
+          "id": "vicfreewifi-BD-47-QueenStreet",
+          "latitude": -36.761998,
+          "longitude": 144.27927,
+          "name": "Queen Street",
+          "openingHours": null,
+          "postcode": "3550",
+          "suburb": "Bendigo",
+          "verificationStatus": "confirmed"
+        },
+        {
+          "accessConditions": [
+            "VicFreeWiFi access point"
+          ],
+          "address": "Lyttleton Terrace 02",
+          "dataUpdatedAt": "2019-04-25T12:52:19.803232",
+          "distanceKm": 18.4,
+          "id": "vicfreewifi-BD-29-LyttletonTerrace02",
+          "latitude": -36.761877,
+          "longitude": 144.281678,
+          "name": "Lyttleton Terrace 02",
+          "openingHours": null,
+          "postcode": "3550",
+          "suburb": "Bendigo",
+          "verificationStatus": "confirmed"
+        },
+        {
+          "accessConditions": [
+            "VicFreeWiFi access point"
+          ],
+          "address": null,
+          "dataUpdatedAt": "2019-04-25T12:52:19.803232",
+          "distanceKm": 18.4,
+          "id": "vicfreewifi-BD-37-BathLane",
+          "latitude": -36.760639,
+          "longitude": 144.278291,
+          "name": "Bath Lane",
+          "openingHours": null,
+          "postcode": "3550",
+          "suburb": "Bendigo",
+          "verificationStatus": "confirmed"
+        },
+        {
+          "accessConditions": [
+            "VicFreeWiFi access point"
+          ],
+          "address": null,
+          "dataUpdatedAt": "2019-04-25T12:52:19.803232",
+          "distanceKm": 18.4,
+          "id": "vicfreewifi-BD-45-CnrQueenMitchell",
+          "latitude": -36.761452,
+          "longitude": 144.280305,
+          "name": "Corner of Queen and Mitchell",
+          "openingHours": null,
+          "postcode": "3550",
+          "suburb": "Bendigo",
+          "verificationStatus": "confirmed"
+        },
+        {
+          "accessConditions": [
+            "VicFreeWiFi access point"
+          ],
+          "address": null,
+          "dataUpdatedAt": "2019-04-25T12:52:19.803232",
+          "distanceKm": 18.5,
+          "id": "vicfreewifi-BD-27-QueenStreet",
+          "latitude": -36.760681,
+          "longitude": 144.281349,
+          "name": "Queen Street",
+          "openingHours": null,
+          "postcode": "3550",
+          "suburb": "Bendigo",
+          "verificationStatus": "confirmed"
+        },
+        {
+          "accessConditions": [
+            "VicFreeWiFi access point"
+          ],
+          "address": "Lyttleton Terrace 01",
+          "dataUpdatedAt": "2019-04-25T12:52:19.803232",
+          "distanceKm": 18.5,
+          "id": "vicfreewifi-BD-28-LyttletonTerrace01",
+          "latitude": -36.761008,
+          "longitude": 144.281864,
+          "name": "Lyttleton Terrace 01",
+          "openingHours": null,
+          "postcode": "3550",
+          "suburb": "Bendigo",
+          "verificationStatus": "confirmed"
+        },
+        {
+          "accessConditions": [
+            "VicFreeWiFi access point"
+          ],
+          "address": null,
+          "dataUpdatedAt": "2019-04-25T12:52:19.803232",
+          "distanceKm": 18.5,
+          "id": "vicfreewifi-BD-31-HargreavesMitchell",
+          "latitude": -36.760444,
+          "longitude": 144.279639,
+          "name": "Hargreaves Mitchell",
+          "openingHours": null,
+          "postcode": "3550",
+          "suburb": "Bendigo",
+          "verificationStatus": "confirmed"
+        },
+        {
+          "accessConditions": [
+            "VicFreeWiFi access point"
+          ],
+          "address": null,
+          "dataUpdatedAt": "2019-04-25T12:52:19.803232",
+          "distanceKm": 18.5,
+          "id": "vicfreewifi-BD-32-HargreavesMid_RAP",
+          "latitude": -36.7599,
+          "longitude": 144.28038,
+          "name": "Hargreaves Mid",
+          "openingHours": null,
+          "postcode": "3550",
+          "suburb": "Bendigo",
+          "verificationStatus": "confirmed"
+        }
+      ],
+      "support": [
+        {
+          "address": "224 Soldier Rd, Ravenswood, VIC, 3453",
+          "availabilityFreshness": null,
+          "availabilityStatus": "not-confirmed",
+          "availabilityUpdatedAt": null,
+          "dataUpdatedAt": "2026-09-13T19:00:54.497199",
+          "distanceKm": 3.5,
+          "eligibility": null,
+          "id": "acnc-50680276082",
+          "latitude": -36.8966481,
+          "longitude": 144.1918505,
+          "name": "PLATE IT UP FOOD LITERACY LTD",
+          "partnerStatus": "unknown",
+          "phone": null,
+          "postcode": "3453",
+          "serviceTypes": [
+            "Food relief"
+          ],
+          "suburb": "Ravenswood",
+          "website": "https://plateitup.org.au/"
+        },
+        {
+          "address": "81 Barker Rd, Harcourt North, VIC, 3453",
+          "availabilityFreshness": null,
+          "availabilityStatus": "not-confirmed",
+          "availabilityUpdatedAt": null,
+          "dataUpdatedAt": "2026-09-13T19:00:54.497199",
+          "distanceKm": 6.8,
+          "eligibility": null,
+          "id": "acnc-98617772200",
+          "latitude": -36.9442891,
+          "longitude": 144.2888506,
+          "name": "CHALICE FOUNDATION LTD",
+          "partnerStatus": "unknown",
+          "phone": null,
+          "postcode": "3453",
+          "serviceTypes": [
+            "Community support services"
+          ],
+          "suburb": "Harcourt North",
+          "website": "www.chalicefoundation.org.au"
+        },
+        {
+          "address": "30 Buckley street, Harcourt, VIC, 3453",
+          "availabilityFreshness": null,
+          "availabilityStatus": "not-confirmed",
+          "availabilityUpdatedAt": null,
+          "dataUpdatedAt": "2026-09-13T19:00:54.497199",
+          "distanceKm": 9.6,
+          "eligibility": null,
+          "id": "acnc-90664506604",
+          "latitude": -36.9980505,
+          "longitude": 144.2630309,
+          "name": "Grace Church Castlemaine Inc.",
+          "partnerStatus": "unknown",
+          "phone": null,
+          "postcode": "3453",
+          "serviceTypes": [
+            "Community support services"
+          ],
+          "suburb": "Harcourt",
+          "website": "gracecastlemaine.org.au"
+        },
+        {
+          "address": "28 Buckley Street, Harcourt, VIC, 3453",
+          "availabilityFreshness": null,
+          "availabilityStatus": "not-confirmed",
+          "availabilityUpdatedAt": null,
+          "dataUpdatedAt": "2026-09-13T19:00:54.497199",
+          "distanceKm": 9.6,
+          "eligibility": null,
+          "id": "acnc-24920925761",
+          "latitude": -36.9982297,
+          "longitude": 144.2629976,
+          "name": "Uca - Harcourt",
+          "partnerStatus": "unknown",
+          "phone": null,
+          "postcode": "3453",
+          "serviceTypes": [
+            "Community support services"
+          ],
+          "suburb": "Harcourt",
+          "website": "https://castlemaine.ucavictas.org.au/"
+        }
+      ]
+    },
+    {
+      "name": "Melbourne CBD",
+      "postcode": "3000",
+      "wifi": [
+        {
+          "accessConditions": [
+            "Facility type: community centre",
+            "Free wifi likely but not confirmed — check with staff"
+          ],
+          "address": null,
+          "dataUpdatedAt": "2026-09-14T08:40:21.150442+00:00",
+          "distanceKm": 0.2,
+          "id": "vicmap-51002",
+          "latitude": -37.82325449830504,
+          "longitude": 144.97471651186495,
+          "name": "SIDNEY MYER MUSIC BOWL",
+          "openingHours": null,
+          "postcode": null,
+          "suburb": null,
+          "verificationStatus": "likely"
+        },
+        {
+          "accessConditions": [
+            "VicFreeWiFi access point"
+          ],
+          "address": "28-32 Southgate Ave, Southbank",
+          "dataUpdatedAt": "2019-04-25T12:52:19.803232",
+          "distanceKm": 0.5,
+          "id": "vicfreewifi-MEL-0842",
+          "latitude": -37.820801,
+          "longitude": 144.96761,
+          "name": "28-32 Southgate Ave, Southbank",
+          "openingHours": null,
+          "postcode": "3000",
+          "suburb": "Melbourne",
+          "verificationStatus": "confirmed"
+        },
+        {
+          "accessConditions": [
+            "VicFreeWiFi access point"
+          ],
+          "address": "Flinders Street Station - ML_Platform1/2",
+          "dataUpdatedAt": "2019-04-25T12:52:19.803232",
+          "distanceKm": 0.7,
+          "id": "vicfreewifi-MEL-0576",
+          "latitude": -37.818816,
+          "longitude": 144.966675,
+          "name": "Flinders Street Station - ML_Platform1/2",
+          "openingHours": null,
+          "postcode": "3000",
+          "suburb": "Melbourne",
+          "verificationStatus": "confirmed"
+        },
+        {
+          "accessConditions": [
+            "VicFreeWiFi access point"
+          ],
+          "address": "Flinders Street Station - ML_Platform3/4",
+          "dataUpdatedAt": "2019-04-25T12:52:19.803232",
+          "distanceKm": 0.7,
+          "id": "vicfreewifi-MEL-0579",
+          "latitude": -37.818606,
+          "longitude": 144.966775,
+          "name": "Flinders Street Station - ML_Platform3/4",
+          "openingHours": null,
+          "postcode": "3000",
+          "suburb": "Melbourne",
+          "verificationStatus": "confirmed"
+        },
+        {
+          "accessConditions": [
+            "VicFreeWiFi access point"
+          ],
+          "address": null,
+          "dataUpdatedAt": "2019-04-25T12:52:19.803232",
+          "distanceKm": 0.7,
+          "id": "vicfreewifi-MEL-0592",
+          "latitude": -37.818496,
+          "longitude": 144.967327,
+          "name": "Flinders Street Station - Concourse",
+          "openingHours": null,
+          "postcode": "3000",
+          "suburb": "Melbourne",
+          "verificationStatus": "confirmed"
+        },
+        {
+          "accessConditions": [
+            "VicFreeWiFi access point"
+          ],
+          "address": null,
+          "dataUpdatedAt": "2019-04-25T12:52:19.803232",
+          "distanceKm": 0.7,
+          "id": "vicfreewifi-MEL-0642",
+          "latitude": -37.818521,
+          "longitude": 144.96737,
+          "name": "Flinders Street Station - Concourse",
+          "openingHours": null,
+          "postcode": "3000",
+          "suburb": "Melbourne",
+          "verificationStatus": "confirmed"
+        },
+        {
+          "accessConditions": [
+            "VicFreeWiFi access point"
+          ],
+          "address": null,
+          "dataUpdatedAt": "2019-04-25T12:52:19.803232",
+          "distanceKm": 0.7,
+          "id": "vicfreewifi-MEL-0643",
+          "latitude": -37.818336,
+          "longitude": 144.967272,
+          "name": "Flinders Street Station - Concourse",
+          "openingHours": null,
+          "postcode": "3000",
+          "suburb": "Melbourne",
+          "verificationStatus": "confirmed"
+        },
+        {
+          "accessConditions": [
+            "VicFreeWiFi access point"
+          ],
+          "address": null,
+          "dataUpdatedAt": "2019-04-25T12:52:19.803232",
+          "distanceKm": 0.7,
+          "id": "vicfreewifi-MEL-0644",
+          "latitude": -37.818181,
+          "longitude": 144.967332,
+          "name": "Flinders Street Station - Concourse",
+          "openingHours": null,
+          "postcode": "3000",
+          "suburb": "Melbourne",
+          "verificationStatus": "confirmed"
+        },
+        {
+          "accessConditions": [
+            "VicFreeWiFi access point"
+          ],
+          "address": null,
+          "dataUpdatedAt": "2019-04-25T12:52:19.803232",
+          "distanceKm": 0.8,
+          "id": "vicfreewifi-MEL-0115",
+          "latitude": -37.816775,
+          "longitude": 144.970184,
+          "name": "FLINDERS",
+          "openingHours": null,
+          "postcode": "3000",
+          "suburb": "Melbourne",
+          "verificationStatus": "confirmed"
+        },
+        {
+          "accessConditions": [
+            "VicFreeWiFi access point"
+          ],
+          "address": "192 Flinders Street",
+          "dataUpdatedAt": "2019-04-25T12:52:19.803232",
+          "distanceKm": 0.8,
+          "id": "vicfreewifi-MEL-0314",
+          "latitude": -37.816839,
+          "longitude": 144.9692,
+          "name": "192 Flinders Street",
+          "openingHours": null,
+          "postcode": "3000",
+          "suburb": "Melbourne",
+          "verificationStatus": "confirmed"
+        },
+        {
+          "accessConditions": [
+            "VicFreeWiFi access point"
+          ],
+          "address": null,
+          "dataUpdatedAt": "2019-04-25T12:52:19.803232",
+          "distanceKm": 0.8,
+          "id": "vicfreewifi-MEL-0315",
+          "latitude": -37.8176424,
+          "longitude": 144.967639,
+          "name": "SE CORNER  SWANSTON & FLINDERS",
+          "openingHours": null,
+          "postcode": "3000",
+          "suburb": "Melbourne",
+          "verificationStatus": "confirmed"
+        },
+        {
+          "accessConditions": [
+            "VicFreeWiFi access point"
+          ],
+          "address": "172 Flinders Street",
+          "dataUpdatedAt": "2019-04-25T12:52:19.803232",
+          "distanceKm": 0.8,
+          "id": "vicfreewifi-MEL-0392",
+          "latitude": -37.817054,
+          "longitude": 144.968425,
+          "name": "172 Flinders Street",
+          "openingHours": null,
+          "postcode": "3000",
+          "suburb": "Melbourne",
+          "verificationStatus": "confirmed"
+        },
+        {
+          "accessConditions": [
+            "VicFreeWiFi access point"
+          ],
+          "address": null,
+          "dataUpdatedAt": "2019-04-25T12:52:19.803232",
+          "distanceKm": 0.8,
+          "id": "vicfreewifi-MEL-0394",
+          "latitude": -37.8166846,
+          "longitude": 144.97054,
+          "name": "FLINDERS",
+          "openingHours": null,
+          "postcode": "3000",
+          "suburb": "Melbourne",
+          "verificationStatus": "confirmed"
+        },
+        {
+          "accessConditions": [
+            "VicFreeWiFi access point"
+          ],
+          "address": null,
+          "dataUpdatedAt": "2019-04-25T12:52:19.803232",
+          "distanceKm": 0.8,
+          "id": "vicfreewifi-MEL-0395",
+          "latitude": -37.816093,
+          "longitude": 144.971761,
+          "name": "FLINDERS",
+          "openingHours": null,
+          "postcode": "3000",
+          "suburb": "Melbourne",
+          "verificationStatus": "confirmed"
+        },
+        {
+          "accessConditions": [
+            "VicFreeWiFi access point"
+          ],
+          "address": "Flinders Street Station - ML_Platform1/2",
+          "dataUpdatedAt": "2019-04-25T12:52:19.803232",
+          "distanceKm": 0.8,
+          "id": "vicfreewifi-MEL-0574",
+          "latitude": -37.819002,
+          "longitude": 144.965653,
+          "name": "Flinders Street Station - ML_Platform1/2",
+          "openingHours": null,
+          "postcode": "3000",
+          "suburb": "Melbourne",
+          "verificationStatus": "confirmed"
+        },
+        {
+          "accessConditions": [
+            "VicFreeWiFi access point"
+          ],
+          "address": "Flinders Street Station - ML_Platform1/2",
+          "dataUpdatedAt": "2019-04-25T12:52:19.803232",
+          "distanceKm": 0.8,
+          "id": "vicfreewifi-MEL-0575",
+          "latitude": -37.818875,
+          "longitude": 144.9663,
+          "name": "Flinders Street Station - ML_Platform1/2",
+          "openingHours": null,
+          "postcode": "3000",
+          "suburb": "Melbourne",
+          "verificationStatus": "confirmed"
+        },
+        {
+          "accessConditions": [
+            "VicFreeWiFi access point"
+          ],
+          "address": "Flinders Street Station - ML_Platform3/4",
+          "dataUpdatedAt": "2019-04-25T12:52:19.803232",
+          "distanceKm": 0.8,
+          "id": "vicfreewifi-MEL-0577",
+          "latitude": -37.818774,
+          "longitude": 144.965997,
+          "name": "Flinders Street Station - ML_Platform3/4",
+          "openingHours": null,
+          "postcode": "3000",
+          "suburb": "Melbourne",
+          "verificationStatus": "confirmed"
+        },
+        {
+          "accessConditions": [
+            "VicFreeWiFi access point"
+          ],
+          "address": "Flinders Street Station - ML_Platform3/4",
+          "dataUpdatedAt": "2019-04-25T12:52:19.803232",
+          "distanceKm": 0.8,
+          "id": "vicfreewifi-MEL-0578",
+          "latitude": -37.81868,
+          "longitude": 144.966439,
+          "name": "Flinders Street Station - ML_Platform3/4",
+          "openingHours": null,
+          "postcode": "3000",
+          "suburb": "Melbourne",
+          "verificationStatus": "confirmed"
+        },
+        {
+          "accessConditions": [
+            "VicFreeWiFi access point"
+          ],
+          "address": "Flinders Street Station - ML_Platform5/6",
+          "dataUpdatedAt": "2019-04-25T12:52:19.803232",
+          "distanceKm": 0.8,
+          "id": "vicfreewifi-MEL-0580",
+          "latitude": -37.818621,
+          "longitude": 144.966034,
+          "name": "Flinders Street Station - ML_Platform5/6",
+          "openingHours": null,
+          "postcode": "3000",
+          "suburb": "Melbourne",
+          "verificationStatus": "confirmed"
+        },
+        {
+          "accessConditions": [
+            "VicFreeWiFi access point"
+          ],
+          "address": "Flinders Street Station - ML_Platform5/6",
+          "dataUpdatedAt": "2019-04-25T12:52:19.803232",
+          "distanceKm": 0.8,
+          "id": "vicfreewifi-MEL-0581",
+          "latitude": -37.818547,
+          "longitude": 144.966404,
+          "name": "Flinders Street Station - ML_Platform5/6",
+          "openingHours": null,
+          "postcode": "3000",
+          "suburb": "Melbourne",
+          "verificationStatus": "confirmed"
+        }
+      ],
+      "support": [
+        {
+          "address": "C/O Tetris Capital, Level 12, 90 Collins Street, Melbourne, VIC, 3000",
+          "availabilityFreshness": null,
+          "availabilityStatus": "not-confirmed",
+          "availabilityUpdatedAt": null,
+          "dataUpdatedAt": "2026-09-13T19:00:54.497199",
+          "distanceKm": 0.0,
+          "eligibility": null,
+          "id": "acnc-95640883101",
+          "latitude": -37.8232,
+          "longitude": 144.9729,
+          "name": "Building Communities (Vic) Limited",
+          "partnerStatus": "unknown",
+          "phone": null,
+          "postcode": "3000",
+          "serviceTypes": [
+            "Community support services"
+          ],
+          "suburb": "Melbourne",
+          "website": "https://www.buildingcommunities.org.au/"
+        },
+        {
+          "address": "Level 7, 171 Collins Street, Melbourne, VIC, 3000",
+          "availabilityFreshness": null,
+          "availabilityStatus": "not-confirmed",
+          "availabilityUpdatedAt": null,
+          "dataUpdatedAt": "2026-09-13T19:00:54.497199",
+          "distanceKm": 0.9,
+          "eligibility": null,
+          "id": "acnc-75274949866",
+          "latitude": -37.8156486,
+          "longitude": 144.968287,
+          "name": "The Trustee For The Sidney Myer Fund",
+          "partnerStatus": "unknown",
+          "phone": null,
+          "postcode": "3000",
+          "serviceTypes": [
+            "Community support services"
+          ],
+          "suburb": "Melbourne",
+          "website": "https://www.myerfoundation.org.au/"
+        },
+        {
+          "address": "247-251 Flinders Lane, Melbourne, VIC, 3000",
+          "availabilityFreshness": null,
+          "availabilityStatus": "not-confirmed",
+          "availabilityUpdatedAt": null,
+          "dataUpdatedAt": "2026-09-13T19:00:54.497199",
+          "distanceKm": 0.9,
+          "eligibility": null,
+          "id": "acnc-39571862204",
+          "latitude": -37.8169931,
+          "longitude": 144.9661786,
+          "name": "The Ross House Trust",
+          "partnerStatus": "unknown",
+          "phone": null,
+          "postcode": "3000",
+          "serviceTypes": [
+            "Community support services"
+          ],
+          "suburb": "Melbourne",
+          "website": "https://rosshouse.org.au/"
+        },
+        {
+          "address": "209 Flinders Lane, Melbourne, VIC, 3000",
+          "availabilityFreshness": null,
+          "availabilityStatus": "not-confirmed",
+          "availabilityUpdatedAt": null,
+          "dataUpdatedAt": "2026-09-13T19:00:54.497199",
+          "distanceKm": 0.9,
+          "eligibility": null,
+          "id": "acnc-70231408602",
+          "latitude": -37.816379,
+          "longitude": 144.9679069,
+          "name": "Melbourne Anglican Youth Ministry Fund",
+          "partnerStatus": "unknown",
+          "phone": null,
+          "postcode": "3000",
+          "serviceTypes": [
+            "Youth services"
+          ],
+          "suburb": "Melbourne",
+          "website": "https://melbourneanglicanfoundation.au/charitable-entities/melbourne-anglican-youth-ministry-fund/"
+        },
+        {
+          "address": "20 Spring Street, Melbourne, VIC, 3000",
+          "availabilityFreshness": null,
+          "availabilityStatus": "not-confirmed",
+          "availabilityUpdatedAt": null,
+          "dataUpdatedAt": "2026-09-13T19:00:54.497199",
+          "distanceKm": 0.9,
+          "eligibility": null,
+          "id": "acnc-57919514317",
+          "latitude": -37.8150403,
+          "longitude": 144.974685,
+          "name": "Old Treasury Building Reserve Committee Of Management Inc",
+          "partnerStatus": "unknown",
+          "phone": null,
+          "postcode": "3000",
+          "serviceTypes": [
+            "Community support services"
+          ],
+          "suburb": "Melbourne",
+          "website": "www.otb.org.au"
+        },
+        {
+          "address": "B 227 Collins St, Melbourne, VIC, 3000",
+          "availabilityFreshness": null,
+          "availabilityStatus": "not-confirmed",
+          "availabilityUpdatedAt": null,
+          "dataUpdatedAt": "2026-09-13T19:00:54.497199",
+          "distanceKm": 1.0,
+          "eligibility": null,
+          "id": "acnc-26143151544",
+          "latitude": -37.8157187,
+          "longitude": 144.966333,
+          "name": "Homes For Homes Limited",
+          "partnerStatus": "unknown",
+          "phone": null,
+          "postcode": "3000",
+          "serviceTypes": [
+            "Community support services"
+          ],
+          "suburb": "Melbourne",
+          "website": "https://homesforhomes.org.au/"
+        },
+        {
+          "address": "L 2 287-293 Collins St, Melbourne, VIC, 3000",
+          "availabilityFreshness": null,
+          "availabilityStatus": "not-confirmed",
+          "availabilityUpdatedAt": null,
+          "dataUpdatedAt": "2026-09-13T19:00:54.497199",
+          "distanceKm": 1.1,
+          "eligibility": null,
+          "id": "acnc-17628817023",
+          "latitude": -37.8163708,
+          "longitude": 144.9644753,
+          "name": "TEDXMELBOURNE LTD.",
+          "partnerStatus": "unknown",
+          "phone": null,
+          "postcode": "3000",
+          "serviceTypes": [
+            "Community support services"
+          ],
+          "suburb": "Melbourne",
+          "website": "https://www.tedxmelbourne.com"
+        },
+        {
+          "address": "L 1 128 Exhibition St, Melbourne, VIC, 3000",
+          "availabilityFreshness": null,
+          "availabilityStatus": "not-confirmed",
+          "availabilityUpdatedAt": null,
+          "dataUpdatedAt": "2026-09-13T19:00:54.497199",
+          "distanceKm": 1.2,
+          "eligibility": null,
+          "id": "acnc-93973661067",
+          "latitude": -37.8126127,
+          "longitude": 144.9711127,
+          "name": "Community Housing Federation Of Victoria Incorporated",
+          "partnerStatus": "unknown",
+          "phone": null,
+          "postcode": "3000",
+          "serviceTypes": [
+            "Housing support"
+          ],
+          "suburb": "Melbourne",
+          "website": "www.chiavic.com.au"
+        },
+        {
+          "address": "L 3 225 Bourke St, Melbourne, VIC, 3000",
+          "availabilityFreshness": null,
+          "availabilityStatus": "not-confirmed",
+          "availabilityUpdatedAt": null,
+          "dataUpdatedAt": "2026-09-13T19:00:54.497199",
+          "distanceKm": 1.3,
+          "eligibility": null,
+          "id": "acnc-30036539902",
+          "latitude": -37.81232957565218,
+          "longitude": 144.9661662869565,
+          "name": "Federation Of Community Legal Centres Vic Inc",
+          "partnerStatus": "unknown",
+          "phone": null,
+          "postcode": "3000",
+          "serviceTypes": [
+            "Community support services"
+          ],
+          "suburb": "Melbourne",
+          "website": "www.fclc.org.au"
+        },
+        {
+          "address": "L 8 225 Bourke St, Melbourne, VIC, 3000",
+          "availabilityFreshness": null,
+          "availabilityStatus": "not-confirmed",
+          "availabilityUpdatedAt": null,
+          "dataUpdatedAt": "2026-09-13T19:00:54.497199",
+          "distanceKm": 1.3,
+          "eligibility": null,
+          "id": "acnc-29130665477",
+          "latitude": -37.81232957565218,
+          "longitude": 144.9661662869565,
+          "name": "Phunktional Limited",
+          "partnerStatus": "unknown",
+          "phone": null,
+          "postcode": "3000",
+          "serviceTypes": [
+            "Community support services"
+          ],
+          "suburb": "Melbourne",
+          "website": "www.phunktional.org.au"
+        },
+        {
+          "address": "Level 15, 222 Exhibition Street, Melbourne, VIC, 3000",
+          "availabilityFreshness": null,
+          "availabilityStatus": "not-confirmed",
+          "availabilityUpdatedAt": null,
+          "dataUpdatedAt": "2026-09-13T19:00:54.497199",
+          "distanceKm": 1.4,
+          "eligibility": null,
+          "id": "acnc-62653394293",
+          "latitude": -37.8106399,
+          "longitude": 144.9703849,
+          "name": "ABORIGINAL COMMUNITY HOUSING (VIC) LTD",
+          "partnerStatus": "unknown",
+          "phone": null,
+          "postcode": "3000",
+          "serviceTypes": [
+            "Housing support"
+          ],
+          "suburb": "Melbourne",
+          "website": "https://www.achl.org.au"
+        },
+        {
+          "address": "L 5 131 Queen St, Melbourne, VIC, 3000",
+          "availabilityFreshness": null,
+          "availabilityStatus": "not-confirmed",
+          "availabilityUpdatedAt": null,
+          "dataUpdatedAt": "2026-09-13T19:00:54.497199",
+          "distanceKm": 1.4,
+          "eligibility": null,
+          "id": "acnc-95683140801",
+          "latitude": -37.8153346,
+          "longitude": 144.9607136,
+          "name": "MELBOURNE ISLAMIC MISSION LTD",
+          "partnerStatus": "unknown",
+          "phone": null,
+          "postcode": "3000",
+          "serviceTypes": [
+            "Community support services"
+          ],
+          "suburb": "Melbourne",
+          "website": null
+        },
+        {
+          "address": "3 Albert Coates Lane, Melbourne, VIC, 3000",
+          "availabilityFreshness": null,
+          "availabilityStatus": "not-confirmed",
+          "availabilityUpdatedAt": null,
+          "dataUpdatedAt": "2026-09-13T19:00:54.497199",
+          "distanceKm": 1.5,
+          "eligibility": null,
+          "id": "acnc-86117794466",
+          "latitude": -37.8110093,
+          "longitude": 144.9652408,
+          "name": "First Nations Foundation Limited",
+          "partnerStatus": "unknown",
+          "phone": null,
+          "postcode": "3000",
+          "serviceTypes": [
+            "Community support services"
+          ],
+          "suburb": "Melbourne",
+          "website": "www.firstnationsfoundation.org.au"
+        },
+        {
+          "address": "Suite 301 / 546 Collins Street, Melbourne, VIC, 3000",
+          "availabilityFreshness": null,
+          "availabilityStatus": "not-confirmed",
+          "availabilityUpdatedAt": null,
+          "dataUpdatedAt": "2026-09-13T19:00:54.497199",
+          "distanceKm": 1.6,
+          "eligibility": null,
+          "id": "acnc-36314277141",
+          "latitude": -37.8182365,
+          "longitude": 144.9558425,
+          "name": "Huntington's Victoria Ltd",
+          "partnerStatus": "unknown",
+          "phone": null,
+          "postcode": "3000",
+          "serviceTypes": [
+            "Community support services"
+          ],
+          "suburb": "Melbourne",
+          "website": "https://www.huntingtonsvic.org.au/"
+        },
+        {
+          "address": "176 Little Lonsdale St, Melbourne, VIC, 3000",
+          "availabilityFreshness": null,
+          "availabilityStatus": "not-confirmed",
+          "availabilityUpdatedAt": null,
+          "dataUpdatedAt": "2026-09-13T19:00:54.497199",
+          "distanceKm": 1.6,
+          "eligibility": null,
+          "id": "acnc-93615613688",
+          "latitude": -37.8101724,
+          "longitude": 144.9652411,
+          "name": "Emerging Writers' Festival Inc",
+          "partnerStatus": "unknown",
+          "phone": null,
+          "postcode": "3000",
+          "serviceTypes": [
+            "Community support services"
+          ],
+          "suburb": "Melbourne",
+          "website": "www.emergingwritersfestval.org.au"
+        },
+        {
+          "address": "L 3 168 Lonsdale St, Melbourne, VIC, 3000",
+          "availabilityFreshness": null,
+          "availabilityStatus": "not-confirmed",
+          "availabilityUpdatedAt": null,
+          "dataUpdatedAt": "2026-09-13T19:00:54.497199",
+          "distanceKm": 1.6,
+          "eligibility": null,
+          "id": "acnc-14004258360",
+          "latitude": -37.8115579,
+          "longitude": 144.9623715,
+          "name": "The Greek Orthodox Community Of Melbourne And Victoria",
+          "partnerStatus": "unknown",
+          "phone": null,
+          "postcode": "3000",
+          "serviceTypes": [
+            "Community support services"
+          ],
+          "suburb": "Melbourne",
+          "website": "https://www.greekcommunity.com.au/"
+        },
+        {
+          "address": "Level 5, 205 William Street, Melbourne, VIC, 3000",
+          "availabilityFreshness": null,
+          "availabilityStatus": "not-confirmed",
+          "availabilityUpdatedAt": null,
+          "dataUpdatedAt": "2026-09-13T19:00:54.497199",
+          "distanceKm": 1.7,
+          "eligibility": null,
+          "id": "acnc-58788275751",
+          "latitude": -37.8143121,
+          "longitude": 144.95715,
+          "name": "Barristers' Benevolent Foundation of Victoria",
+          "partnerStatus": "unknown",
+          "phone": null,
+          "postcode": "3000",
+          "serviceTypes": [
+            "Community support services"
+          ],
+          "suburb": "Melbourne",
+          "website": null
+        },
+        {
+          "address": "Suite 455, 585 Little Collins Street, Melbourne, VIC, 3000",
+          "availabilityFreshness": null,
+          "availabilityStatus": "not-confirmed",
+          "availabilityUpdatedAt": null,
+          "dataUpdatedAt": "2026-09-13T19:00:54.497199",
+          "distanceKm": 1.7,
+          "eligibility": null,
+          "id": "acnc-83649083125",
+          "latitude": -37.8177387,
+          "longitude": 144.955428,
+          "name": "BEYOND CHARITY LTD",
+          "partnerStatus": "unknown",
+          "phone": null,
+          "postcode": "3000",
+          "serviceTypes": [
+            "Community support services"
+          ],
+          "suburb": "Melbourne",
+          "website": "beyondcharity.org"
+        },
+        {
+          "address": "L 11 456 Lonsdale St, Melbourne, VIC, 3000",
+          "availabilityFreshness": null,
+          "availabilityStatus": "not-confirmed",
+          "availabilityUpdatedAt": null,
+          "dataUpdatedAt": "2026-09-13T19:00:54.497199",
+          "distanceKm": 1.7,
+          "eligibility": null,
+          "id": "acnc-99736862891",
+          "latitude": -37.8130897,
+          "longitude": 144.9587073,
+          "name": "Therapeutic Horticulture Australia Ltd",
+          "partnerStatus": "unknown",
+          "phone": null,
+          "postcode": "3000",
+          "serviceTypes": [
+            "Community support services"
+          ],
+          "suburb": "Melbourne",
+          "website": "www.tha.org.au"
+        },
+        {
+          "address": "L 13 8 Exhibition St, Melbourne, VIC, 3000",
+          "availabilityFreshness": null,
+          "availabilityStatus": "not-confirmed",
+          "availabilityUpdatedAt": null,
+          "dataUpdatedAt": "2026-09-13T19:00:54.497199",
+          "distanceKm": 1.7,
+          "eligibility": null,
+          "id": "acnc-80392811855",
+          "latitude": -37.808467,
+          "longitude": 144.9676071,
+          "name": "THE TRUSTEE FOR THE JOHN & MYRIAM WYLIE FOUNDATION",
+          "partnerStatus": "unknown",
+          "phone": null,
+          "postcode": "3000",
+          "serviceTypes": [
+            "Community support services"
+          ],
+          "suburb": "Melbourne",
+          "website": "https://jamwfoundation.org/"
+        }
+      ]
+    },
+    {
+      "name": "Clayton",
+      "postcode": "3168",
+      "wifi": [
+        {
+          "accessConditions": [
+            "Facility type: neighbourhood house",
+            "Free wifi likely but not confirmed — check with staff"
+          ],
+          "address": null,
+          "dataUpdatedAt": "2026-09-14T08:40:21.122585+00:00",
+          "distanceKm": 2.1,
+          "id": "vicmap-2493",
+          "latitude": -37.906273084258544,
+          "longitude": 145.14923546413073,
+          "name": "NOTTING HILL NEIGHBOURHOOD HOUSE",
+          "openingHours": null,
+          "postcode": null,
+          "suburb": null,
+          "verificationStatus": "likely"
+        },
+        {
+          "accessConditions": [
+            "Facility type: library",
+            "Free wifi likely but not confirmed — check with staff"
+          ],
+          "address": null,
+          "dataUpdatedAt": "2026-09-14T08:40:21.120488+00:00",
+          "distanceKm": 2.2,
+          "id": "vicmap-2139",
+          "latitude": -37.9270878480253,
+          "longitude": 145.11819489275035,
+          "name": "CLAYTON LIBRARY",
+          "openingHours": null,
+          "postcode": null,
+          "suburb": null,
+          "verificationStatus": "likely"
+        },
+        {
+          "accessConditions": [
+            "Facility type: community centre",
+            "Free wifi likely but not confirmed — check with staff"
+          ],
+          "address": null,
+          "dataUpdatedAt": "2026-09-14T08:40:21.135466+00:00",
+          "distanceKm": 2.2,
+          "id": "vicmap-20222",
+          "latitude": -37.92763519626813,
+          "longitude": 145.11758325143293,
+          "name": "CLAYTON COMMUNITY CENTRE",
+          "openingHours": null,
+          "postcode": null,
+          "suburb": null,
+          "verificationStatus": "likely"
+        },
+        {
+          "accessConditions": [
+            "Facility type: community centre",
+            "Free wifi likely but not confirmed — check with staff"
+          ],
+          "address": null,
+          "dataUpdatedAt": "2026-09-14T08:40:21.136337+00:00",
+          "distanceKm": 2.7,
+          "id": "vicmap-20278",
+          "latitude": -37.92759781228354,
+          "longitude": 145.10627592518637,
+          "name": "KINGSTON COMMUNITY FAMILY CENTRE",
+          "openingHours": null,
+          "postcode": null,
+          "suburb": null,
+          "verificationStatus": "likely"
+        },
+        {
+          "accessConditions": [
+            "Facility type: community centre",
+            "Free wifi likely but not confirmed — check with staff"
+          ],
+          "address": null,
+          "dataUpdatedAt": "2026-09-14T08:40:21.135404+00:00",
+          "distanceKm": 3.1,
+          "id": "vicmap-20217",
+          "latitude": -37.89427682213753,
+          "longitude": 145.09387097085036,
+          "name": "OAKLEIGH COURTHOUSE COMMUNITY CENTRE",
+          "openingHours": null,
+          "postcode": null,
+          "suburb": null,
+          "verificationStatus": "likely"
+        },
+        {
+          "accessConditions": [
+            "Facility type: community centre",
+            "Free wifi likely but not confirmed — check with staff"
+          ],
+          "address": null,
+          "dataUpdatedAt": "2026-09-14T08:40:21.135495+00:00",
+          "distanceKm": 3.1,
+          "id": "vicmap-20225",
+          "latitude": -37.935601318172175,
+          "longitude": 145.1342549850779,
+          "name": "CENTRAL BAYSIDE ADULT COMMUNITY OPTIONS",
+          "openingHours": null,
+          "postcode": null,
+          "suburb": null,
+          "verificationStatus": "likely"
+        },
+        {
+          "accessConditions": [
+            "Facility type: library",
+            "Free wifi likely but not confirmed — check with staff"
+          ],
+          "address": null,
+          "dataUpdatedAt": "2026-09-14T08:40:21.120404+00:00",
+          "distanceKm": 3.3,
+          "id": "vicmap-2119",
+          "latitude": -37.897378847676215,
+          "longitude": 145.09020990218133,
+          "name": "OAKLEIGH LIBRARY",
+          "openingHours": null,
+          "postcode": null,
+          "suburb": null,
+          "verificationStatus": "likely"
+        },
+        {
+          "accessConditions": [
+            "Facility type: community centre",
+            "Free wifi likely but not confirmed — check with staff"
+          ],
+          "address": null,
+          "dataUpdatedAt": "2026-09-14T08:40:21.138638+00:00",
+          "distanceKm": 3.5,
+          "id": "vicmap-20517",
+          "latitude": -37.90311777195206,
+          "longitude": 145.16461109141576,
+          "name": "BRANDON PARK COMMUNITY CENTRE",
+          "openingHours": null,
+          "postcode": null,
+          "suburb": null,
+          "verificationStatus": "likely"
+        },
+        {
+          "accessConditions": [
+            "Facility type: library",
+            "Free wifi likely but not confirmed — check with staff"
+          ],
+          "address": null,
+          "dataUpdatedAt": "2026-09-14T08:40:21.120620+00:00",
+          "distanceKm": 3.7,
+          "id": "vicmap-2165",
+          "latitude": -37.87473484690294,
+          "longitude": 145.1276558999153,
+          "name": "MOUNT WAVERLEY LIBRARY",
+          "openingHours": null,
+          "postcode": null,
+          "suburb": null,
+          "verificationStatus": "likely"
+        },
+        {
+          "accessConditions": [
+            "Facility type: community centre",
+            "Free wifi likely but not confirmed — check with staff"
+          ],
+          "address": null,
+          "dataUpdatedAt": "2026-09-14T08:40:21.135432+00:00",
+          "distanceKm": 3.8,
+          "id": "vicmap-20219",
+          "latitude": -37.87455370408033,
+          "longitude": 145.1275375774194,
+          "name": "MOUNT WAVERLEY YOUTH CENTRE",
+          "openingHours": null,
+          "postcode": null,
+          "suburb": null,
+          "verificationStatus": "likely"
+        },
+        {
+          "accessConditions": [
+            "Facility type: community centre",
+            "Free wifi likely but not confirmed — check with staff"
+          ],
+          "address": null,
+          "dataUpdatedAt": "2026-09-14T08:40:21.135444+00:00",
+          "distanceKm": 3.8,
+          "id": "vicmap-20220",
+          "latitude": -37.87451959890818,
+          "longitude": 145.12814126684987,
+          "name": "MOUNT WAVERLEY COMMUNITY CENTRE",
+          "openingHours": null,
+          "postcode": null,
+          "suburb": null,
+          "verificationStatus": "likely"
+        },
+        {
+          "accessConditions": [
+            "Facility type: library",
+            "Free wifi likely but not confirmed — check with staff"
+          ],
+          "address": null,
+          "dataUpdatedAt": "2026-09-14T08:40:21.121725+00:00",
+          "distanceKm": 4.1,
+          "id": "vicmap-2292",
+          "latitude": -37.940459847759946,
+          "longitude": 145.10211789412907,
+          "name": "CLARINDA LIBRARY",
+          "openingHours": null,
+          "postcode": null,
+          "suburb": null,
+          "verificationStatus": "likely"
+        },
+        {
+          "accessConditions": [
+            "Facility type: community centre",
+            "Free wifi likely but not confirmed — check with staff"
+          ],
+          "address": null,
+          "dataUpdatedAt": "2026-09-14T08:40:21.138630+00:00",
+          "distanceKm": 4.2,
+          "id": "vicmap-20516",
+          "latitude": -37.94394923029363,
+          "longitude": 145.10754852622856,
+          "name": "SUNDOWNER COMMUNITY CENTRE",
+          "openingHours": null,
+          "postcode": null,
+          "suburb": null,
+          "verificationStatus": "likely"
+        },
+        {
+          "accessConditions": [
+            "Facility type: library",
+            "Free wifi likely but not confirmed — check with staff"
+          ],
+          "address": null,
+          "dataUpdatedAt": "2026-09-14T08:40:21.122184+00:00",
+          "distanceKm": 4.3,
+          "id": "vicmap-2363",
+          "latitude": -37.92739684230608,
+          "longitude": 145.08197790171607,
+          "name": "SOUTH OAKLEIGH LIBRARY",
+          "openingHours": null,
+          "postcode": null,
+          "suburb": null,
+          "verificationStatus": "likely"
+        },
+        {
+          "accessConditions": [
+            "Facility type: community centre",
+            "Free wifi likely but not confirmed — check with staff"
+          ],
+          "address": null,
+          "dataUpdatedAt": "2026-09-14T08:40:21.135420+00:00",
+          "distanceKm": 4.4,
+          "id": "vicmap-20218",
+          "latitude": -37.89795882281726,
+          "longitude": 145.0766757107359,
+          "name": "HUGHESDALE COMMUNITY CENTRE",
+          "openingHours": null,
+          "postcode": null,
+          "suburb": null,
+          "verificationStatus": "likely"
+        },
+        {
+          "accessConditions": [
+            "Facility type: community centre",
+            "Free wifi likely but not confirmed — check with staff"
+          ],
+          "address": null,
+          "dataUpdatedAt": "2026-09-14T08:40:21.135455+00:00",
+          "distanceKm": 4.4,
+          "id": "vicmap-20221",
+          "latitude": -37.87079814312311,
+          "longitude": 145.13944156377931,
+          "name": "VILLA MARIA COMMUNITY CENTRE",
+          "openingHours": null,
+          "postcode": null,
+          "suburb": null,
+          "verificationStatus": "likely"
+        },
+        {
+          "accessConditions": [
+            "Facility type: library",
+            "Free wifi likely but not confirmed — check with staff"
+          ],
+          "address": null,
+          "dataUpdatedAt": "2026-09-14T08:40:21.122283+00:00",
+          "distanceKm": 5.0,
+          "id": "vicmap-2379",
+          "latitude": -37.879655325864334,
+          "longitude": 145.08132849432576,
+          "name": "MALVERN EAST LIBRARY",
+          "openingHours": null,
+          "postcode": null,
+          "suburb": null,
+          "verificationStatus": "likely"
+        },
+        {
+          "accessConditions": [
+            "Facility type: community centre",
+            "Free wifi likely but not confirmed — check with staff"
+          ],
+          "address": null,
+          "dataUpdatedAt": "2026-09-14T08:40:21.137861+00:00",
+          "distanceKm": 5.4,
+          "id": "vicmap-20430",
+          "latitude": -37.93350485471155,
+          "longitude": 145.17799069897046,
+          "name": "SOUTHERN COMMUNITY CENTRE",
+          "openingHours": null,
+          "postcode": null,
+          "suburb": null,
+          "verificationStatus": "likely"
+        },
+        {
+          "accessConditions": [
+            "Facility type: library",
+            "Free wifi likely but not confirmed — check with staff"
+          ],
+          "address": null,
+          "dataUpdatedAt": "2026-09-14T08:40:21.121249+00:00",
+          "distanceKm": 5.8,
+          "id": "vicmap-2222",
+          "latitude": -37.90722785232699,
+          "longitude": 145.19059289100358,
+          "name": "WHEELERS HILL LIBRARY",
+          "openingHours": null,
+          "postcode": null,
+          "suburb": null,
+          "verificationStatus": "likely"
+        },
+        {
+          "accessConditions": [
+            "Facility type: library",
+            "Free wifi likely but not confirmed — check with staff"
+          ],
+          "address": null,
+          "dataUpdatedAt": "2026-09-14T08:40:21.121760+00:00",
+          "distanceKm": 5.9,
+          "id": "vicmap-2297",
+          "latitude": -37.95673025782388,
+          "longitude": 145.15229917289884,
+          "name": "SPRINGVALE LIBRARY",
+          "openingHours": null,
+          "postcode": null,
+          "suburb": null,
+          "verificationStatus": "likely"
+        }
+      ],
+      "support": [
+        {
+          "address": "Fy 28 270 Ferntree Gully Rd, Notting Hill, VIC, 3168",
+          "availabilityFreshness": null,
+          "availabilityStatus": "not-confirmed",
+          "availabilityUpdatedAt": null,
+          "dataUpdatedAt": "2026-09-13T19:00:54.497199",
+          "distanceKm": 0.0,
+          "eligibility": null,
+          "id": "acnc-47562918365",
+          "latitude": -37.90835,
+          "longitude": 145.125,
+          "name": "VECA Hope Church Incorporated",
+          "partnerStatus": "unknown",
+          "phone": null,
+          "postcode": "3168",
+          "serviceTypes": [
+            "Community support services"
+          ],
+          "suburb": "Notting Hill",
+          "website": null
+        },
+        {
+          "address": "Fy 5 20 Duerdin St, Clayton, VIC, 3168",
+          "availabilityFreshness": null,
+          "availabilityStatus": "not-confirmed",
+          "availabilityUpdatedAt": null,
+          "dataUpdatedAt": "2026-09-13T19:00:54.497199",
+          "distanceKm": 0.0,
+          "eligibility": null,
+          "id": "acnc-54657581158",
+          "latitude": -37.90835,
+          "longitude": 145.125,
+          "name": "RATNATUNGA CHARITY PROJECTS LTD.",
+          "partnerStatus": "unknown",
+          "phone": null,
+          "postcode": "3168",
+          "serviceTypes": [
+            "Community support services"
+          ],
+          "suburb": "Clayton",
+          "website": null
+        },
+        {
+          "address": "U 4 346 Ferntree Gully Rd, Notting Hill, VIC, 3168",
+          "availabilityFreshness": null,
+          "availabilityStatus": "not-confirmed",
+          "availabilityUpdatedAt": null,
+          "dataUpdatedAt": "2026-09-13T19:00:54.497199",
+          "distanceKm": 0.0,
+          "eligibility": null,
+          "id": "acnc-30632482752",
+          "latitude": -37.90835,
+          "longitude": 145.125,
+          "name": "BODHI INSTITUTE AUSTRALIA INCORPORATED",
+          "partnerStatus": "unknown",
+          "phone": null,
+          "postcode": "3168",
+          "serviceTypes": [
+            "Community support services"
+          ],
+          "suburb": "Notting Hill",
+          "website": "https://www.ausbia.org"
+        },
+        {
+          "address": "Spanish and Latin American Club, 21 Chancellors Walk, Clayton, VIC, 3168",
+          "availabilityFreshness": null,
+          "availabilityStatus": "not-confirmed",
+          "availabilityUpdatedAt": null,
+          "dataUpdatedAt": "2026-09-13T19:00:54.497199",
+          "distanceKm": 0.0,
+          "eligibility": null,
+          "id": "acnc-25019910687",
+          "latitude": -37.90835,
+          "longitude": 145.125,
+          "name": "Spanish and Latin American Club",
+          "partnerStatus": "unknown",
+          "phone": null,
+          "postcode": "3168",
+          "serviceTypes": [
+            "Community support services"
+          ],
+          "suburb": "Clayton",
+          "website": "https://clubs.msa.monash.edu/organisation/7192/"
+        },
+        {
+          "address": "21 Chancellors Walk, Clayton, VIC, 3168",
+          "availabilityFreshness": null,
+          "availabilityStatus": "not-confirmed",
+          "availabilityUpdatedAt": null,
+          "dataUpdatedAt": "2026-09-13T19:00:54.497199",
+          "distanceKm": 0.8,
+          "eligibility": null,
+          "id": "acnc-50185709699",
+          "latitude": -37.911962,
+          "longitude": 145.1330597,
+          "name": "Monash Engineering Students' Society Inc.",
+          "partnerStatus": "unknown",
+          "phone": null,
+          "postcode": "3168",
+          "serviceTypes": [
+            "Community support services"
+          ],
+          "suburb": "Clayton",
+          "website": "mess.org.au"
+        },
+        {
+          "address": "Level 1, 32 Business Park Drive, NOTTING HILL, VIC, 3168",
+          "availabilityFreshness": null,
+          "availabilityStatus": "not-confirmed",
+          "availabilityUpdatedAt": null,
+          "dataUpdatedAt": "2026-09-13T19:00:54.497199",
+          "distanceKm": 0.8,
+          "eligibility": null,
+          "id": "acnc-30121203343",
+          "latitude": -37.9033251,
+          "longitude": 145.1319742,
+          "name": "Immunisation Coalition",
+          "partnerStatus": "unknown",
+          "phone": null,
+          "postcode": "3168",
+          "serviceTypes": [
+            "Community support services"
+          ],
+          "suburb": "NOTTING HILL",
+          "website": "www.immunisationcoalition.org.au"
+        },
+        {
+          "address": "21 Chancellors Walk, Clayton, VIC, 3168",
+          "availabilityFreshness": null,
+          "availabilityStatus": "not-confirmed",
+          "availabilityUpdatedAt": null,
+          "dataUpdatedAt": "2026-09-13T19:00:54.497199",
+          "distanceKm": 0.8,
+          "eligibility": null,
+          "id": "acnc-12627399359",
+          "latitude": -37.911962,
+          "longitude": 145.1330597,
+          "name": "Australia-China Youth Association Monash",
+          "partnerStatus": "unknown",
+          "phone": null,
+          "postcode": "3168",
+          "serviceTypes": [
+            "Youth services"
+          ],
+          "suburb": "Clayton",
+          "website": "https://www.instagram.com/acyamonash/"
+        },
+        {
+          "address": "21 Chancellors Walk, Clayton, VIC, 3168",
+          "availabilityFreshness": null,
+          "availabilityStatus": "not-confirmed",
+          "availabilityUpdatedAt": null,
+          "dataUpdatedAt": "2026-09-13T19:00:54.497199",
+          "distanceKm": 0.8,
+          "eligibility": null,
+          "id": "acnc-30794498736",
+          "latitude": -37.911962,
+          "longitude": 145.1330597,
+          "name": "Monash Biomedical Engineering Student Society",
+          "partnerStatus": "unknown",
+          "phone": null,
+          "postcode": "3168",
+          "serviceTypes": [
+            "Community support services"
+          ],
+          "suburb": "Clayton",
+          "website": null
+        },
+        {
+          "address": "21 Chancellors Walk, Clayton, VIC, 3168",
+          "availabilityFreshness": null,
+          "availabilityStatus": "not-confirmed",
+          "availabilityUpdatedAt": null,
+          "dataUpdatedAt": "2026-09-13T19:00:54.497199",
+          "distanceKm": 0.8,
+          "eligibility": null,
+          "id": "acnc-27697311316",
+          "latitude": -37.911962,
+          "longitude": 145.1330597,
+          "name": "SRI LANKAN CULTURAL CLUB OF MONASH UNIVERSITY",
+          "partnerStatus": "unknown",
+          "phone": null,
+          "postcode": "3168",
+          "serviceTypes": [
+            "Community support services"
+          ],
+          "suburb": "Clayton",
+          "website": "https://clubs.msa.monash.edu/organisation/7203/"
+        },
+        {
+          "address": "1 Prince St, Clayton, VIC, 3168",
+          "availabilityFreshness": null,
+          "availabilityStatus": "not-confirmed",
+          "availabilityUpdatedAt": null,
+          "dataUpdatedAt": "2026-09-13T19:00:54.497199",
+          "distanceKm": 0.8,
+          "eligibility": null,
+          "id": "acnc-58250193431",
+          "latitude": -37.915864,
+          "longitude": 145.1243648,
+          "name": "AUSTRALIA TELUGU NRI ASSOCIATION INC.",
+          "partnerStatus": "unknown",
+          "phone": null,
+          "postcode": "3168",
+          "serviceTypes": [
+            "Community support services"
+          ],
+          "suburb": "Clayton",
+          "website": null
+        },
+        {
+          "address": "U 1 4 Flora Rd, Clayton, VIC, 3168",
+          "availabilityFreshness": null,
+          "availabilityStatus": "not-confirmed",
+          "availabilityUpdatedAt": null,
+          "dataUpdatedAt": "2026-09-13T19:00:54.497199",
+          "distanceKm": 0.9,
+          "eligibility": null,
+          "id": "acnc-46646924325",
+          "latitude": -37.9131825,
+          "longitude": 145.1166882,
+          "name": "THINK PROJECT GLOBAL LIMITED",
+          "partnerStatus": "unknown",
+          "phone": null,
+          "postcode": "3168",
+          "serviceTypes": [
+            "Community support services"
+          ],
+          "suburb": "Clayton",
+          "website": "https://thethinkproject.org/"
+        },
+        {
+          "address": "63 Fulton St, Clayton, VIC, 3168",
+          "availabilityFreshness": null,
+          "availabilityStatus": "not-confirmed",
+          "availabilityUpdatedAt": null,
+          "dataUpdatedAt": "2026-09-13T19:00:54.497199",
+          "distanceKm": 1.0,
+          "eligibility": null,
+          "id": "acnc-48797857207",
+          "latitude": -37.9139923,
+          "longitude": 145.1157289,
+          "name": "SMART HEALTH GLOBAL AUSTRALIA INC.",
+          "partnerStatus": "unknown",
+          "phone": null,
+          "postcode": "3168",
+          "serviceTypes": [
+            "Community support services"
+          ],
+          "suburb": "Clayton",
+          "website": "https://smarthealthglobal.org/"
+        },
+        {
+          "address": "22a Wellington Rd, Clayton, VIC, 3168",
+          "availabilityFreshness": null,
+          "availabilityStatus": "not-confirmed",
+          "availabilityUpdatedAt": null,
+          "dataUpdatedAt": "2026-09-13T19:00:54.497199",
+          "distanceKm": 1.0,
+          "eligibility": null,
+          "id": "acnc-62846219054",
+          "latitude": -37.9155626,
+          "longitude": 145.1318455,
+          "name": "MANNIX COLLEGE STUDENT SOCIETY INC.",
+          "partnerStatus": "unknown",
+          "phone": null,
+          "postcode": "3168",
+          "serviceTypes": [
+            "Community support services"
+          ],
+          "suburb": "Clayton",
+          "website": null
+        },
+        {
+          "address": "22a Wellington Rd, Clayton, VIC, 3168",
+          "availabilityFreshness": null,
+          "availabilityStatus": "not-confirmed",
+          "availabilityUpdatedAt": null,
+          "dataUpdatedAt": "2026-09-13T19:00:54.497199",
+          "distanceKm": 1.0,
+          "eligibility": null,
+          "id": "acnc-59204464070",
+          "latitude": -37.9155626,
+          "longitude": 145.1318455,
+          "name": "Mannix College Foundation",
+          "partnerStatus": "unknown",
+          "phone": null,
+          "postcode": "3168",
+          "serviceTypes": [
+            "Community support services"
+          ],
+          "suburb": "Clayton",
+          "website": "www.mannix.monash.edu/foundation/"
+        },
+        {
+          "address": "2 Dixon St, Clayton, VIC, 3168",
+          "availabilityFreshness": null,
+          "availabilityStatus": "not-confirmed",
+          "availabilityUpdatedAt": null,
+          "dataUpdatedAt": "2026-09-13T19:00:54.497199",
+          "distanceKm": 1.2,
+          "eligibility": null,
+          "id": "acnc-86648041219",
+          "latitude": -37.9190519,
+          "longitude": 145.1221306,
+          "name": "Dixon House Neighbourhood Centre",
+          "partnerStatus": "unknown",
+          "phone": null,
+          "postcode": "3168",
+          "serviceTypes": [
+            "Community support services"
+          ],
+          "suburb": "Clayton",
+          "website": "www.dixonhouse.org.au"
+        },
+        {
+          "address": "Unit 1, 10 Duerdin St, Clayton, VIC, 3168",
+          "availabilityFreshness": null,
+          "availabilityStatus": "not-confirmed",
+          "availabilityUpdatedAt": null,
+          "dataUpdatedAt": "2026-09-13T19:00:54.497199",
+          "distanceKm": 1.6,
+          "eligibility": null,
+          "id": "acnc-25126098398",
+          "latitude": -37.9105475,
+          "longitude": 145.1424785,
+          "name": "Power to Change",
+          "partnerStatus": "unknown",
+          "phone": null,
+          "postcode": "3168",
+          "serviceTypes": [
+            "Youth services"
+          ],
+          "suburb": "Clayton",
+          "website": "www.powertochange.org.au"
+        },
+        {
+          "address": "51-53 Morton St, Clayton, VIC, 3168",
+          "availabilityFreshness": null,
+          "availabilityStatus": "not-confirmed",
+          "availabilityUpdatedAt": null,
+          "dataUpdatedAt": "2026-09-13T19:00:54.497199",
+          "distanceKm": 1.6,
+          "eligibility": null,
+          "id": "acnc-47711305813",
+          "latitude": -37.9172012,
+          "longitude": 145.1396462,
+          "name": "weExplore Wellness Inc",
+          "partnerStatus": "unknown",
+          "phone": null,
+          "postcode": "3168",
+          "serviceTypes": [
+            "Community support services"
+          ],
+          "suburb": "Clayton",
+          "website": "www.weexplore.org.au"
+        },
+        {
+          "address": "14 Winterton Rd, Clayton, VIC, 3168",
+          "availabilityFreshness": null,
+          "availabilityStatus": "not-confirmed",
+          "availabilityUpdatedAt": null,
+          "dataUpdatedAt": "2026-09-13T19:00:54.497199",
+          "distanceKm": 1.8,
+          "eligibility": null,
+          "id": "acnc-11296752873",
+          "latitude": -37.9217526,
+          "longitude": 145.135971,
+          "name": "Our Village Network Inc",
+          "partnerStatus": "unknown",
+          "phone": null,
+          "postcode": "3168",
+          "serviceTypes": [
+            "Community support services"
+          ],
+          "suburb": "Clayton",
+          "website": "https://ourvillage.org.au"
+        },
+        {
+          "address": "25 Burton Ave, Clayton, VIC, 3168",
+          "availabilityFreshness": null,
+          "availabilityStatus": "not-confirmed",
+          "availabilityUpdatedAt": null,
+          "dataUpdatedAt": "2026-09-13T19:00:54.497199",
+          "distanceKm": 2.0,
+          "eligibility": null,
+          "id": "acnc-47767237668",
+          "latitude": -37.9254868,
+          "longitude": 145.1175621,
+          "name": "Cafe Care Ministry Incorporated",
+          "partnerStatus": "unknown",
+          "phone": null,
+          "postcode": "3168",
+          "serviceTypes": [
+            "Community support services"
+          ],
+          "suburb": "Clayton",
+          "website": "https://www.cafecare.org.au"
+        },
+        {
+          "address": "25 Burton Ave, Clayton, VIC, 3168",
+          "availabilityFreshness": null,
+          "availabilityStatus": "not-confirmed",
+          "availabilityUpdatedAt": null,
+          "dataUpdatedAt": "2026-09-13T19:00:54.497199",
+          "distanceKm": 2.0,
+          "eligibility": null,
+          "id": "acnc-93065089736",
+          "latitude": -37.9254868,
+          "longitude": 145.1175621,
+          "name": "CHURCH OF CHRIST FELLOWSHIP CLAYTON INC",
+          "partnerStatus": "unknown",
+          "phone": null,
+          "postcode": "3168",
+          "serviceTypes": [
+            "Community support services"
+          ],
+          "suburb": "Clayton",
+          "website": "http://www.claytonchurch.org.au"
+        }
+      ]
+    }
+  ]
+}
