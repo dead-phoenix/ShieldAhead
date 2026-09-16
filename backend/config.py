@@ -7,7 +7,12 @@ CHARITY_CACHE_TTL_SECONDS = 86400  # 24 hours
 EXTRA_POSTCODE_CACHE_TTL_SECONDS = 86400  # 24 hours, same as the main charity cache
 
 # Harcourt, Castlemaine, Bendigo — pre-seeded on a full refresh.
-PRIORITY_REFRESH_POSTCODES = ("3453", "3450", "3550")
+# Extra Melbourne postcodes stored in Neon but missing from cache_meta, so a
+# full refresh would otherwise never rewrite them.
+PRIORITY_REFRESH_POSTCODES = (
+    "3453", "3450", "3550",
+    "3002", "3003", "3004", "3051", "3053", "3205", "3207",
+)
 
 #  Config
 

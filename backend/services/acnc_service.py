@@ -78,19 +78,50 @@ def is_victorian_charity(charity):
     return state in {"VIC", "VICTORIA"} or is_valid_vic_postcode(postcode)
 
 
-SUPPORT_FLAG_NEEDLES = (
-    "homeless", "poverty", "disadvantage", "emergency", "relief",
-    "family_violence", "domestic", "financial", "food", "housing",
+# Needle (substring of an ACNC column name) -> service-type label, used when
+# that column's value is Y/YES. Only People_at_risk_of_homelessness and
+# Financially_Disadvantaged exist on the live Charity Register; the rest is
+# kept so a later field still maps instead of falling through to generic.
+SUPPORT_FLAG_LABELS = (
+    ("homeless", "Homelessness support"),
+    ("poverty", "Financial counselling / hardship support"),
+    ("disadvantage", "Financial counselling / hardship support"),
+    ("emergency", "Emergency relief"),
+    ("relief", "Emergency relief"),
+    ("family_violence", "Family violence support"),
+    ("domestic", "Family violence support"),
+    ("financial", "Financial counselling / hardship support"),
+    ("food", "Food relief"),
+    ("housing", "Housing support"),
 )
+SUPPORT_FLAG_NEEDLES = tuple(needle for needle, _label in SUPPORT_FLAG_LABELS)
+GENERIC_SERVICE_TYPE = "Community support services"
+
+
+def _is_yes_flag(value):
+    return str(value).strip().upper() in {"Y", "YES"}
+
+
+def _labels_from_y_flags(charity):
+    """Map ACNC Y/YES beneficiary flags onto SERVICE_TYPE_RULES labels."""
+    matched = []
+    for key, value in charity.items():
+        if not _is_yes_flag(value):
+            continue
+        key_l = str(key).lower()
+        for needle, label in SUPPORT_FLAG_LABELS:
+            if needle in key_l and label not in matched:
+                matched.append(label)
+    return matched
 
 
 def is_relevant_support_charity(charity):
     """Keep organisations that actually look like support services, not every ACNC record in town."""
-    if infer_service_types(charity) != ["Community support services"]:
+    if infer_service_types(charity) != [GENERIC_SERVICE_TYPE]:
         return True
     for key, value in charity.items():
         key_l = str(key).lower()
-        if str(value).strip().upper() in {"Y", "YES"} and any(needle in key_l for needle in SUPPORT_FLAG_NEEDLES):
+        if _is_yes_flag(value) and any(needle in key_l for needle in SUPPORT_FLAG_NEEDLES):
             return True
     return False
 
@@ -101,13 +132,21 @@ def is_relevant(charity):
 
 
 def infer_service_types(charity):
-    """Infer service categories from free text — ACNC doesn't publish a confirmed category field."""
+    """Infer service categories from free text and ACNC Y-flags.
+
+    ACNC doesn't publish a confirmed category field. Generic
+    'Community support services' is used only when nothing specific matched.
+    """
     combined_text = " ".join(str(v) for v in charity.values() if v).lower()
     matched = []
     for keyword, label in SERVICE_TYPE_RULES:
         if keyword in combined_text and label not in matched:
             matched.append(label)
-    return matched or ["Community support services"]
+    for label in _labels_from_y_flags(charity):
+        if label not in matched:
+            matched.append(label)
+    specific = [label for label in matched if label != GENERIC_SERVICE_TYPE]
+    return specific or [GENERIC_SERVICE_TYPE]
 
 
 def stable_charity_id(name, town):

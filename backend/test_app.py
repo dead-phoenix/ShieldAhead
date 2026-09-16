@@ -160,6 +160,38 @@ def test_no_specific_keyword_falls_back_to_generic_label():
     charity = {"Charity_Legal_Name": "Test Org", "Objects": "general welfare nature"}
     assert infer_service_types(charity) == ["Community support services"]
 
+def test_homelessness_y_flag_infers_homelessness_support():
+    charity = {
+        "Charity_Legal_Name": "Regional Assistance Inc",
+        "People_at_risk_of_homelessness": "Y",
+    }
+    assert infer_service_types(charity) == ["Homelessness support"]
+
+def test_financially_disadvantaged_y_flag_infers_financial_label():
+    charity = {
+        "Charity_Legal_Name": "Regional Assistance Inc",
+        "Financially_Disadvantaged": "Y",
+    }
+    assert infer_service_types(charity) == ["Financial counselling / hardship support"]
+
+def test_both_y_flags_attach_both_labels_without_generic():
+    charity = {
+        "Charity_Legal_Name": "Regional Assistance Inc",
+        "People_at_risk_of_homelessness": "Y",
+        "Financially_Disadvantaged": "YES",
+    }
+    assert infer_service_types(charity) == [
+        "Homelessness support",
+        "Financial counselling / hardship support",
+    ]
+
+def test_financial_year_end_is_not_treated_as_a_y_flag():
+    charity = {
+        "Charity_Legal_Name": "Regional Assistance Inc",
+        "Financial_Year_End": "30-Jun",
+    }
+    assert infer_service_types(charity) == ["Community support services"]
+
 def test_support_relevance_requires_an_explicit_service_signal():
     assert is_relevant_support_charity({
         "Charity_Legal_Name": "Harcourt Valley Heritage and Tourist Centre Inc",
