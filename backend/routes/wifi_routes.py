@@ -100,15 +100,23 @@ def get_wifi():
                 dist = haversine_km(user_lat, user_lng, record["latitude"], record["longitude"])
                 record["distanceKm"] = round(dist, 1)
 
-        # Keep only records with a known distance, sorted nearest-first
+        # Keep only records with a known distance.
+        # Confirmed listings first, then nearest-first within each group.
         all_with_distance = [r for r in all_records if r.get("distanceKm") is not None]
-        all_with_distance.sort(key=lambda r: r["distanceKm"])
+        all_with_distance.sort(
+            key=lambda r: (0 if r.get("verificationStatus") == "confirmed" else 1, r["distanceKm"])
+        )
 
         # Filter to search radius
         within_radius = [r for r in all_with_distance if r["distanceKm"] <= SEARCH_RADIUS_KM]
 
         # Never present distant records from another area as local coverage.
-        within_radius.sort(key=lambda record: record["distanceKm"])
+        within_radius.sort(
+            key=lambda record: (
+                0 if record.get("verificationStatus") == "confirmed" else 1,
+                record["distanceKm"],
+            )
+        )
         all_records = within_radius
 
         # Build limitations
