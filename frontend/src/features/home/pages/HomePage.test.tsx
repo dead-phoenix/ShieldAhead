@@ -37,12 +37,20 @@ describe('home landing page', () => {
     expect(wifiLink.compareDocumentPosition(supportLink) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
   })
 
-  it('describes the Crisis Pack as a later iteration, not a current destination', () => {
+  it('provides clear preparation destinations and explains on-device privacy', () => {
     renderHome()
 
-    expect(screen.getByText('Coming later')).toBeVisible()
-    expect(screen.getByRole('heading', { name: 'Crisis Pack' })).toBeVisible()
-    expect(screen.getByText(/not available in this version/i)).toBeVisible()
-    expect(screen.queryByRole('link', { name: /Crisis Pack/i })).not.toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'What is ShieldAhead?' })).toBeVisible()
+    expect(screen.getByRole('heading', { name: 'Why ShieldAhead?' })).toBeVisible()
+    expect(screen.getByRole('heading', { name: 'Our key features' })).toBeVisible()
+    expect(screen.getByRole('link', { name: /Crisis preparation/i })).toHaveAttribute('href', '/crisis')
+    expect(screen.getByRole('link', { name: /^Offline information/i })).toHaveAttribute('href', '/settings/offline-information')
+    expect(screen.getByRole('link', { name: /Nearby Wi-Fi/i })).toHaveAttribute('href', '/wifi')
+    expect(screen.getByRole('link', { name: /Nearby support/i })).toHaveAttribute('href', '/support')
+    expect(screen.getByRole('heading', { name: 'Your information stays yours.' })).toBeVisible()
+    expect(screen.getByRole('heading', { name: 'Built for households that may need extra support.' })).toBeVisible()
+    expect(screen.getByText('Postcode, not continuous tracking')).toBeVisible()
+    expect(screen.queryByText('Coming later')).not.toBeInTheDocument()
+    expect(screen.queryByRole('heading', { name: 'Crisis Pack' })).not.toBeInTheDocument()
   })
 })

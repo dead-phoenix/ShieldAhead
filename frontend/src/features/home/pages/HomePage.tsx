@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { ArrowDown, ArrowRight, CloudSlash, HandHeart, LockKey, MapPin, ShieldCheck, WifiHigh } from '@phosphor-icons/react'
+import { ArrowDown, ArrowRight, BookOpenText, CheckSquareOffset, CloudSlash, HandHeart, HouseLine, LockKey, MapPin, ShieldCheck, UsersThree, WifiHigh } from '@phosphor-icons/react'
 import { Link } from 'react-router-dom'
 import { appRoutes } from '../../../app/config/product'
 import {
@@ -116,6 +116,54 @@ export function HomePage() {
         </ul>
       </section>
 
+      <section className="landing-overview" aria-labelledby="overview-title">
+        <div className="landing-overview__intro" data-scroll-reveal>
+          <div>
+            <h2 id="overview-title">What is ShieldAhead?</h2>
+            <p>ShieldAhead is a preparation and offline-support app for Victorian households. It brings crisis guidance, possible public Wi-Fi and nearby support information together, so useful details are easier to understand before a disruption occurs.</p>
+          </div>
+          <aside aria-labelledby="why-shieldahead-title">
+            <h3 id="why-shieldahead-title">Why ShieldAhead?</h3>
+            <ul>
+              <li><ShieldCheck aria-hidden="true" weight="fill" /> Prepare before something goes wrong</li>
+              <li><HandHeart aria-hidden="true" weight="fill" /> Understand nearby support options</li>
+              <li><WifiHigh aria-hidden="true" weight="fill" /> Find possible places to reconnect</li>
+              <li><BookOpenText aria-hidden="true" weight="fill" /> Keep important information easier to access</li>
+            </ul>
+          </aside>
+        </div>
+
+        <div className="landing-overview__features" data-scroll-reveal>
+          <h3>Our key features</h3>
+          <div className="landing-overview__feature-grid">
+            <Link className="landing-overview__feature landing-overview__feature--crisis" to={appRoutes.crisis}>
+              <span className="landing-overview__feature-icon"><CheckSquareOffset aria-hidden="true" weight="duotone" /></span>
+              <strong>Crisis preparation</strong>
+              <span>Practical guidance and household checklists for bushfires, floods and extended power outages.</span>
+              <small>Progress saved on this device</small>
+            </Link>
+            <Link className="landing-overview__feature landing-overview__feature--offline" to={appRoutes.offlineInformation}>
+              <span className="landing-overview__feature-icon"><CloudSlash aria-hidden="true" weight="duotone" /></span>
+              <strong>Offline information</strong>
+              <span>Prepare useful Wi-Fi and support information while connected, then read the saved copy offline.</span>
+              <small>Available when the network is not</small>
+            </Link>
+            <Link className="landing-overview__feature landing-overview__feature--wifi" to={appRoutes.wifi}>
+              <span className="landing-overview__feature-icon"><WifiHigh aria-hidden="true" weight="duotone" /></span>
+              <strong>Nearby Wi-Fi</strong>
+              <span>Review public Wi-Fi and possible fallback locations before deciding where to travel.</span>
+              <small>Check the listing before travelling</small>
+            </Link>
+            <Link className="landing-overview__feature landing-overview__feature--support" to={appRoutes.support}>
+              <span className="landing-overview__feature-icon"><UsersThree aria-hidden="true" weight="duotone" /></span>
+              <strong>Nearby support</strong>
+              <span>Explore food, financial, housing and emergency support details near your selected area.</span>
+              <small>Clear service details and limitations</small>
+            </Link>
+          </div>
+        </div>
+      </section>
+
       <section className="landing-journey" id="how-it-works" aria-labelledby="journey-title">
         <header className="landing-journey__header" data-scroll-reveal>
           <p>How ShieldAhead works</p>
@@ -164,7 +212,7 @@ export function HomePage() {
               <p>Community support service</p>
               <strong>Help near your saved area</strong>
               <span><MapPin aria-hidden="true" /> Address and distance shown</span>
-              <div><b>Availability not confirmed</b><small>Check the details before travelling.</small></div>
+              <div><b>Check service details</b><small>Review the listing before travelling.</small></div>
               <span className="journey-preview__link">View service details <ArrowRight aria-hidden="true" /></span>
             </div>
           </div>
@@ -185,14 +233,27 @@ export function HomePage() {
         </article>
       </section>
 
-      <section className="landing-pack" aria-labelledby="crisis-pack-title" data-scroll-reveal>
-        <p className="landing-tag landing-tag--later">Coming later</p>
-        <h2 id="crisis-pack-title">Crisis Pack</h2>
-        <p>
-          The Crisis Pack will be a private, on-device checklist for later iterations: household
-          contacts, medication notes, and a short list of things to take if you need to leave.
-          It is not available in this version.
-        </p>
+      <section className="landing-trust" aria-label="Privacy and community" data-scroll-reveal>
+        <article className="landing-trust__panel" aria-labelledby="landing-privacy-title">
+          <span className="landing-trust__icon"><LockKey aria-hidden="true" weight="duotone" /></span>
+          <div>
+            <h2 id="landing-privacy-title">Your information stays yours.</h2>
+            <p>Household details and checklist progress stay on this device. No account is required, and you remain in control of what you save.</p>
+          </div>
+          <ul aria-label="Privacy benefits">
+            <li><ShieldCheck aria-hidden="true" weight="fill" /> Stored locally</li>
+            <li><MapPin aria-hidden="true" weight="fill" /> Postcode, not continuous tracking</li>
+            <li><LockKey aria-hidden="true" weight="fill" /> Review or remove it any time</li>
+          </ul>
+        </article>
+        <article className="landing-trust__panel landing-trust__panel--community" aria-labelledby="community-title">
+          <span className="landing-trust__icon"><UsersThree aria-hidden="true" weight="duotone" /></span>
+          <div>
+            <h2 id="community-title">Built for households that may need extra support.</h2>
+            <p>Designed for older people, families, people with health or accessibility needs, and communities using slower or less reliable connections.</p>
+          </div>
+          <span className="landing-trust__community-line"><HouseLine aria-hidden="true" weight="duotone" /> Prepared households. Stronger communities.</span>
+        </article>
       </section>
 
       <div className="landing-install">

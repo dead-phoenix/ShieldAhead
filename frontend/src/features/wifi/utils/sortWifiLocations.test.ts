@@ -60,6 +60,16 @@ describe('sortWifiLocations', () => {
     ).toEqual(['nearby-likely', 'farther-confirmed'])
   })
 
+  it('can prioritise confirmed listings before nearer likely listings', () => {
+    expect(
+      sortWifiLocations(
+        [nearbyLikely, fartherConfirmed],
+        null,
+        'confirmed-first',
+      ).map(({ id }) => id),
+    ).toEqual(['farther-confirmed', 'nearby-likely'])
+  })
+
   it('keeps nearer confirmed spots ahead of farther confirmed spots', () => {
     const nearerConfirmed = { ...fartherConfirmed, id: 'nearer-confirmed', distanceKm: 18 }
 
