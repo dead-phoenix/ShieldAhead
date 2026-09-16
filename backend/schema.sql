@@ -57,3 +57,37 @@ CREATE TABLE IF NOT EXISTS postcode_requests (
 
 CREATE INDEX IF NOT EXISTS idx_postcode_requests_postcode
     ON postcode_requests (postcode);
+
+CREATE TABLE IF NOT EXISTS helplines (
+    id TEXT PRIMARY KEY,
+    crisis_type TEXT NOT NULL,
+    display_order INTEGER NOT NULL DEFAULT 0,
+    name TEXT NOT NULL,
+    service_type TEXT NOT NULL,
+    phone TEXT NOT NULL,
+    website TEXT,
+    description TEXT,
+    availability TEXT,
+    coverage_area TEXT,
+    verified_against TEXT,
+    verified_on TEXT
+);
+
+CREATE INDEX IF NOT EXISTS idx_helplines_crisis_type
+    ON helplines (crisis_type);
+
+CREATE TABLE IF NOT EXISTS pre_crisis_checklist_items (
+    id TEXT PRIMARY KEY,
+    crisis_type TEXT NOT NULL,
+    category_id TEXT NOT NULL,
+    category TEXT NOT NULL,
+    item_id TEXT NOT NULL,
+    task TEXT NOT NULL,
+    description TEXT,
+    steps TEXT[] NOT NULL DEFAULT '{}',
+    display_order INTEGER NOT NULL DEFAULT 0,
+    is_active BOOLEAN NOT NULL DEFAULT TRUE
+);
+
+CREATE INDEX IF NOT EXISTS idx_checklist_crisis_type
+    ON pre_crisis_checklist_items (crisis_type);

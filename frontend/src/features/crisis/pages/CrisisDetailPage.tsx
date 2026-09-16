@@ -2,16 +2,20 @@ import { ArrowLeft, ArrowSquareOut, CalendarBlank, CaretDown, Check, CheckCircle
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link, Navigate, useParams } from 'react-router-dom'
 import { appRoutes } from '../../../app/config/product'
-import { getChecklistGroups, getHelplineSource, getHelplines } from '../../../data/crisis/crisisStaticContent'
 import { getCrisisContent } from '../crisisContent'
 import { readCrisisChecklist, saveCrisisChecklist } from '../crisisChecklistStorage'
+import { useCrisisChecklist, useHelplines } from '../useCrisisApiContent'
 
 export function CrisisDetailPage() {
   const { kind } = useParams()
   const content = getCrisisContent(kind)
-  const checklistGroups = useMemo(() => getChecklistGroups(kind ?? ''), [kind])
-  const helplines = useMemo(() => getHelplines(kind ?? ''), [kind])
-  const helplineSource = useMemo(() => getHelplineSource(kind ?? ''), [kind])
+  const checklistGroups = useCrisisChecklist(kind ?? '', content?.checklist ?? [])
+  const helplines = useHelplines(kind ?? '')
+  const helplineSource = useMemo(() => {
+    const url = helplines[0]?.verifiedAgainst
+    if (!url) return undefined
+    return { url, label: new URL(url).hostname.replace(/^www\./, '') }
+  }, [helplines])
   const [checked, setChecked] = useState(() => readCrisisChecklist(kind ?? ''))
   const [selectedStageId, setSelectedStageId] = useState<string | null>(null)
   const guidanceDialogRef = useRef<HTMLDialogElement>(null)

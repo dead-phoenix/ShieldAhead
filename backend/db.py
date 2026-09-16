@@ -106,6 +106,47 @@ SCHEMA_STATEMENTS = [
     );
     """,
     "CREATE INDEX IF NOT EXISTS idx_postcode_requests_postcode ON postcode_requests (postcode);",
+    # An earlier iteration created 'helplines'/'pre_crisis_checklist_items' with a
+    # NOT NULL data_updated_at column and no verified_against/verified_on columns.
+    # CREATE TABLE IF NOT EXISTS below won't touch an already-existing table, so
+    # these loosen/extend it to the current shape. Both are additive/no-op-safe
+    # to run on every startup, including against a table that already matches.
+    "ALTER TABLE IF EXISTS helplines ALTER COLUMN data_updated_at DROP NOT NULL;",
+    "ALTER TABLE IF EXISTS helplines ADD COLUMN IF NOT EXISTS verified_against TEXT;",
+    "ALTER TABLE IF EXISTS helplines ADD COLUMN IF NOT EXISTS verified_on TEXT;",
+    "ALTER TABLE IF EXISTS pre_crisis_checklist_items ALTER COLUMN data_updated_at DROP NOT NULL;",
+    """
+    CREATE TABLE IF NOT EXISTS helplines (
+        id TEXT PRIMARY KEY,
+        crisis_type TEXT NOT NULL,
+        display_order INTEGER NOT NULL DEFAULT 0,
+        name TEXT NOT NULL,
+        service_type TEXT NOT NULL,
+        phone TEXT NOT NULL,
+        website TEXT,
+        description TEXT,
+        availability TEXT,
+        coverage_area TEXT,
+        verified_against TEXT,
+        verified_on TEXT
+    );
+    """,
+    "CREATE INDEX IF NOT EXISTS idx_helplines_crisis_type ON helplines (crisis_type);",
+    """
+    CREATE TABLE IF NOT EXISTS pre_crisis_checklist_items (
+        id TEXT PRIMARY KEY,
+        crisis_type TEXT NOT NULL,
+        category_id TEXT NOT NULL,
+        category TEXT NOT NULL,
+        item_id TEXT NOT NULL,
+        task TEXT NOT NULL,
+        description TEXT,
+        steps TEXT[] NOT NULL DEFAULT '{}',
+        display_order INTEGER NOT NULL DEFAULT 0,
+        is_active BOOLEAN NOT NULL DEFAULT TRUE
+    );
+    """,
+    "CREATE INDEX IF NOT EXISTS idx_checklist_crisis_type ON pre_crisis_checklist_items (crisis_type);",
 ]
 
 
@@ -406,3 +447,170 @@ def save_charities_to_db(records):
             )
     except Exception as e:
         _flask_app().logger.error(f"Postgres write failed for charities: {e}")
+
+
+def _helpline_row_to_dict(row):
+    return {
+        "id": row["id"],
+        "crisisType": row["crisis_type"],
+        "displayOrder": row["display_order"],
+        "name": row["name"],
+        "serviceType": row["service_type"],
+        "phone": row["phone"],
+        "website": row["website"],
+        "description": row["description"],
+        "availability": row["availability"],
+        "coverageArea": row["coverage_area"],
+        "verifiedAgainst": row["verified_against"],
+        "verifiedOn": row["verified_on"],
+    }
+
+
+def load_helplines_from_db():
+    if not db_available():
+        return []
+    try:
+        with _engine.connect() as conn:
+            rows = conn.execute(
+                text("SELECT * FROM helplines ORDER BY crisis_type, display_order"),
+            ).mappings().all()
+        return [_helpline_row_to_dict(r) for r in rows]
+    except Exception as e:
+        _flask_app().logger.error(f"Postgres read failed for helplines: {e}")
+        return []
+
+
+def save_helplines_to_db(records):
+    """Upsert-only: this is small, hand-curated reference data seeded from
+    data/helplines.json on every startup, so a record disappearing from
+    the seed file should not be inferred as 'delete it' automatically."""
+    if not db_available() or not records:
+        return
+    try:
+        rows = [
+            {
+                "id": r.get("id"),
+                "crisis_type": r.get("crisisType"),
+                "display_order": r.get("displayOrder", 0),
+                "name": r.get("name"),
+                "service_type": r.get("serviceType"),
+                "phone": r.get("phone"),
+                "website": r.get("website"),
+                "description": r.get("description"),
+                "availability": r.get("availability"),
+                "coverage_area": r.get("coverageArea"),
+                "verified_against": r.get("verifiedAgainst"),
+                "verified_on": r.get("verifiedOn"),
+            }
+            for r in records if r.get("id")
+        ]
+        if not rows:
+            return
+        with _engine.begin() as conn:
+            conn.execute(
+                text("""
+                    INSERT INTO helplines
+                        (id, crisis_type, display_order, name, service_type, phone, website,
+                         description, availability, coverage_area, verified_against, verified_on)
+                    VALUES
+                        (:id, :crisis_type, :display_order, :name, :service_type, :phone, :website,
+                         :description, :availability, :coverage_area, :verified_against, :verified_on)
+                    ON CONFLICT (id) DO UPDATE SET
+                        crisis_type = EXCLUDED.crisis_type,
+                        display_order = EXCLUDED.display_order,
+                        name = EXCLUDED.name,
+                        service_type = EXCLUDED.service_type,
+                        phone = EXCLUDED.phone,
+                        website = EXCLUDED.website,
+                        description = EXCLUDED.description,
+                        availability = EXCLUDED.availability,
+                        coverage_area = EXCLUDED.coverage_area,
+                        verified_against = EXCLUDED.verified_against,
+                        verified_on = EXCLUDED.verified_on
+                """),
+                rows,
+            )
+    except Exception as e:
+        _flask_app().logger.error(f"Postgres write failed for helplines: {e}")
+
+
+def _checklist_item_row_to_dict(row):
+    return {
+        "id": row["id"],
+        "crisisType": row["crisis_type"],
+        "categoryId": row["category_id"],
+        "category": row["category"],
+        "itemId": row["item_id"],
+        "task": row["task"],
+        "description": row["description"],
+        "steps": row["steps"] or [],
+        "displayOrder": row["display_order"],
+        "isActive": row["is_active"],
+    }
+
+
+def load_checklist_items_from_db():
+    if not db_available():
+        return []
+    try:
+        with _engine.connect() as conn:
+            rows = conn.execute(
+                text("""
+                    SELECT * FROM pre_crisis_checklist_items
+                    WHERE is_active
+                    ORDER BY crisis_type, category_id, display_order
+                """),
+            ).mappings().all()
+        return [_checklist_item_row_to_dict(r) for r in rows]
+    except Exception as e:
+        _flask_app().logger.error(f"Postgres read failed for pre_crisis_checklist_items: {e}")
+        return []
+
+
+def save_checklist_items_to_db(records):
+    """Upsert-only, same reasoning as helplines: seeded from
+    data/pre_crisis_checklist.json on every startup."""
+    if not db_available() or not records:
+        return
+    try:
+        rows = [
+            {
+                "id": r.get("id"),
+                "crisis_type": r.get("crisisType"),
+                "category_id": r.get("categoryId"),
+                "category": r.get("category"),
+                "item_id": r.get("itemId"),
+                "task": r.get("task"),
+                "description": r.get("description"),
+                "steps": r.get("steps") or [],
+                "display_order": r.get("displayOrder", 0),
+                "is_active": r.get("isActive", True),
+            }
+            for r in records if r.get("id")
+        ]
+        if not rows:
+            return
+        with _engine.begin() as conn:
+            conn.execute(
+                text("""
+                    INSERT INTO pre_crisis_checklist_items
+                        (id, crisis_type, category_id, category, item_id, task, description,
+                         steps, display_order, is_active)
+                    VALUES
+                        (:id, :crisis_type, :category_id, :category, :item_id, :task, :description,
+                         :steps, :display_order, :is_active)
+                    ON CONFLICT (id) DO UPDATE SET
+                        crisis_type = EXCLUDED.crisis_type,
+                        category_id = EXCLUDED.category_id,
+                        category = EXCLUDED.category,
+                        item_id = EXCLUDED.item_id,
+                        task = EXCLUDED.task,
+                        description = EXCLUDED.description,
+                        steps = EXCLUDED.steps,
+                        display_order = EXCLUDED.display_order,
+                        is_active = EXCLUDED.is_active
+                """),
+                rows,
+            )
+    except Exception as e:
+        _flask_app().logger.error(f"Postgres write failed for pre_crisis_checklist_items: {e}")

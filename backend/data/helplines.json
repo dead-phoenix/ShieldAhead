@@ -1,5 +1,5 @@
 {
-  "_comment": "Helplines shown on each crisis page. Scoped per crisisType  add entries here (one hazard page at a time) only after manually verifying the phone number against its official source. This file is bundled directly into the frontend (see frontend/src/data/crisis/crisisStaticContent.ts)  no backend or API call is involved.",
+  "_comment": "Helplines shown on each crisis page. Scoped per crisisType  add entries here (one hazard page at a time) only after manually verifying the phone number against its official source. This file seeds the 'helplines' Postgres table on startup (see services/crisis_content_service.py); /api/helplines serves from the DB and falls back to reading this file directly if no database is configured (e.g. local dev).",
   "records": [
     {
       "id": "bushfire-triple-zero",
