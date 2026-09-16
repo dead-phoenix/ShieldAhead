@@ -15,7 +15,7 @@ import { MapLegend } from '../../../shared/map/MapLegend'
 import { wifiMapRecords } from '../../../shared/map/mapRecords'
 import { getSearchLocation, getSearchPostcode } from '../../../storage/searchLocationStorage'
 import { clearUsualWifiSpot, getOfflinePreferences, getUsualWifiSpot } from '../../../storage/onboardingDraftStorage'
-import { selectWifiLocationsForList } from '../utils/sortWifiLocations'
+import { selectWifiLocationsForList, type WifiSortMode } from '../utils/sortWifiLocations'
 import { wifiAreaLabel } from '../utils/wifiMapsUrl'
 import { WifiVerificationBadge } from '../components/WifiVerificationBadge'
 import { DirectionsPanel } from '../../../shared/map/DirectionsPanel'
@@ -41,9 +41,10 @@ export function WifiListPage() {
     usualSpot && data?.metadata.removedRecordIds?.includes(usualSpot),
   )
   const activeUsualSpot = removedUsualSpot ? null : usualSpot
+  const [sortMode, setSortMode] = useState<WifiSortMode>('confirmed-first')
   const locations = useMemo(
-    () => selectWifiLocationsForList(data?.records ?? [], activeUsualSpot),
-    [activeUsualSpot, data?.records],
+    () => selectWifiLocationsForList(data?.records ?? [], activeUsualSpot, sortMode),
+    [activeUsualSpot, data?.records, sortMode],
   )
   const [view, setView] = useState<ResultsView>('list')
   const [selectedMapIds, setSelectedMapIds] = useState<string[]>([])
@@ -102,8 +103,20 @@ export function WifiListPage() {
         </Link>
       </div>
       {data && locations.length > 0 ? (
-        <div className="results-toolbar">
-          <p className="results-count">Showing {locations.length} nearest result{locations.length === 1 ? '' : 's'}{data.records.length > locations.length ? ` out of ${data.records.length}` : ''}.</p>
+        <div className={`results-toolbar${effectiveView === 'map' ? ' results-toolbar--map' : ''}`}>
+          {effectiveView === 'list' ? (
+            <>
+              <p className="results-count">Showing {locations.length} result{locations.length === 1 ? '' : 's'}{data.records.length > locations.length ? ` out of ${data.records.length}` : ''}, {sortMode === 'confirmed-first' ? 'confirmed listings first' : 'nearest first'}.</p>
+              <fieldset className="results-sort">
+                <legend>Sort results</legend>
+                <div className="results-sort__track">
+                  <span className={`results-sort__thumb results-sort__thumb--${sortMode}`} aria-hidden="true" />
+                  <button type="button" aria-pressed={sortMode === 'confirmed-first'} onClick={() => setSortMode('confirmed-first')}>Confirmed</button>
+                  <button type="button" aria-pressed={sortMode === 'nearest-first'} onClick={() => setSortMode('nearest-first')}>Nearest</button>
+                </div>
+              </fieldset>
+            </>
+          ) : null}
           <ListMapToggle mapDisabled={!isOnline} value={effectiveView} onChange={(nextView) => { setView(nextView); if (nextView === 'list') { setSelectedMapIds([]); setRoutePreview(undefined) } }} />
           {!isOnline ? <small>Map view needs an internet connection.</small> : null}
         </div>

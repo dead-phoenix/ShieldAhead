@@ -178,10 +178,12 @@ export function SupportServicesPage() {
               <article className="service-card" key={service.id}>
                 <div className="service-card__heading"><span className="record-row__icon"><HandHeart aria-hidden="true" size={25} weight="duotone" /></span><div><h2>{service.name}</h2><p><MapPin aria-hidden="true" size={17} /> {service.address ? formatServiceAddress(service) : `${service.suburb} VIC ${service.postcode} · Street address not confirmed`} · {service.distanceKm === undefined ? 'Distance not confirmed' : `${service.distanceKm} km`}</p><p><Phone aria-hidden="true" size={17} /> {service.phone ?? 'Phone not published'}{service.website ? <> · <a className="service-contact-link" href={service.website} target="_blank" rel="noreferrer"><LinkSimple aria-hidden="true" size={15} /> Website</a></> : null}</p></div></div>
                 <div className="service-tags">{service.serviceTypes.map((type) => <span key={type}>{type}</span>)}</div>
-                <div className={`availability availability--${availability.tone}`}>
-                  <AvailabilityIcon tone={availability.tone} />
-                  <span><strong>{availability.title}</strong><small>{availability.detail}</small></span>
-                </div>
+                {availability.tone !== 'not-confirmed' ? (
+                  <div className={`availability availability--${availability.tone}`}>
+                    <AvailabilityIcon tone={availability.tone} />
+                    <span><strong>{availability.title}</strong><small>{availability.detail}</small></span>
+                  </div>
+                ) : null}
                 <div className="service-card__actions">
                   <Link className="service-card__link" to={appRoutes.supportDetail(service.id)}>View service details <ArrowRight aria-hidden="true" size={19} weight="bold" /></Link>
                   <button className="button button--quiet button--compact" type="button" onClick={() => showServiceOnMap(service.id)} disabled={!isOnline}><MapPin aria-hidden="true" size={16} /> Show on map</button>
@@ -245,10 +247,12 @@ export function SupportServicesPage() {
                       <p><Phone aria-hidden="true" size={17} /> {selectedMapService.phone ?? 'Phone not published'}</p>
                       {selectedMapService.website ? <p><LinkSimple aria-hidden="true" size={17} /> <a className="service-contact-link" href={selectedMapService.website} target="_blank" rel="noreferrer">Website</a></p> : null}
                     </div>
-                    <div className={`availability availability--${availability.tone}`}>
-                      <AvailabilityIcon tone={availability.tone} />
-                      <span><strong>{availability.title}</strong><small>{availability.detail}</small></span>
-                    </div>
+                    {availability.tone !== 'not-confirmed' ? (
+                      <div className={`availability availability--${availability.tone}`}>
+                        <AvailabilityIcon tone={availability.tone} />
+                        <span><strong>{availability.title}</strong><small>{availability.detail}</small></span>
+                      </div>
+                    ) : null}
                     <div className="map-support-details">
                       <section>
                         <h3>Services offered</h3>

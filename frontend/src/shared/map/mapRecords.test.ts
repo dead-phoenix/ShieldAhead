@@ -22,7 +22,7 @@ describe('map record adapters', () => {
     ] satisfies SupportService[]
 
     expect(supportMapRecords(services)).toEqual([
-      { id: 'mapped', kind: 'support', name: 'Mapped service', latitude: -37.82, longitude: 144.97, markerLabel: 'Support', previewStatus: 'Availability not confirmed', previewLines: ['Melbourne VIC 3000', 'Phone not published'] },
+      { id: 'mapped', kind: 'support', name: 'Mapped service', latitude: -37.82, longitude: 144.97, markerLabel: 'Support', previewStatus: 'Support service', previewLines: ['Melbourne VIC 3000', 'Phone not published'] },
     ])
   })
 })

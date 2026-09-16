@@ -43,6 +43,21 @@ function renderDetail(path: string, fixture: Parameters<typeof getMockWifiReposi
 }
 
 describe('Epic 2 Wi-Fi states', () => {
+  it('lets the user choose between confirmed-first and nearest-first sorting', async () => {
+    renderList('/wifi', 'default')
+
+    const confirmedButton = await screen.findByRole('button', { name: 'Confirmed' })
+    const nearestButton = screen.getByRole('button', { name: 'Nearest' })
+    expect(confirmedButton).toHaveAttribute('aria-pressed', 'true')
+
+    fireEvent.click(nearestButton)
+    expect(nearestButton).toHaveAttribute('aria-pressed', 'true')
+    expect(screen.getByText(/showing 2 results, nearest first\./i)).toBeVisible()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Map' }))
+    expect(screen.queryByRole('group', { name: 'Sort results' })).not.toBeInTheDocument()
+  })
+
   it('switches from a list row to the map when Show on map is pressed', async () => {
     renderList('/wifi', 'default')
 

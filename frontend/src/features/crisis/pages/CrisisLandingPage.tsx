@@ -1,7 +1,5 @@
-import { Warning } from '@phosphor-icons/react'
 import { lazy, Suspense, useCallback, useState } from 'react'
 import { appRoutes } from '../../../app/config/product'
-import { StatusBanner } from '../../../shared/components/StatusBanner'
 import { crisisContent } from '../crisisContent'
 
 const AccordionGallery = lazy(() => import('../../../shared/components/AccordionGallery').then((module) => ({ default: module.AccordionGallery })))
@@ -24,11 +22,7 @@ export function CrisisLandingPage() {
       </div>
       <header className="crisis-intro">
         <div><h1 id="crisis-title">Pre-crisis guidance</h1><p>Choose a hazard to review its preparation page and household checklist before an emergency occurs.</p></div>
-        <span className="crisis-review-label"><Warning aria-hidden="true" size={18} /> Prototype content</span>
       </header>
-      <StatusBanner title="Page structure ready — guidance review still required" tone="warning">
-        <p>The layouts and checklist controls are ready for testing. Preparation wording must be reviewed against the named authority before release.</p>
-      </StatusBanner>
       <Suspense fallback={<p className="crisis-gallery-loading" role="status">Loading preparation topics…</p>}>
         <AccordionGallery
           defaultIndex={1}

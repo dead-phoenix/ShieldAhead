@@ -65,7 +65,9 @@ export function supportMapRecords(services: SupportService[]): MapRecord[] {
       ? 'Availability reported as normal'
       : service.availabilityStatus === 'closed'
         ? 'Reported closed — check first'
-        : 'Availability not confirmed',
+        : service.availabilityStatus === 'low'
+          ? 'Low availability reported'
+          : 'Support service',
     previewLines: [
       `${service.address ? `${service.address}, ` : ''}${service.suburb} VIC ${service.postcode}${service.distanceKm === undefined ? '' : ` · ${service.distanceKm} km`}`,
       service.phone ?? 'Phone not published',
