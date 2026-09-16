@@ -9,7 +9,7 @@ import { useCrisisChecklist, useHelplines } from '../useCrisisApiContent'
 export function CrisisDetailPage() {
   const { kind } = useParams()
   const content = getCrisisContent(kind)
-  const checklistGroups = useCrisisChecklist(kind ?? '', content?.checklist ?? [])
+  const checklistGroups = useCrisisChecklist(kind ?? '')
   const helplines = useHelplines(kind ?? '')
   const helplineSource = useMemo(() => {
     const url = helplines[0]?.verifiedAgainst

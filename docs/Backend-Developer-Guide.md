@@ -552,9 +552,14 @@ wifi_locations
 charities
 cache_meta
 postcode_requests
-helplines
-pre_crisis_checklist_items
 ```
+
+Helpline and pre-crisis checklist content is not stored in Postgres.
+`GET /api/helplines` and `GET /api/checklist` load `backend/data/helplines.json`
+and `backend/data/pre_crisis_checklist.json` into memory once at process start.
+Leftover empty tables from an earlier iteration are dropped with
+`backend/migrations/drop_helplines_and_checklist.sql` (reverse with
+`restore_helplines_and_checklist.sql`).
 
 ### Wi-Fi table
 
@@ -597,32 +602,8 @@ charities
 
 ### Content tables
 
-```text
-helplines
-  id
-  name
-  service_type
-  phone
-  website
-  description
-  availability
-  coverage_area
-  data_updated_at
-```
-
-```text
-pre_crisis_checklist_items
-  id
-  crisis_type
-  category
-  task
-  description
-  display_order
-  is_active
-  data_updated_at
-```
-
-The checklist content tables store definitions. User checkbox progress remains device-local in the browser.
+Helplines and checklist definitions are file-backed, not Neon tables.
+User checkbox progress remains device-local in the browser.
 
 ## 7. JSON Output
 
@@ -686,7 +667,7 @@ http://127.0.0.1:5001/api/charities?postcode=3064
 ### Check local database counts
 
 ```powershell
-docker exec shieldahead-local-postgres psql -U shieldahead -d shieldahead -c "SELECT 'wifi_locations' AS table_name, count(*) FROM wifi_locations UNION ALL SELECT 'charities', count(*) FROM charities UNION ALL SELECT 'helplines', count(*) FROM helplines UNION ALL SELECT 'pre_crisis_checklist_items', count(*) FROM pre_crisis_checklist_items;"
+docker exec shieldahead-local-postgres psql -U shieldahead -d shieldahead -c "SELECT 'wifi_locations' AS table_name, count(*) FROM wifi_locations UNION ALL SELECT 'charities', count(*) FROM charities;"
 ```
 
 ### Check Wi-Fi cache freshness

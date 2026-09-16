@@ -15,7 +15,6 @@ export type CrisisContent = {
   sourceUrl: string
   lastVerified: string
   guidance: CrisisGuidanceStage[]
-  checklist: CrisisChecklistGroup[]
 }
 
 const cfaPlan = 'https://www.cfa.vic.gov.au/plan-prepare/before-and-during-a-fire/your-bushfire-plan'
@@ -59,22 +58,6 @@ export const crisisContent: CrisisContent[] = [
         { id: 'restock', title: 'Review and restock your plan', summary: 'Use what you learned to make the household plan easier to follow next time.', steps: ['Replace used water, food, medication, batteries and first-aid supplies.', 'Write down what worked, what was missing and what caused delay.', 'Update the plan and share the changes with your household.'], sourceName: 'CFA — Fire Ready Kit', sourceUrl: cfaKit },
       ] },
     ],
-    checklist: [
-      { id: 'household-plan', title: 'Household plan and essentials', items: [
-        { id: 'plan-reviewed', label: 'Write down your bushfire plan', description: 'Complete this when your household has a written plan everyone can follow.', steps: ['Choose the conditions that will prompt you to leave early.', 'Write down where you will go and your main and alternative routes.', 'Give each household member a clear responsibility.'] },
-        { id: 'leave-destination', label: 'Confirm your early-leaving destination', description: 'Complete this when everyone knows the destination and how to get there.', steps: ['Choose a suitable place in a lower-risk area.', 'Check that the destination will be available when you need it.', 'Share the address and travel plan with the household.'] },
-        { id: 'kit-ready', label: 'Pack an emergency kit', description: 'Complete this when essential supplies are together and easy to take.', steps: ['Pack water, a torch, batteries, first-aid items and a charged power bank.', 'Add essential medication and suitable food.', 'Store the kit somewhere everyone can reach quickly.'] },
-        { id: 'documents-ready', label: 'Keep important documents ready', description: 'Complete this when essential copies are protected and easy to take.', steps: ['Collect identification, insurance details and prescriptions.', 'Place copies in a protective folder or waterproof bag.', 'Tell another household member where they are stored.'] },
-      ] },
-      { id: 'children-pets', title: 'Children and pets', items: [
-        { id: 'dependants-plan', label: 'Plan support for children and dependants', description: 'Complete this when each dependant has a named person to help them leave.', steps: ['Write down who will help each person.', 'Pack medication, clothing and comfort items they may need.', 'Practise how you will leave together.'] },
-        { id: 'pet-plan', label: 'Prepare to transport your pets', description: 'Complete this when pet transport and essential supplies are ready.', steps: ['Keep a carrier, cage or lead where it is easy to reach.', 'Pack pet food, water and medication.', 'Include your pets in the household leaving plan.'] },
-      ] },
-      { id: 'health-access', title: 'Health and accessibility', items: [
-        { id: 'health-needs', label: 'Prepare medication and accessibility support', description: 'Complete this when essential health items and assistance are organised.', steps: ['List medication and equipment that must travel with you.', 'Arrange help for mobility, communication or other access needs.', 'Keep the plan with your emergency kit.'] },
-        { id: 'contacts-ready', label: 'Write down important contact details', description: 'Complete this when contacts are available without internet access.', steps: ['Write down household, carer and support-service numbers.', 'Keep a paper copy with the emergency kit.', 'Make sure at least one other person has a copy.'] },
-      ] },
-    ],
   },
   {
     kind: 'flood', title: 'Prepare for flood',
@@ -103,22 +86,6 @@ export const crisisContent: CrisisContent[] = [
         { id: 'record-support', title: 'Record damage and ask for support', summary: 'A clear record can support insurance or assistance applications, while recovery services can help with immediate needs.', steps: ['Photograph damage when it is safe and keep receipts for urgent expenses.', 'Contact your insurer before making non-urgent repairs where possible.', 'Check official recovery information or ask your local council where support is available.'], sourceName: 'VICSES — Recovery after an emergency', sourceUrl: sesRecovery },
       ] },
     ],
-    checklist: [
-      { id: 'household-plan', title: 'Household plan and essentials', items: [
-        { id: 'local-information', label: 'Check your local flood risk', description: 'Complete this when you know the safer places and routes near you.', steps: ['Check whether your home and usual routes are flood-prone.', 'Choose a safer place on higher ground.', 'Write down a route that avoids low-lying roads and crossings.'] },
-        { id: 'contact-plan', label: 'Write down your household contact plan', description: 'Complete this when everyone knows how to reconnect if separated.', steps: ['Choose one household contact and one contact outside the area.', 'Write down their phone numbers.', 'Agree where you will meet if phone services fail.'] },
-        { id: 'kit-ready', label: 'Pack an emergency kit', description: 'Complete this when essential supplies are together and easy to take.', steps: ['Pack water, a torch, batteries and a charged power bank.', 'Add medication, first-aid items and suitable food.', 'Store the kit above likely flood level.'] },
-        { id: 'items-lifted', label: 'Plan which items to move higher', description: 'Complete this when important belongings can be protected before water rises.', steps: ['Identify documents, medicines and valuables that must be moved.', 'Choose a higher storage place.', 'Prepare waterproof bags or containers where practical.'] },
-      ] },
-      { id: 'children-pets', title: 'Children and pets', items: [
-        { id: 'dependants-plan', label: 'Plan support for children and dependants', description: 'Complete this when each dependant has a named person to help them.', steps: ['Write down who will help each person.', 'Pack medication, clothing and comfort items.', 'Explain the safer place in calm, simple language.'] },
-        { id: 'pet-plan', label: 'Prepare to move your pets safely', description: 'Complete this when pet transport and essential supplies are ready.', steps: ['Keep a carrier, cage or lead ready.', 'Pack pet food, water and medication.', 'Identify a safer destination that accepts pets.'] },
-      ] },
-      { id: 'health-access', title: 'Health and accessibility', items: [
-        { id: 'medicine-plan', label: 'Prepare medication and accessibility support', description: 'Complete this when health items and assistance can move with you.', steps: ['Keep medication and prescriptions ready to take.', 'Arrange help for mobility, communication or other access needs.', 'Store important instructions in a waterproof bag.'] },
-        { id: 'contacts-ready', label: 'Write down flood emergency contacts', description: 'Complete this when important numbers are available without internet.', steps: ['Write down VICSES 132 500 and household contacts.', 'Keep a paper copy with your emergency kit.', 'Remember that Triple Zero (000) is for life-threatening danger.'] },
-      ] },
-    ],
   },
   {
     kind: 'power-outage', title: 'Prepare for an extended power outage',
@@ -145,22 +112,6 @@ export const crisisContent: CrisisContent[] = [
         { id: 'food-medicine', title: 'Check refrigerated food and medicine', summary: 'Food or medicine may be unsafe even if electricity has returned and the container looks unchanged.', steps: ['Check whether chilled food stayed below 5°C and follow current food-safety advice.', 'Discard perishable food that has been 5°C or warmer for more than four hours.', 'Ask a pharmacist or healthcare professional about temperature-sensitive medicine.'], sourceName: 'Energy Victoria — Staying safe during a power outage', sourceUrl: energySafety },
         { id: 'record-damage', title: 'Record outage-related damage', summary: 'Photos and notes may help when reporting damage to your distributor, insurer or another support service.', steps: ['Photograph damaged appliances or property when it is safe.', 'Write down when the outage and damage occurred.', 'Keep receipts for necessary replacement items or urgent repairs.'], sourceName: 'Energy Victoria — Energy outages', sourceUrl: energyOutage },
         { id: 'restock', title: 'Restock and improve your household plan', summary: 'Replace what you used and record anything that would make the next outage safer or easier to manage.', steps: ['Replace batteries, food, water, first-aid supplies and other used items.', 'Recharge power banks and test torches and radios.', 'Update contact details and write down what was missing or difficult.'], sourceName: 'Energy Victoria — Energy outages', sourceUrl: energyOutage },
-      ] },
-    ],
-    checklist: [
-      { id: 'household-plan', title: 'Household essentials', items: [
-        { id: 'outage-plan', label: 'Prepare essential supplies for 72 hours', description: 'Complete this when your household can manage basic needs for at least three days.', steps: ['Set aside drinking water and non-perishable food.', 'Prepare safe lighting, batteries and a battery-powered radio if available.', 'Check the supplies regularly and replace expired items.'] },
-        { id: 'lighting-plan', label: 'Put backup lighting somewhere easy to find', description: 'Complete this when safe lighting is ready before the power fails.', steps: ['Place torches or battery-operated lights in known locations.', 'Check that they work.', 'Store compatible spare batteries nearby.'] },
-        { id: 'power-bank', label: 'Charge your phone and power bank', description: 'Complete this when the devices and correct cables are together.', steps: ['Fully charge the phone and power bank.', 'Check that the cable fits your phone.', 'Store them somewhere easy to reach.'] },
-        { id: 'distributor-ready', label: 'Write down your energy distributor details', description: 'Complete this when you can report an outage without internet.', steps: ['Find the distributor name and faults number on your energy bill.', 'Write the details on paper.', 'Keep the paper with your household plan.'] },
-      ] },
-      { id: 'children-pets', title: 'Children and pets', items: [
-        { id: 'dependants-plan', label: 'Prepare supplies for children and dependants', description: 'Complete this when essential care items are ready.', steps: ['Pack suitable food, clothing and comfort items.', 'Add required medication and care instructions.', 'Plan activities or support that do not require electricity.'] },
-        { id: 'pet-plan', label: 'Prepare essential supplies for pets', description: 'Complete this when food, water and medication are available.', steps: ['Set aside enough pet food and water.', 'Check that required medication is available.', 'Keep a carrier, cage or lead accessible if you may need to leave.'] },
-      ] },
-      { id: 'health-access', title: 'Health and accessibility', items: [
-        { id: 'powered-equipment', label: 'Make a backup plan for powered medical equipment', description: 'Complete this when the equipment, backup time and contacts are written down.', steps: ['Write down each device and how long its battery lasts.', 'Ask the equipment provider what to do during a long outage.', 'Keep the provider and emergency contact numbers available offline.'] },
-        { id: 'medicine-plan', label: 'Ask how to protect refrigerated medicine', description: 'Complete this after receiving advice for your specific medicine.', steps: ['Ask a pharmacist or healthcare professional how long the medicine can be unrefrigerated.', 'Write down the safe storage instructions.', 'Prepare an appropriate backup storage plan if advised.'] },
       ] },
     ],
   },

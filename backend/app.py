@@ -8,10 +8,8 @@ from routes.spa_routes import spa_bp
 from routes.directions_routes import directions_bp
 from routes.helplines_routes import helplines_bp
 from services.refresh_service import maybe_refresh_on_startup
-from services.crisis_content_service import seed_static_crisis_content
 
 init_db()
-seed_static_crisis_content() # loads data/helplines.json + data/pre_crisis_checklist.json into Postgres
 maybe_refresh_on_startup() # checks refresh timestamps and refreshes if needed
 
 app.register_blueprint(wifi_bp)

@@ -674,3 +674,30 @@ def test_refresh_full_returns_202_without_blocking(client, monkeypatch):
     assert response.status_code == 202
     assert response.json["status"] == "refresh started"
     assert elapsed < 0.5
+
+
+def test_helplines_filters_by_crisis_type(client):
+    response = client.get("/api/helplines?crisisType=bushfire")
+    assert response.status_code == 200
+    records = response.json["records"]
+    assert records
+    assert all(record["crisisType"] == "bushfire" for record in records)
+    assert any(record["id"] == "bushfire-triple-zero" for record in records)
+
+
+def test_helplines_filters_by_service_type(client):
+    response = client.get("/api/helplines?serviceType=Emergency")
+    assert response.status_code == 200
+    records = response.json["records"]
+    assert records
+    assert all(record["serviceType"].lower() == "emergency" for record in records)
+
+
+def test_checklist_filters_by_crisis_type(client):
+    response = client.get("/api/checklist?crisisType=flood")
+    assert response.status_code == 200
+    records = response.json["records"]
+    assert len(records) == 8
+    assert all(record["crisisType"] == "flood" for record in records)
+    assert records[0]["task"] == "Check your local flood risk"
+

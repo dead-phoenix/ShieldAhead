@@ -17,11 +17,10 @@ def _flask_app():
 @helplines_bp.route("/api/helplines")
 @limiter.limit("30 per minute")
 def get_helplines_route():
-    """Return the helpline directory, served from Postgres (seeded from
-    data/helplines.json on startup) and falling back to that file
-    directly if no database is configured. Optional ?crisisType= scopes
-    to one hazard page (e.g. 'bushfire'); optional ?serviceType= filters
-    to a single service type (e.g. 'Emergency')."""
+    """Return the helpline directory from data/helplines.json (loaded once
+    at process start). Optional ?crisisType= scopes to one hazard page
+    (e.g. 'bushfire'); optional ?serviceType= filters to a single service
+    type (e.g. 'Emergency')."""
     try:
         crisis_type = request.args.get("crisisType", "").strip()
         service_type = request.args.get("serviceType", "").strip()
@@ -42,11 +41,9 @@ def get_helplines_route():
 @helplines_bp.route("/api/checklist")
 @limiter.limit("30 per minute")
 def get_checklist_route():
-    """Return the pre-crisis checklist, served from Postgres (seeded
-    from data/pre_crisis_checklist.json on startup) and falling back to
-    that file directly if no database is configured. Optional
-    ?crisisType= filters to one crisis kind (e.g. 'bushfire', 'flood',
-    'power-outage')."""
+    """Return the pre-crisis checklist from data/pre_crisis_checklist.json
+    (loaded once at process start). Optional ?crisisType= filters to one
+    crisis kind (e.g. 'bushfire', 'flood', 'power-outage')."""
     try:
         crisis_type = request.args.get("crisisType", "").strip()
         records = get_checklist_items(crisis_type)

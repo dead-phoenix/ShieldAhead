@@ -1,5 +1,5 @@
 {
-  "_comment": "Pre-crisis checklist items shown on each crisis page, grouped by crisisType. categoryId/itemId must exactly match frontend/src/features/crisis/crisisContent.ts group/item ids, because the frontend saves checklist tick state in localStorage keyed as `${categoryId}.${itemId}`. This file seeds the 'pre_crisis_checklist_items' Postgres table on startup (see services/crisis_content_service.py); /api/checklist serves from the DB and falls back to reading this file directly if no database is configured (e.g. local dev).",
+  "_comment": "Pre-crisis checklist items shown on each crisis page, grouped by crisisType. categoryId/itemId are used by the frontend to save checklist tick state in localStorage keyed as `${categoryId}.${itemId}`. GET /api/checklist loads this file into memory once at process start (see services/crisis_content_service.py).",
   "groups": [
     {
       "crisisType": "bushfire",

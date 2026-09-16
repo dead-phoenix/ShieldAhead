@@ -447,23 +447,22 @@ Then it:
 5. Calculates distance.
 6. Returns JSON.
 
-## 11. Checklist and Helpline Database Boundary
+## 11. Checklist and Helpline Content
 
-The existing crisis checklist is currently frontend-defined:
+Helpline numbers and pre-crisis checklist definitions are served by the backend API from JSON files:
 
 ```text
-crisisContent.ts
+backend/data/helplines.json
+backend/data/pre_crisis_checklist.json
+  -> GET /api/helplines and GET /api/checklist
   -> CrisisDetailPage.tsx
-  -> crisisChecklistStorage.ts
+  -> crisisChecklistStorage.ts (tick state only)
   -> browser localStorage
 ```
 
-The Neon tables `helplines` and `pre_crisis_checklist_items` now exist for future structured content storage, but they are currently empty and no frontend/backend endpoint reads them yet.
-
-The table creation is defined in:
-
-- [backend/db.py](../backend/db.py), through `SCHEMA_STATEMENTS`.
-- [backend/schema.sql](../backend/schema.sql), for manual Neon migration.
+The files are loaded into memory once at process start in
+`services/crisis_content_service.py`. There are no Neon tables for this content.
+Drop leftover empty tables with `backend/migrations/drop_helplines_and_checklist.sql`.
 
 ## 12. Database Verification Queries
 
@@ -472,8 +471,6 @@ Run these in the Neon SQL Editor or local PostgreSQL:
 ```sql
 SELECT count(*) FROM wifi_locations;
 SELECT count(*) FROM charities;
-SELECT count(*) FROM helplines;
-SELECT count(*) FROM pre_crisis_checklist_items;
 
 SELECT key, timestamp, freshness_status
 FROM cache_meta

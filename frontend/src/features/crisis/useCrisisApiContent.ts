@@ -19,11 +19,9 @@ function groupChecklistRecords(records: Awaited<ReturnType<typeof fetchChecklist
   return [...groups.values()]
 }
 
-/** Loads the pre-crisis checklist for a hazard from the backend/Neon DB.
- * Falls back to the bundled `fallback` groups (from crisisContent.ts) if the
- * API is unreachable, so the page still works offline or if the DB is empty. */
-export function useCrisisChecklist(kind: string, fallback: CrisisChecklistGroup[]): CrisisChecklistGroup[] {
-  const [groups, setGroups] = useState<CrisisChecklistGroup[]>(fallback)
+/** Loads the pre-crisis checklist for a hazard from GET /api/checklist. */
+export function useCrisisChecklist(kind: string): CrisisChecklistGroup[] {
+  const [groups, setGroups] = useState<CrisisChecklistGroup[]>([])
 
   useEffect(() => {
     let isCurrent = true
@@ -33,7 +31,7 @@ export function useCrisisChecklist(kind: string, fallback: CrisisChecklistGroup[
         setGroups(groupChecklistRecords(records))
       })
       .catch(() => {
-        // Keep the bundled fallback content if the API call fails.
+        // Keep an empty checklist if the API call fails.
       })
     return () => {
       isCurrent = false
@@ -43,10 +41,8 @@ export function useCrisisChecklist(kind: string, fallback: CrisisChecklistGroup[
   return groups
 }
 
-/** Loads the helpline directory scoped to one hazard page from the
- * backend/Neon DB. Returns an empty list (rather than throwing) if the API
- * is unreachable, so callers can simply hide the section instead of
- * handling an error state. */
+/** Loads the helpline directory scoped to one hazard page from GET /api/helplines.
+ * Returns an empty list if the API is unreachable so callers can hide the section. */
 export function useHelplines(kind: string): Helpline[] {
   const [helplines, setHelplines] = useState<Helpline[]>([])
 
