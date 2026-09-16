@@ -2114,7 +2114,6 @@ input[type='checkbox'] {
   box-shadow: 0 0 0 1px var(--color-border);
 }
 
-.map-legend__symbol--likely,
 .map-legend__symbol--support {
   border-radius: 0.2rem;
 }
