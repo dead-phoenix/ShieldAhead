@@ -2375,9 +2375,12 @@ input[type='checkbox'] {
 }
 
 .map-service-picker__list {
-  display: grid;
-  max-height: 20rem;
+  display: flex;
+  max-height: min(55dvh, 24rem);
+  flex-direction: column;
   overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
   border-block: 1px solid var(--color-border);
 }
 
@@ -2385,9 +2388,12 @@ input[type='checkbox'] {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
   gap: 0.75rem;
+  width: 100%;
   min-height: 4rem;
-  align-items: center;
-  padding: 0.75rem 0.25rem;
+  height: auto;
+  flex: 0 0 auto;
+  align-items: start;
+  padding: 1rem 0.25rem;
   border: 0;
   background: transparent;
   color: var(--color-text);
@@ -2396,8 +2402,15 @@ input[type='checkbox'] {
 
 .map-service-picker__list button + button { border-top: 1px solid var(--color-border); }
 .map-service-picker__list button:hover { background: var(--color-surface-muted); }
-.map-service-picker__list button span { display: grid; gap: 0.15rem; }
-.map-service-picker__list button small { color: var(--color-text-muted); font-size: var(--text-xs); }
+.map-service-picker__list button span { display: grid; min-width: 0; gap: 0.25rem; }
+.map-service-picker__list button strong,
+.map-service-picker__list button small {
+  display: block;
+  overflow-wrap: anywhere;
+}
+.map-service-picker__list button strong { line-height: 1.35; }
+.map-service-picker__list button small { color: var(--color-text-muted); font-size: var(--text-xs); line-height: 1.45; }
+.map-service-picker__list button > svg { flex-shrink: 0; margin-top: 0.2rem; }
 
 .map-detail-card__heading h2 {
   overflow-wrap: anywhere;
