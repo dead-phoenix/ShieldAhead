@@ -25,10 +25,12 @@ def _flask_app():
 def _load_database_url():
     url = os.environ.get("DATABASE_URL", "").strip()
     # Tests must not read the linked Neon project — they use in-memory caches only.
+    # .env.local is personal (Neon, overrides) and must win over the committed
+    # backend/.env Docker default, otherwise a stopped local Postgres shadows Neon.
     if not url and "pytest" not in sys.modules:
         for candidate in (
-            Path(__file__).resolve().parent / ".env",
             Path(__file__).resolve().parent.parent / ".env.local",
+            Path(__file__).resolve().parent / ".env",
             Path(__file__).resolve().parent.parent / ".env",
         ):
             if not candidate.is_file():
@@ -50,6 +52,7 @@ _engine = create_engine(
     pool_pre_ping=True,
     connect_args={"connect_timeout": 5},
 ) if DATABASE_URL else None
+_postgres_unreachable = False
 
 SCHEMA_STATEMENTS = [
     """
@@ -112,12 +115,15 @@ SCHEMA_STATEMENTS = [
 def db_available():
     if _flask_app().config.get("TESTING"):
         return False
+    if _postgres_unreachable:
+        return False
     return _engine is not None
 
 
 def init_db():
     """Creates every table/index above if it doesn't already exist yet —
     safe to call on every process start; a no-op once the schema is there."""
+    global _postgres_unreachable
     if not db_available():
         return
     try:
@@ -126,6 +132,10 @@ def init_db():
                 conn.execute(text(statement))
     except Exception as e:
         _flask_app().logger.error(f"Postgres schema setup failed: {e}")
+        # Connection refused means nothing is listening (local Docker down).
+        # Stop retrying on every request — the API still works from memory.
+        if "connection refused" in str(e).lower():
+            _postgres_unreachable = True
 
 
 def load_cache_meta(key):

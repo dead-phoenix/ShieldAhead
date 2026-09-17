@@ -378,6 +378,20 @@ MELBOURNE_CHARITY = {
 }
 
 
+def test_charity_request_uses_postcode_centroid_without_street_geocode(client):
+    with patch("services.geocoding.postcode_to_coords", return_value=(-36.757, 144.279)):
+        with patch("services.acnc_service.fetch_acnc_last_updated", return_value="2026-01-01"):
+            with patch("services.acnc_service.fetch_charities_for_region", return_value=[MOCK_CHARITY]):
+                with patch("services.geocoding.geocode_address") as mock_geocode:
+                    response = client.get("/api/charities?postcode=3550")
+
+    assert response.status_code == 200
+    mock_geocode.assert_not_called()
+    record = response.json["records"][0]
+    assert record["latitude"] == -36.757
+    assert record["longitude"] == 144.279
+
+
 def test_valid_postcode_returns_fetched_charities(client):
     with patch("services.geocoding.postcode_to_coords", return_value=(-36.757, 144.279)):
         with patch("services.acnc_service.fetch_acnc_last_updated", return_value="2026-01-01"):

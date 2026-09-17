@@ -105,8 +105,13 @@ def refresh_wifi(blocking=True):
         _wifi_refresh_lock.release()
 
 
-def refresh_charities_for_postcode(postcode, place_names=None, blocking=True):
-    """Fetch ACNC + geocode for one postcode and persist. Returns (records, fetch_error, removed_ids)."""
+def refresh_charities_for_postcode(postcode, place_names=None, blocking=True, geocode_streets=True):
+    """Fetch ACNC for one postcode and persist. Returns (records, fetch_error, removed_ids).
+
+    Street geocoding is slow (public Photon/Nominatim, one address at a time).
+    Live HTTP requests should pass geocode_streets=False and return postcode
+    centroids immediately; background refreshes then refine street coordinates.
+    """
     postcode = str(postcode).strip()
     lock = _charity_lock(postcode)
     acquired = lock.acquire(blocking=blocking)
@@ -136,10 +141,10 @@ def refresh_charities_for_postcode(postcode, place_names=None, blocking=True):
                 if acnc_service.is_victorian_charity(charity) and acnc_service.is_relevant_support_charity(charity)
             ]
             all_records = [acnc_service.charity_to_support_service(c, last_updated) for c in raw_charities]
-            acnc_service.geocode_charities(all_records)
             acnc_service.attach_charity_coordinates(all_records)
-            acnc_service.geocode_charities(all_records, refresh_existing=True)
-            acnc_service.attach_charity_coordinates(all_records)
+            if geocode_streets:
+                acnc_service.geocode_charities(all_records, refresh_existing=True)
+                acnc_service.attach_charity_coordinates(all_records)
         except Exception as e:
             fetch_error = str(e)
             _flask_app().logger.error(f"Charity fetch failed: {fetch_error}")

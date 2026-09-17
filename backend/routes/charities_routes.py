@@ -103,6 +103,7 @@ def get_charities():
                 all_records, fetch_error, removed_ids = refresh_charities_for_postcode(
                     postcode,
                     place_names=place_names,
+                    geocode_streets=False,
                 )
                 cached_after = get_charity_cache_entry(postcode) or {}
                 freshness_status = cached_after.get("freshness_status") or (
