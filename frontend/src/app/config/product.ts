@@ -38,4 +38,5 @@ export const storageKeys = {
   usualWifiSpot: 'shieldahead.usual-wifi-spot.v1',
   searchLocation: 'shieldahead.search-location.v1',
   crisisChecklist: 'shieldahead.crisis-checklist.v1',
+  siteUnlocked: 'shieldahead.site-unlocked.v1',
 } as const
