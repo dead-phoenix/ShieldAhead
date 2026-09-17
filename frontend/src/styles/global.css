@@ -3282,7 +3282,12 @@ input[type='checkbox'] {
   color: var(--color-info-text);
 }
 
-.crisis-source-panel > svg { grid-row: 1 / 5; }
+.crisis-source-panel > svg {
+  grid-column: 1;
+  grid-row: 1;
+  align-self: start;
+}
+.crisis-source-panel > :not(svg) { grid-column: 2; }
 .crisis-source-panel span { font-size: var(--text-sm); }
 .crisis-source-panel a,
 .crisis-guidance__actions a {
@@ -3368,6 +3373,7 @@ input[type='checkbox'] {
 .crisis-guidance-dialog__actions p { max-width: 62ch; margin-top: var(--space-2); color: color-mix(in srgb, var(--color-on-primary) 78%, transparent); }
 .crisis-guidance-dialog__actions ul { display: grid; max-width: 62ch; gap: var(--space-2); margin-top: var(--space-3); padding-inline-start: var(--space-5); color: var(--color-on-primary); }
 .crisis-guidance-dialog__actions a { display: inline-flex; min-height: 3rem; align-items: center; gap: var(--space-2); margin-top: var(--space-3); color: var(--color-on-primary); font-weight: 700; text-underline-offset: 0.25em; }
+.crisis-guidance-dialog__sources { display: grid; justify-items: start; }
 .crisis-guidance-dialog__note { display: flex; gap: var(--space-2); margin-top: var(--space-4); color: color-mix(in srgb, var(--color-on-primary) 76%, transparent); }
 
 .crisis-checklist__summary > strong { color: var(--color-success-text); font-variant-numeric: tabular-nums; }

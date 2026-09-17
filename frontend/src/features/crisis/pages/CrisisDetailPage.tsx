@@ -55,6 +55,7 @@ export function CrisisDetailPage() {
         <strong>Content source</strong>
         <span>{content.sourceOwner}</span>
         <a href={content.sourceUrl} rel="noreferrer" target="_blank">Read official guidance <ArrowSquareOut aria-hidden="true" size={16} /></a>
+        {content.officialDetailsUrl && <a href={content.officialDetailsUrl} rel="noreferrer" target="_blank">For official details, check VICSES <ArrowSquareOut aria-hidden="true" size={16} /></a>}
         <span className="crisis-source-panel__date"><CalendarBlank aria-hidden="true" size={16} /> Last checked {content.lastVerified}</span>
       </div>
     </header>
@@ -84,7 +85,10 @@ export function CrisisDetailPage() {
                 <h4>{item.title}</h4>
                 <p>{item.summary}</p>
                 {item.steps && <ul>{item.steps.map((step) => <li key={step}>{step}</li>)}</ul>}
-                <a href={item.sourceUrl} rel="noreferrer" target="_blank">Source: {item.sourceName} <ArrowSquareOut aria-hidden="true" size={16} /></a>
+                <div className="crisis-guidance-dialog__sources">
+                  <a href={item.sourceUrl} rel="noreferrer" target="_blank">Source: {item.sourceName} <ArrowSquareOut aria-hidden="true" size={16} /></a>
+                  {item.officialDetailsUrl && <a href={item.officialDetailsUrl} rel="noreferrer" target="_blank">For official details, check VICSES <ArrowSquareOut aria-hidden="true" size={16} /></a>}
+                </div>
               </article>)}
             </div>
             <p className="crisis-guidance-dialog__note"><Info aria-hidden="true" size={18} /> Preparation information only. Check current official warnings when conditions change.</p>
@@ -136,7 +140,7 @@ export function CrisisDetailPage() {
                   <div className="crisis-checklist__instructions">
                     <ol>{item.steps.map((step) => <li key={step}>{step}</li>)}</ol>
                     <p>Tick this task only when these steps are ready for your household.</p>
-                    <a href={content.sourceUrl} rel="noreferrer" target="_blank">Read official guidance <ArrowSquareOut aria-hidden="true" size={15} /></a>
+                    <a href={content.officialDetailsUrl ?? content.sourceUrl} rel="noreferrer" target="_blank">Read official guidance <ArrowSquareOut aria-hidden="true" size={15} /></a>
                   </div>
                 </details>
               </div>
