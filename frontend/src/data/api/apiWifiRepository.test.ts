@@ -48,7 +48,9 @@ describe('API Wi-Fi repository', () => {
     await repository.list()
 
     const requestedUrl = fetchMock.mock.calls[0][0] as URL
-    expect(requestedUrl.toString()).toBe('http://127.0.0.1:5001/api/wifi?postcode=3453')
+    expect(requestedUrl.origin + requestedUrl.pathname).toBe('http://127.0.0.1:5001/api/wifi')
+    expect(requestedUrl.searchParams.get('postcode')).toBe('3453')
+    expect(requestedUrl.searchParams.get('_refresh')).toBeTruthy()
   })
 
   it('normalizes backend nulls and blank regional fields safely', () => {
@@ -96,8 +98,9 @@ describe('API Wi-Fi repository', () => {
 
     await repository.list()
 
-    expect((fetchMock.mock.calls[0][0] as URL).toString()).toBe(
-      `${window.location.origin}/api/wifi?postcode=3453`,
-    )
+    const requestedUrl = fetchMock.mock.calls[0][0] as URL
+    expect(requestedUrl.origin + requestedUrl.pathname).toBe(`${window.location.origin}/api/wifi`)
+    expect(requestedUrl.searchParams.get('postcode')).toBe('3453')
+    expect(requestedUrl.searchParams.get('_refresh')).toBeTruthy()
   })
 })

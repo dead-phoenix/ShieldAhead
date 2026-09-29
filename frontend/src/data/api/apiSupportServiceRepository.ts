@@ -132,7 +132,7 @@ export function normalizeSupportServiceDataset(value: unknown): DatasetResult<Su
 export function createApiSupportServiceRepository({
   baseUrl,
   postcode,
-  timeoutMs = 20_000,
+  timeoutMs = 60_000,
   fetcher = fetch,
 }: ApiSupportServiceRepositoryOptions): SupportServiceRepository {
   return {
@@ -162,7 +162,7 @@ export function createApiSupportServiceRepository({
         }
         return normalizeSupportServiceDataset(await response.json())
       } catch (reason) {
-        if (reason instanceof DOMException && reason.name === 'AbortError') {
+        if (controller.signal.aborted || (reason instanceof Error && reason.name === 'AbortError')) {
           throw new Error(
             'Support information took too long to load. Check your connection and try again.',
             { cause: reason },

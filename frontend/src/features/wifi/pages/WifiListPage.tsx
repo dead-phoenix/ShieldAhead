@@ -1,5 +1,10 @@
+<<<<<<< HEAD
 import { ArrowRight, Clock, CloudSlash, Heart, Info, MapPin, NavigationArrow, ShieldCheck, WifiHigh, X } from '@phosphor-icons/react'
 import { useCallback, useEffect, useMemo, useState } from 'react'
+=======
+import { ArrowRight, Clock, CloudSlash, Heart, MapPin, NavigationArrow, WifiHigh } from '@phosphor-icons/react'
+import { useEffect, useMemo } from 'react'
+>>>>>>> 240220e278c8da9dcb0df536bb94ca4d283058f2
 import { Link, useLocation } from 'react-router-dom'
 import { appRoutes } from '../../../app/config/product'
 import { useRepositoryData } from '../../../data/useRepositoryData'

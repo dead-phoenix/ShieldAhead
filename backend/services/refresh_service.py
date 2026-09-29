@@ -57,7 +57,7 @@ def _charity_lock(postcode):
 
 def refresh_wifi(blocking=True):
     """Fetch VicFreeWiFi + Vicmap and persist. Returns (records, wifi_error, public_error)."""
-    acquired = _wifi_refresh_lock.acquire(blocking=blocking)
+    acquired = _wifi_refresh_lock.acquire(blocking=blocking)  # is anyone accessing the wifi API?
     if not acquired:
         return list(_cache.get("data") or []), None, None
 

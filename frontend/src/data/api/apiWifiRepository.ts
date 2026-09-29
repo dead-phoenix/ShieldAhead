@@ -96,17 +96,19 @@ export function normalizeWifiDataset(value: unknown): DatasetResult<WifiLocation
 export function createApiWifiRepository({
   baseUrl,
   postcode,
-  timeoutMs = 20_000,
+  timeoutMs = 60_000,
   fetcher = fetch,
 }: ApiWifiRepositoryOptions): WifiRepository {
   return {
     async list() {
       const url = resolveApiUrl(baseUrl, '/api/wifi', postcode)
+      url.searchParams.set('_refresh', Date.now().toString())
       const controller = new AbortController()
       const timeout = window.setTimeout(() => controller.abort(), timeoutMs)
 
       try {
         const response = await fetcher(url, {
+          cache: 'no-store',
           headers: { Accept: 'application/json' },
           signal: controller.signal,
         })
@@ -114,6 +116,20 @@ export function createApiWifiRepository({
           throw new Error(`Wi-Fi API request failed with status ${response.status}.`)
         }
         return normalizeWifiDataset(await response.json())
+      } catch (reason) {
+        if (controller.signal.aborted || (reason instanceof Error && reason.name === 'AbortError')) {
+          throw new Error(
+            'Wi-Fi information took too long to load. Check your connection and try again.',
+            { cause: reason },
+          )
+        }
+        if (reason instanceof TypeError) {
+          throw new Error(
+            'Wi-Fi information could not be reached. Check your connection and try again.',
+            { cause: reason },
+          )
+        }
+        throw reason
       } finally {
         window.clearTimeout(timeout)
       }

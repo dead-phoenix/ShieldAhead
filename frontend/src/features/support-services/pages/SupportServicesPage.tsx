@@ -178,6 +178,7 @@ export function SupportServicesPage() {
               <article className="service-card" key={service.id}>
                 <div className="service-card__heading"><span className="record-row__icon"><HandHeart aria-hidden="true" size={25} weight="duotone" /></span><div><h2>{service.name}</h2><p><MapPin aria-hidden="true" size={17} /> {service.address ? formatServiceAddress(service) : `${service.suburb} VIC ${service.postcode} · Street address not confirmed`} · {service.distanceKm === undefined ? 'Distance not confirmed' : `${service.distanceKm} km`}</p><p><Phone aria-hidden="true" size={17} /> {service.phone ?? 'Phone not published'}{service.website ? <> · <a className="service-contact-link" href={service.website} target="_blank" rel="noreferrer"><LinkSimple aria-hidden="true" size={15} /> Website</a></> : null}</p></div></div>
                 <div className="service-tags">{service.serviceTypes.map((type) => <span key={type}>{type}</span>)}</div>
+<<<<<<< HEAD
                 {availability.tone !== 'not-confirmed' ? (
                   <div className={`availability availability--${availability.tone}`}>
                     <AvailabilityIcon tone={availability.tone} />
@@ -187,6 +188,12 @@ export function SupportServicesPage() {
                 <div className="service-card__actions">
                   <Link className="service-card__link" to={appRoutes.supportDetail(service.id)}>View service details <ArrowRight aria-hidden="true" size={19} weight="bold" /></Link>
                   <button className="button button--quiet button--compact" type="button" onClick={() => showServiceOnMap(service.id)} disabled={!isOnline}><MapPin aria-hidden="true" size={16} /> Show on map</button>
+=======
+                <p className="service-card__provided"><strong>Services provided:</strong> {service.serviceTypes.join(', ')}</p>
+                <div className={`availability availability--${availability.tone}`}>
+                  <AvailabilityIcon tone={availability.tone} />
+                  <span><strong>{availability.title}</strong><small>{availability.detail}</small></span>
+>>>>>>> 240220e278c8da9dcb0df536bb94ca4d283058f2
                 </div>
               </article>
             )

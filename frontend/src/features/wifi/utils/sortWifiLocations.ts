@@ -22,6 +22,7 @@ export function sortWifiLocations(
     if (left.id === usualSpotId) return -1
     if (right.id === usualSpotId) return 1
 
+<<<<<<< HEAD
     if (sortMode === 'confirmed-first') {
       const verificationDifference = verificationRank(left) - verificationRank(right)
       if (verificationDifference !== 0) return verificationDifference
@@ -31,6 +32,12 @@ export function sortWifiLocations(
     const rightDistance = distanceFrom(right)
     if (leftDistance !== rightDistance) return leftDistance - rightDistance
 
+=======
+    const leftDistance = distanceFrom(left)
+    const rightDistance = distanceFrom(right)
+    if (leftDistance !== rightDistance) return leftDistance - rightDistance
+
+>>>>>>> 240220e278c8da9dcb0df536bb94ca4d283058f2
     return verificationRank(left) - verificationRank(right)
   })
 }
