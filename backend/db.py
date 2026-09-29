@@ -109,6 +109,54 @@ SCHEMA_STATEMENTS = [
     );
     """,
     "CREATE INDEX IF NOT EXISTS idx_postcode_requests_postcode ON postcode_requests (postcode);",
+    # Emergency facilities (hospitals, police/fire/ambulance stations) from
+    # the Vicmap Features of Interest REST API. Normalised (3NF): facility
+    # type and postcode->suburb are extracted into lookup tables instead of
+    # being repeated per row, and free-text theme tags go in a junction
+    # table instead of an array column. See schema.sql for the full design
+    # rationale.
+    """
+    CREATE TABLE IF NOT EXISTS facility_types (
+        id SERIAL PRIMARY KEY,
+        type_name TEXT UNIQUE NOT NULL
+    );
+    """,
+    """
+    INSERT INTO facility_types (type_name) VALUES
+        ('Hospital'),
+        ('Police Station'),
+        ('Fire Station'),
+        ('Ambulance Station')
+    ON CONFLICT (type_name) DO NOTHING;
+    """,
+    """
+    CREATE TABLE IF NOT EXISTS suburb_lookup (
+        postcode TEXT PRIMARY KEY,
+        suburb TEXT NOT NULL
+    );
+    """,
+    """
+    CREATE TABLE IF NOT EXISTS emergency_facilities (
+        id TEXT PRIMARY KEY,
+        name TEXT NOT NULL,
+        facility_type_id INTEGER NOT NULL REFERENCES facility_types (id),
+        address TEXT,
+        postcode TEXT REFERENCES suburb_lookup (postcode),
+        latitude DOUBLE PRECISION,
+        longitude DOUBLE PRECISION,
+        phone TEXT,
+        data_updated_at TEXT
+    );
+    """,
+    "CREATE INDEX IF NOT EXISTS idx_emergency_facilities_type ON emergency_facilities (facility_type_id);",
+    "CREATE INDEX IF NOT EXISTS idx_emergency_facilities_postcode ON emergency_facilities (postcode);",
+    """
+    CREATE TABLE IF NOT EXISTS emergency_facility_tags (
+        facility_id TEXT NOT NULL REFERENCES emergency_facilities (id) ON DELETE CASCADE,
+        tag TEXT NOT NULL,
+        PRIMARY KEY (facility_id, tag)
+    );
+    """,
 ]
 
 
@@ -416,3 +464,126 @@ def save_charities_to_db(records):
             )
     except Exception as e:
         _flask_app().logger.error(f"Postgres write failed for charities: {e}")
+
+
+def _facility_type_id_map(conn):
+    rows = conn.execute(text("SELECT id, type_name FROM facility_types")).mappings().all()
+    return {r["type_name"]: r["id"] for r in rows}
+
+
+def _upsert_suburb_lookup(conn, records):
+    """suburb is functionally dependent on postcode alone, so it's kept in
+    its own table (see schema.sql) instead of repeated on every facility
+    row — this just keeps that table's facts current."""
+    pairs = {}
+    for r in records:
+        postcode = r.get("postcode")
+        suburb = r.get("suburb")
+        if postcode and suburb:
+            pairs[postcode] = suburb
+    for postcode, suburb in pairs.items():
+        conn.execute(
+            text("""
+                INSERT INTO suburb_lookup (postcode, suburb)
+                VALUES (:postcode, :suburb)
+                ON CONFLICT (postcode) DO UPDATE SET suburb = EXCLUDED.suburb
+            """),
+            {"postcode": postcode, "suburb": suburb},
+        )
+
+
+def _emergency_facility_row_to_dict(row, tags_by_facility):
+    return {
+        "id": row["id"],
+        "name": row["name"],
+        "facilityType": row["type_name"],
+        "address": row["address"],
+        "suburb": row["suburb"],
+        "postcode": row["postcode"],
+        "latitude": row["latitude"],
+        "longitude": row["longitude"],
+        "distanceKm": None,  # always recomputed per-request against the household's own postcode
+        "phone": row["phone"],
+        "tags": tags_by_facility.get(row["id"], []),
+        "dataUpdatedAt": row["data_updated_at"],
+    }
+
+
+def load_emergency_facilities_from_db():
+    if not db_available():
+        return []
+    try:
+        with _engine.connect() as conn:
+            rows = conn.execute(
+                text("""
+                    SELECT ef.*, ft.type_name, sl.suburb
+                    FROM emergency_facilities ef
+                    JOIN facility_types ft ON ft.id = ef.facility_type_id
+                    LEFT JOIN suburb_lookup sl ON sl.postcode = ef.postcode
+                """)
+            ).mappings().all()
+            tag_rows = conn.execute(
+                text("SELECT facility_id, tag FROM emergency_facility_tags")
+            ).mappings().all()
+        tags_by_facility = {}
+        for t in tag_rows:
+            tags_by_facility.setdefault(t["facility_id"], []).append(t["tag"])
+        return [_emergency_facility_row_to_dict(r, tags_by_facility) for r in rows]
+    except Exception as e:
+        _flask_app().logger.error(f"Postgres read failed for emergency_facilities: {e}")
+        return []
+
+
+def save_emergency_facilities_to_db(records):
+    """Replaces the full table on every refresh — like wifi_locations, the
+    Vicmap Features of Interest dataset is always refetched in full, so a
+    record's absence from this refresh means it's genuinely gone.
+
+    Each record: {id, name, facilityType, address, suburb, postcode,
+    latitude, longitude, phone, tags, dataUpdatedAt}. facilityType must
+    match a facility_types.type_name; tags is a list of free-text labels
+    (Vicmap's theme1/theme2) stored in the junction table, not an array
+    column.
+    """
+    if not db_available() or not records:
+        return
+    try:
+        with _engine.begin() as conn:
+            _upsert_suburb_lookup(conn, records)
+            type_ids = _facility_type_id_map(conn)
+            conn.execute(text("DELETE FROM emergency_facilities"))  # cascades to emergency_facility_tags
+            for r in records:
+                facility_id = r.get("id")
+                facility_type_id = type_ids.get(r.get("facilityType"))
+                if not facility_id or not facility_type_id:
+                    continue
+                conn.execute(
+                    text("""
+                        INSERT INTO emergency_facilities
+                            (id, name, facility_type_id, address, postcode, latitude, longitude, phone, data_updated_at)
+                        VALUES
+                            (:id, :name, :facility_type_id, :address, :postcode, :latitude, :longitude, :phone, :data_updated_at)
+                    """),
+                    {
+                        "id": facility_id,
+                        "name": r.get("name"),
+                        "facility_type_id": facility_type_id,
+                        "address": r.get("address"),
+                        "postcode": r.get("postcode"),
+                        "latitude": r.get("latitude"),
+                        "longitude": r.get("longitude"),
+                        "phone": r.get("phone"),
+                        "data_updated_at": r.get("dataUpdatedAt"),
+                    },
+                )
+                for tag in r.get("tags") or []:
+                    conn.execute(
+                        text("""
+                            INSERT INTO emergency_facility_tags (facility_id, tag)
+                            VALUES (:facility_id, :tag)
+                            ON CONFLICT DO NOTHING
+                        """),
+                        {"facility_id": facility_id, "tag": tag},
+                    )
+    except Exception as e:
+        _flask_app().logger.error(f"Postgres write failed for emergency_facilities: {e}")
