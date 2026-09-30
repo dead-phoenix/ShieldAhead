@@ -17,6 +17,7 @@ export const appRoutes = {
   consentChoices: '/setup/choices',
   setupComplete: '/setup/complete',
   location: '/location',
+  map: '/map',
   wifi: '/wifi',
   wifiDetail: (id: string) => `/wifi/${id}`,
   support: '/support',

@@ -4,7 +4,7 @@ import { describe, expect, it } from 'vitest'
 import { ChooseLocationPage } from './ChooseLocationPage'
 import { storageKeys } from '../../../app/config/product'
 
-function renderLocation(next = '/wifi') {
+function renderLocation(next = '/map') {
   return render(
     <MemoryRouter initialEntries={[`/location?next=${encodeURIComponent(next)}`]}>
       <ChooseLocationPage />
@@ -24,19 +24,19 @@ describe('choose location page', () => {
     })
   })
 
-  it('explains that location stays on the device', () => {
+  it('explains how the selected area and current location are handled', () => {
     renderLocation()
 
     expect(screen.getByRole('heading', { name: 'Find places near you' })).toBeVisible()
     expect(screen.getByRole('button', { name: 'Use my current location' })).toBeVisible()
-    expect(screen.getByText('Your location stays on this device and is never sent to a server.')).toBeVisible()
+    expect(screen.getByText(/Your chosen area is saved on this device/)).toBeVisible()
+    expect(screen.getByText(/sent to our location service only to identify the nearby area/)).toBeVisible()
   })
 
-  it('defaults to Wi-Fi and allows support services as the destination', () => {
+  it('uses one location step for the unified Map', () => {
     renderLocation()
 
-    expect(screen.getByRole('radio', { name: 'Wi-Fi' })).toBeChecked()
-    fireEvent.click(screen.getByRole('radio', { name: 'Support services' }))
-    expect(screen.getByRole('radio', { name: 'Support services' })).toBeChecked()
+    expect(screen.queryByRole('radio')).not.toBeInTheDocument()
+    expect(screen.getByText(/nearby Wi-Fi or support services/)).toBeVisible()
   })
 })

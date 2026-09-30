@@ -26,7 +26,7 @@ describe('first-run routing', () => {
     expect(window.location.pathname).toBe('/location')
   })
 
-  it('opens support after a search area is saved', async () => {
+  it('redirects the old support entry to the unified Map', async () => {
     window.localStorage.setItem(storageKeys.searchLocation, JSON.stringify({
       postcode: '3453',
       label: 'Harcourt 3453',
@@ -35,8 +35,9 @@ describe('first-run routing', () => {
 
     render(<AppRouter />)
 
-    expect(await screen.findByRole('heading', { name: 'Nearby support services' })).toBeVisible()
-    expect(window.location.pathname).toBe('/support')
+    expect(await screen.findByRole('heading', { name: 'Nearby places' })).toBeVisible()
+    expect(window.location.pathname).toBe('/map')
+    expect(window.location.search).toBe('?category=support')
   })
 
   it('shows home to a returning user with a saved profile and consent', async () => {
@@ -60,8 +61,7 @@ describe('first-run routing', () => {
     const primaryNavigation = screen.getAllByRole('navigation', { name: 'Primary navigation' })
     primaryNavigation.forEach((navigation) => {
       expect(navigation).toHaveTextContent('Home')
-      expect(navigation).toHaveTextContent('Wi-Fi')
-      expect(navigation).toHaveTextContent('Support')
+      expect(navigation).toHaveTextContent('Map')
       expect(navigation).toHaveTextContent('Crisis')
       expect(navigation).not.toHaveTextContent('Profile')
     })

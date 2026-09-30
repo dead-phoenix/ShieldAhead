@@ -1,10 +1,9 @@
 import {
-  HandHeart,
   House,
   Lifebuoy,
+  MapTrifold,
   ShieldCheck,
   UserCircle,
-  WifiHigh,
 } from '@phosphor-icons/react'
 import type { CSSProperties } from 'react'
 import { Link, NavLink, Outlet, useLocation } from 'react-router-dom'
@@ -14,8 +13,7 @@ import { GetTheAppButton } from '../components/GetTheAppButton'
 
 const primaryNavigation = [
   { to: appRoutes.home, label: 'Home', end: true, icon: House },
-  { to: appRoutes.wifi, label: 'Wi-Fi', icon: WifiHigh },
-  { to: appRoutes.support, label: 'Support', icon: HandHeart },
+  { to: appRoutes.map, label: 'Map', icon: MapTrifold },
   { to: appRoutes.crisis, label: 'Crisis', icon: Lifebuoy },
 ]
 

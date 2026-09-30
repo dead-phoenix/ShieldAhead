@@ -1,0 +1,599 @@
+import {
+  ArrowLeft,
+  CaretDown,
+  CaretUp,
+  Crosshair,
+  HandHeart,
+  ListBullets,
+  MagnifyingGlass,
+  MapPin,
+  NavigationArrow,
+  Phone,
+  WifiHigh,
+} from '@phosphor-icons/react'
+import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } from 'react'
+import { Link, useSearchParams } from 'react-router-dom'
+import { appRoutes } from '../../../app/config/product'
+import { EmptyState } from '../../../shared/components/EmptyState'
+import { LoadingState } from '../../../shared/components/LoadingState'
+import { StatusBanner } from '../../../shared/components/StatusBanner'
+import { useOnlineStatus } from '../../../shared/hooks/useOnlineStatus'
+import { LazyMapView } from '../../../shared/map/LazyMapView'
+import { ListMapToggle, type ResultsView } from '../../../shared/map/ListMapToggle'
+import { MapLegend } from '../../../shared/map/MapLegend'
+import { DirectionsPanel, type DirectionsPanelState } from '../../../shared/map/DirectionsPanel'
+import {
+  getSearchLocation,
+  getSearchPostcode,
+  saveSearchLocation,
+  type SearchLocation,
+} from '../../../storage/searchLocationStorage'
+import { resolveCoordinates, searchLocations, type SearchLocationResult } from '../data/locationSearchApi'
+import type { RoutePoint, RoutePreview } from '../../../data/api/directionsApi'
+import type { MapViewport } from '../../../shared/map/MapView'
+import { mapPlaceHasCoordinates, mapPlacesToMapRecords } from '../data/mapPlaceMapRecords'
+import { getMapPlaceRepository } from '../data/mapPlaceRepository'
+import { MapFilters } from '../components/MapFilters'
+import {
+  enabledMapPlaceKinds,
+  mapPlaceKindPresentation,
+} from '../model/mapPlacePresentation'
+import type { MapPlace, MapPlaceKind, MapPlaceResult } from '../model/mapTypes'
+import {
+  readMapSessionState,
+  saveMapSessionState,
+  type MapPanelMode,
+  type MobilePanelSize,
+} from '../model/mapSessionStorage'
+import './MapPage.css'
+
+function initialKinds(category: string | null): MapPlaceKind[] {
+  return category === 'wifi' || category === 'support'
+    ? [category]
+    : [...enabledMapPlaceKinds]
+}
+
+function restoredKinds(kinds: MapPlaceKind[] | undefined, category: string | null): MapPlaceKind[] {
+  const enabled = kinds?.filter((kind) => enabledMapPlaceKinds.includes(kind)) ?? []
+  return enabled.length > 0 ? enabled : initialKinds(category)
+}
+
+function placeAddress(place: MapPlace): string {
+  const locality = [place.suburb, place.postcode].filter(Boolean).join(' ')
+  return place.address
+    ? [place.address, locality].filter(Boolean).join(', ')
+    : locality || 'Address not provided'
+}
+
+function sortPlaces(places: MapPlace[]): MapPlace[] {
+  return [...places].sort((left, right) =>
+    (left.distanceKm ?? Number.POSITIVE_INFINITY)
+    - (right.distanceKm ?? Number.POSITIVE_INFINITY))
+}
+
+const MAP_RESULT_LIMIT = 30
+
+function formatDate(value: string | undefined): string {
+  if (!value) return 'Not provided'
+  const date = new Date(value)
+  return Number.isNaN(date.getTime())
+    ? 'Not provided'
+    : new Intl.DateTimeFormat('en-AU', { dateStyle: 'medium' }).format(date)
+}
+
+function latestSavedAt(result: MapPlaceResult | null): string | undefined {
+  return result?.datasets
+    .map(({ metadata }) => metadata.cachedAt)
+    .filter((value): value is string => Boolean(value))
+    .sort((left, right) => Date.parse(right) - Date.parse(left))[0]
+}
+
+function PlaceIcon({ kind }: { kind: MapPlaceKind }) {
+  return kind === 'wifi'
+    ? <WifiHigh aria-hidden="true" size={23} weight="duotone" />
+    : <HandHeart aria-hidden="true" size={23} weight="duotone" />
+}
+
+export function MapPage() {
+  const [searchParams, setSearchParams] = useSearchParams()
+  const [restoredSession] = useState(readMapSessionState)
+  const savedLocation = getSearchLocation()
+  const fallbackPostcode = getSearchPostcode()
+  const [area, setArea] = useState<SearchLocation>({
+    postcode: restoredSession?.area.postcode ?? savedLocation?.postcode ?? fallbackPostcode,
+    label: restoredSession?.area.label ?? savedLocation?.label ?? fallbackPostcode,
+  })
+  const [query, setQuery] = useState(restoredSession?.query ?? savedLocation?.label ?? fallbackPostcode)
+  const [selectedKinds, setSelectedKinds] = useState<MapPlaceKind[]>(
+    () => restoredKinds(restoredSession?.selectedKinds, searchParams.get('category')),
+  )
+  const [result, setResult] = useState<MapPlaceResult | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
+  const [loadError, setLoadError] = useState('')
+  const [retryKey, setRetryKey] = useState(0)
+  const [searchError, setSearchError] = useState('')
+  const [isSearching, setIsSearching] = useState(false)
+  const [searchResults, setSearchResults] = useState<SearchLocationResult[]>([])
+  const [selectedPlaceId, setSelectedPlaceId] = useState<string | undefined>(restoredSession?.selectedPlaceId)
+  const [panelMode, setPanelMode] = useState<MapPanelMode>(restoredSession?.panelMode ?? 'results')
+  const [mobileView, setMobileView] = useState<ResultsView>(restoredSession?.mobileView ?? 'map')
+  const [panelSize, setPanelSize] = useState<MobilePanelSize>(restoredSession?.panelSize ?? 'half')
+  const [movedMapCenter, setMovedMapCenter] = useState<RoutePoint>()
+  const [mapViewport, setMapViewport] = useState<MapViewport | undefined>(restoredSession?.viewport)
+  const [routePreview, setRoutePreview] = useState<RoutePreview | undefined>(restoredSession?.directions?.route)
+  const [directionsState, setDirectionsState] = useState<DirectionsPanelState | undefined>(restoredSession?.directions)
+  const [selectedMapStart, setSelectedMapStart] = useState<RoutePoint>()
+  const [isSelectingMapStart, setIsSelectingMapStart] = useState(false)
+  const [routeRecentreKey, setRouteRecentreKey] = useState(0)
+  const listScrollTopRef = useRef(restoredSession?.listScrollTop ?? 0)
+  const panelContentRef = useRef<HTMLDivElement>(null)
+  const searchInputRef = useRef<HTMLInputElement>(null)
+  const isOnline = useOnlineStatus()
+
+  useEffect(() => {
+    saveMapSessionState({
+      area,
+      query,
+      selectedKinds,
+      selectedPlaceId,
+      panelMode,
+      mobileView,
+      panelSize,
+      listScrollTop: listScrollTopRef.current,
+      viewport: mapViewport,
+      directions: directionsState,
+    })
+  }, [area, directionsState, mapViewport, mobileView, panelMode, panelSize, query, selectedKinds, selectedPlaceId])
+
+  const repository = useMemo(
+    () => getMapPlaceRepository({ postcode: area.postcode }),
+    [area.postcode],
+  )
+
+  useEffect(() => {
+    let isCurrent = true
+    repository.findNearby({ postcode: area.postcode })
+      .then((nextResult) => {
+        if (isCurrent) setResult(nextResult)
+      })
+      .catch((reason: unknown) => {
+        if (isCurrent) {
+          setLoadError(reason instanceof Error
+            ? reason.message
+            : 'Nearby places could not be loaded. Try again.')
+        }
+      })
+      .finally(() => {
+        if (isCurrent) setIsLoading(false)
+      })
+    return () => {
+      isCurrent = false
+    }
+  }, [area.postcode, repository, retryKey])
+
+  const filteredPlaces = useMemo(() => sortPlaces(
+    (result?.places ?? []).filter((place) => selectedKinds.includes(place.kind)),
+  ), [result?.places, selectedKinds])
+  const visiblePlaces = useMemo(
+    () => filteredPlaces.slice(0, MAP_RESULT_LIMIT),
+    [filteredPlaces],
+  )
+  const mapRecords = useMemo(() => mapPlacesToMapRecords(visiblePlaces), [visiblePlaces])
+  const routeMapRecords = useMemo(
+    () => panelMode === 'directions' && selectedPlaceId
+      ? mapRecords.filter((record) => record.id === selectedPlaceId)
+      : mapRecords,
+    [mapRecords, panelMode, selectedPlaceId],
+  )
+  const selectedMapIds = useMemo(() => selectedPlaceId ? [selectedPlaceId] : [], [selectedPlaceId])
+  const selectedPlace = visiblePlaces.find(({ id }) => id === selectedPlaceId)
+  const allSelected = selectedKinds.length === enabledMapPlaceKinds.length
+
+  const updateCategoryParam = useCallback((kinds: MapPlaceKind[]) => {
+    const next = new URLSearchParams(searchParams)
+    if (kinds.length === enabledMapPlaceKinds.length) next.delete('category')
+    else next.set('category', kinds.join(','))
+    next.set('area', area.postcode)
+    setSearchParams(next, { replace: true })
+  }, [area.postcode, searchParams, setSearchParams])
+
+  function chooseAll() {
+    const next = [...enabledMapPlaceKinds]
+    setSelectedKinds(next)
+    setSelectedPlaceId(undefined)
+    setPanelMode('results')
+    updateCategoryParam(next)
+  }
+
+  function toggleKind(kind: MapPlaceKind) {
+    const next = allSelected
+      ? [kind]
+      : selectedKinds.includes(kind)
+        ? selectedKinds.filter((item) => item !== kind)
+        : [...selectedKinds, kind]
+    const normalized = next.length === 0 || next.length === enabledMapPlaceKinds.length
+      ? [...enabledMapPlaceKinds]
+      : next
+    setSelectedKinds(normalized)
+    setSelectedPlaceId(undefined)
+    setPanelMode('results')
+    updateCategoryParam(normalized)
+  }
+
+  function applyArea(location: SearchLocationResult) {
+    const nextArea = { postcode: location.postcode, label: location.label }
+    if (!saveSearchLocation(nextArea)) {
+      setSearchError('This browser could not save your search area. Check storage settings and try again.')
+      return
+    }
+    setArea(nextArea)
+    setIsLoading(true)
+    setLoadError('')
+    setResult(null)
+    setQuery(location.label)
+    setSearchResults([])
+    setSelectedPlaceId(undefined)
+    setPanelMode('results')
+    setRoutePreview(undefined)
+    setDirectionsState(undefined)
+    setSelectedMapStart(undefined)
+    setIsSelectingMapStart(false)
+    setMapViewport(undefined)
+    listScrollTopRef.current = 0
+    const next = new URLSearchParams(searchParams)
+    next.set('area', location.postcode)
+    setSearchParams(next, { replace: true })
+  }
+
+  async function handleSearch(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    setSearchError('')
+    setSearchResults([])
+    if (!query.trim()) {
+      setSearchError('Enter a Victorian suburb or postcode.')
+      return
+    }
+    if (!isOnline && !/\b3\d{3}\b/.test(query)) {
+      setSearchError('Suburb search needs an internet connection. Enter the postcode of an area you saved earlier, or reconnect and try again.')
+      return
+    }
+    setIsSearching(true)
+    try {
+      const matches = await searchLocations(query)
+      if (matches.length === 0) {
+        setSearchError('No Victorian area matched that search. Check the spelling or enter a postcode.')
+      } else if (matches.length === 1) {
+        applyArea(matches[0])
+      } else {
+        setSearchResults(matches)
+      }
+    } catch (reason) {
+      setSearchError(reason instanceof Error
+        ? reason.message
+        : 'We could not search for that area. Enter a Victorian postcode or try again.')
+    } finally {
+      setIsSearching(false)
+    }
+  }
+
+  async function searchMovedMapArea() {
+    if (!movedMapCenter) return
+    setSearchError('')
+    setIsSearching(true)
+    try {
+      applyArea(await resolveCoordinates(movedMapCenter.latitude, movedMapCenter.longitude))
+      setMovedMapCenter(undefined)
+    } catch (reason) {
+      setSearchError(reason instanceof Error ? reason.message : 'We could not search this map area. Enter a postcode instead.')
+    } finally {
+      setIsSearching(false)
+    }
+  }
+
+  function selectPlace(id: string) {
+    if (panelMode === 'results') {
+      listScrollTopRef.current = panelContentRef.current?.scrollTop ?? listScrollTopRef.current
+    }
+    setSelectedPlaceId(id)
+    if (panelMode === 'directions') {
+      setRoutePreview(undefined)
+      setDirectionsState((current) => current ? { ...current, route: undefined } : current)
+      setSelectedMapStart(undefined)
+      setIsSelectingMapStart(false)
+    } else {
+      setPanelMode('details')
+    }
+    setPanelSize('full')
+  }
+
+  function backToResults() {
+    setPanelMode('results')
+    setRoutePreview(undefined)
+    setDirectionsState(undefined)
+    setSelectedMapStart(undefined)
+    setIsSelectingMapStart(false)
+    window.requestAnimationFrame(() => {
+      if (panelContentRef.current) panelContentRef.current.scrollTop = listScrollTopRef.current
+    })
+  }
+
+  function showDirections() {
+    if (!selectedPlace || !mapPlaceHasCoordinates(selectedPlace)) return
+    setPanelMode('directions')
+    setRoutePreview(directionsState?.route)
+    setPanelSize('half')
+    setMobileView('map')
+  }
+
+  const handleDirectionsStateChange = useCallback((state: DirectionsPanelState) => {
+    setDirectionsState(state)
+  }, [])
+
+  function handleSelectMapStart(point: RoutePoint) {
+    setSelectedMapStart(point)
+    setIsSelectingMapStart(false)
+  }
+
+  function focusAreaSearch() {
+    searchInputRef.current?.focus()
+    searchInputRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+  }
+
+  const panelContent = panelMode === 'directions' && selectedPlace && mapPlaceHasCoordinates(selectedPlace) ? (
+    <section className="unified-map-directions" aria-label="Route planning">
+      <button className="unified-map-back" type="button" onClick={() => {
+        setPanelMode('details')
+        setIsSelectingMapStart(false)
+      }}>
+        <ArrowLeft aria-hidden="true" size={18} /> Back to place details
+      </button>
+      <div className="unified-map-directions__heading">
+        <h1 id="unified-map-title">Plan a route</h1>
+        <p>Compare a standard walking or driving route before you travel.</p>
+      </div>
+      <DirectionsPanel
+        key={selectedPlace.id}
+        destination={{ name: selectedPlace.name, latitude: selectedPlace.latitude, longitude: selectedPlace.longitude }}
+        destinationIsApproximate={!selectedPlace.address}
+        initialState={directionsState}
+        isOnline={isOnline}
+        selectedMapStart={selectedMapStart}
+        isSelectingMapStart={isSelectingMapStart}
+        onRequestMapStart={() => setIsSelectingMapStart((current) => !current)}
+        onRouteChange={setRoutePreview}
+        onStateChange={handleDirectionsStateChange}
+        showHeading={false}
+      />
+      <p className="unified-map-directions__destination-note">Select another map marker to change the destination. Your current filters and search area will stay in place.</p>
+    </section>
+  ) : panelMode === 'details' && selectedPlace ? (
+    <article className="unified-map-detail" aria-labelledby="selected-place-title">
+      <button className="unified-map-back" type="button" onClick={backToResults}>
+        <ArrowLeft aria-hidden="true" size={18} /> Back to results
+      </button>
+      <div className="unified-map-detail__heading">
+        <span className="record-row__icon"><PlaceIcon kind={selectedPlace.kind} /></span>
+        <div>
+          <h2 id="selected-place-title">{selectedPlace.name}</h2>
+          <p>{mapPlaceKindPresentation[selectedPlace.kind].singularLabel}</p>
+        </div>
+      </div>
+      <dl className="unified-map-facts">
+        <div><dt>Address</dt><dd>{placeAddress(selectedPlace)}</dd></div>
+        <div><dt>Distance</dt><dd>{selectedPlace.distanceKm === undefined ? 'Not confirmed' : `${selectedPlace.distanceKm} km`}</dd></div>
+        {selectedPlace.phone ? <div><dt>Phone</dt><dd><Phone aria-hidden="true" size={16} /> {selectedPlace.phone}</dd></div> : null}
+        {selectedPlace.openingHours ? <div><dt>Opening hours</dt><dd>{selectedPlace.openingHours}</dd></div> : null}
+        {selectedPlace.eligibility ? <div><dt>Eligibility</dt><dd>{selectedPlace.eligibility}</dd></div> : null}
+        {selectedPlace.accessConditions?.length ? <div><dt>Access conditions</dt><dd>{selectedPlace.accessConditions.join('; ')}</dd></div> : null}
+        <div><dt>Updated</dt><dd>{formatDate(selectedPlace.dataUpdatedAt)}</dd></div>
+        <div><dt>Information</dt><dd>{selectedPlace.dataOrigin === 'cache' ? 'Saved on this device' : 'Loaded online'}</dd></div>
+      </dl>
+      {selectedPlace.serviceTypes?.length ? (
+        <section className="unified-map-service-types" aria-labelledby="service-types-title">
+          <h3 id="service-types-title">Published information may indicate</h3>
+          <div className="service-tags">{selectedPlace.serviceTypes.map((type) => <span key={type}>{type}</span>)}</div>
+          <p>Service types are inferred from published charity information and may be incomplete. Check with the organisation before travelling.</p>
+        </section>
+      ) : null}
+      <div className="unified-map-detail__actions">
+        {mapPlaceHasCoordinates(selectedPlace) ? (
+          <button className="button button--primary" type="button" onClick={showDirections}>
+            <NavigationArrow aria-hidden="true" size={18} weight="fill" /> Directions
+          </button>
+        ) : <p className="directions-warning">Directions are unavailable because this record has no confirmed map coordinates.</p>}
+        {selectedPlace.phone ? <a className="button button--quiet" href={`tel:${selectedPlace.phone}`}><Phone aria-hidden="true" size={18} /> Call</a> : null}
+        <Link
+          className="button button--quiet"
+          to={selectedPlace.source === 'wifi'
+            ? appRoutes.wifiDetail(selectedPlace.sourceId)
+            : appRoutes.supportDetail(selectedPlace.sourceId)}
+        >
+          View full details
+        </Link>
+      </div>
+    </article>
+  ) : selectedPlaceId && !isLoading ? (
+    <EmptyState title="This place is no longer in these results" action={<button className="button button--quiet" type="button" onClick={backToResults}>Back to results</button>}>
+      <p>The saved selection may belong to an older dataset or another search area. The rest of your Map state has been kept.</p>
+    </EmptyState>
+  ) : (
+    <section className="unified-map-results" aria-labelledby="map-results-title">
+      <div className="unified-map-results__heading">
+        <div>
+          <h2 id="map-results-title">Places near {area.label}</h2>
+          <p role="status">Showing {visiblePlaces.length} of {filteredPlaces.length} matching places.</p>
+        </div>
+        <div className="unified-map-mobile-toggle">
+          <ListMapToggle value={mobileView} mapDisabled={!isOnline} onChange={setMobileView} />
+        </div>
+      </div>
+      {result?.sourceErrors.map((sourceError) => (
+        <StatusBanner key={sourceError.source} title={`${mapPlaceKindPresentation[sourceError.source].label} could not be updated`} tone="warning">
+          <p>{sourceError.message} Other available results are still shown.</p>
+        </StatusBanner>
+      ))}
+      {result && result.dataOrigin !== 'network' ? (
+        <StatusBanner title={result.dataOrigin === 'cache' ? 'Showing saved information' : 'Some information is saved'} tone="warning">
+          <p>This information was saved on this device for {area.label}{latestSavedAt(result) ? ` on ${formatDate(latestSavedAt(result))}` : ''}. Check the update dates before travelling.</p>
+        </StatusBanner>
+      ) : null}
+      {result?.datasets.some(({ metadata }) => metadata.freshnessStatus === 'stale') ? (
+        <StatusBanner title="Some information may be out of date" tone="warning">
+          <p>The latest online update was not available. Saved records remain visible with their update dates.</p>
+        </StatusBanner>
+      ) : null}
+      {result?.limitations.length ? (
+        <details className="unified-map-limitations">
+          <summary>Data limitations</summary>
+          <div>
+            <p>Check these notes before relying on a listing.</p>
+            <ul>{result.limitations.map((limitation) => <li key={limitation}>{limitation}</li>)}</ul>
+          </div>
+        </details>
+      ) : null}
+      {isLoading ? <LoadingState /> : null}
+      {loadError ? (
+        <div className="error-state" role="alert">
+          <p>{loadError}</p>
+          <button className="button button--quiet" type="button" onClick={() => {
+            setIsLoading(true)
+            setLoadError('')
+            setRetryKey((current) => current + 1)
+          }}>Try again</button>
+        </div>
+      ) : null}
+      {!isLoading && !loadError && filteredPlaces.length === 0 ? (
+        <EmptyState
+          title={allSelected ? 'No nearby places found' : 'No places match these filters'}
+          action={allSelected
+            ? <button className="button button--quiet" type="button" onClick={focusAreaSearch}>Search another area</button>
+            : <button className="button button--quiet" type="button" onClick={chooseAll}>Clear filters</button>}
+        >
+          <p>This does not confirm that help is unavailable. {allSelected ? 'Search another suburb or postcode.' : 'Clear the filters or search another area.'}</p>
+        </EmptyState>
+      ) : null}
+      {visiblePlaces.length > 0 ? (
+        <div className="unified-map-place-list">
+          {visiblePlaces.map((place) => (
+            <button
+              className={place.id === selectedPlaceId ? 'unified-map-place is-selected' : 'unified-map-place'}
+              key={place.id}
+              type="button"
+              onClick={() => selectPlace(place.id)}
+            >
+              <span className="record-row__icon"><PlaceIcon kind={place.kind} /></span>
+              <span>
+                <strong>{place.name}</strong>
+                <small>{mapPlaceKindPresentation[place.kind].singularLabel}</small>
+                <small><MapPin aria-hidden="true" size={15} /> {placeAddress(place)}{place.distanceKm === undefined ? '' : ` · ${place.distanceKm} km`}</small>
+                {!mapPlaceHasCoordinates(place) ? <small className="unified-map-place__map-note">Not shown on map — coordinates not provided</small> : null}
+              </span>
+            </button>
+          ))}
+        </div>
+      ) : null}
+    </section>
+  )
+
+  return (
+    <section className="unified-map-page" aria-labelledby="unified-map-title">
+      <div className={`unified-map-workspace unified-map-workspace--${mobileView}${panelMode === 'directions' ? ' unified-map-workspace--directions' : ''}`}>
+        <aside className={`unified-map-panel unified-map-panel--${panelSize}${panelMode === 'directions' ? ' unified-map-panel--directions' : ''}`} aria-label={panelMode === 'directions' ? 'Route planning' : 'Nearby place information'}>
+          {panelMode !== 'directions' ? <div className="unified-map-controls">
+            <div className="unified-map-intro">
+              <h1 id="unified-map-title">Nearby places</h1>
+              <p>Find public Wi-Fi and community support near your chosen area.</p>
+            </div>
+            <form className="unified-map-search" onSubmit={(event) => void handleSearch(event)}>
+              <label htmlFor="map-area-search">Search area</label>
+              <div>
+                <MagnifyingGlass aria-hidden="true" size={20} />
+                <input
+                  id="map-area-search"
+                  ref={searchInputRef}
+                  value={query}
+                  onChange={(event) => setQuery(event.target.value)}
+                  placeholder="Suburb or postcode"
+                  aria-describedby="map-search-help"
+                  aria-invalid={Boolean(searchError)}
+                  disabled={isSearching}
+                />
+                <button className="button button--primary" type="submit" disabled={isSearching}>
+                  {isSearching ? 'Searching…' : 'Search'}
+                </button>
+              </div>
+              <p id="map-search-help">Search runs only when you choose Search.</p>
+              {searchError ? <p className="field-error" role="alert">{searchError}</p> : null}
+              {searchResults.length > 1 ? (
+                <div className="unified-map-suggestions" aria-label="Search results">
+                  {searchResults.map((location) => (
+                    <button key={`${location.postcode}-${location.label}`} type="button" onClick={() => applyArea(location)}>
+                      <MapPin aria-hidden="true" size={18} />
+                      <span><strong>{location.label}</strong><small>Victoria {location.postcode}</small></span>
+                    </button>
+                  ))}
+                </div>
+              ) : null}
+            </form>
+            <p className="unified-map-context" role="status">
+              <MapPin aria-hidden="true" size={18} weight="fill" />
+              <span>Showing places near <strong>{area.label}</strong></span>
+            </p>
+            <MapFilters selectedKinds={selectedKinds} onChooseAll={chooseAll} onToggleKind={toggleKind} />
+          </div> : null}
+          <div className="unified-map-panel__size" aria-label="Resize information panel">
+            <button aria-pressed={panelSize === 'compact'} type="button" onClick={() => setPanelSize('compact')}><CaretDown aria-hidden="true" size={17} /> Collapse</button>
+            <button aria-pressed={panelSize === 'half'} type="button" onClick={() => setPanelSize('half')}><ListBullets aria-hidden="true" size={17} /> Half</button>
+            <button aria-pressed={panelSize === 'full'} type="button" onClick={() => setPanelSize('full')}><CaretUp aria-hidden="true" size={17} /> Expand</button>
+          </div>
+          <div
+            className="unified-map-panel__content"
+            ref={panelContentRef}
+            onScroll={(event) => { listScrollTopRef.current = event.currentTarget.scrollTop }}
+          >{panelContent}</div>
+        </aside>
+
+        <div className="unified-map-canvas" aria-label="Map area">
+          {isOnline ? (
+            <>
+              <LazyMapView
+                ariaLabel={`Map of places near ${area.label}`}
+                markers={routeMapRecords}
+                selectedIds={selectedMapIds}
+                onSelect={(ids) => ids[0] && selectPlace(ids[0])}
+                onReturnToList={() => setMobileView('list')}
+                onViewportSettled={setMovedMapCenter}
+                initialViewport={restoredSession?.viewport}
+                onViewportChange={setMapViewport}
+                route={routePreview}
+                routeRecentreKey={routeRecentreKey}
+                isSelectingStart={isSelectingMapStart}
+                onSelectStart={handleSelectMapStart}
+              />
+              {movedMapCenter && panelMode !== 'directions' ? (
+                <button className="button button--quiet unified-map-search-area" type="button" onClick={() => void searchMovedMapArea()} disabled={isSearching}>
+                  Search this area
+                </button>
+              ) : null}
+              {panelMode !== 'directions' ? <MapLegend items={[
+                { label: 'Free Wi-Fi', variant: 'confirmed' },
+                { label: 'Charity and community support', variant: 'support' },
+              ]} /> : null}
+              {panelMode === 'directions' && routePreview ? (
+                <button className="button button--quiet unified-map-recentre" type="button" onClick={() => setRouteRecentreKey((current) => current + 1)}>
+                  <Crosshair aria-hidden="true" size={18} /> Re-centre route
+                </button>
+              ) : null}
+            </>
+          ) : (
+            <div className="map-unavailable" role="status">
+              <strong>Map unavailable while offline</strong>
+              <p>Your saved place list remains available for this area.</p>
+              <button className="button button--quiet" type="button" onClick={() => setMobileView('list')}>View saved list</button>
+            </div>
+          )}
+        </div>
+      </div>
+    </section>
+  )
+}

@@ -18,9 +18,8 @@ import { ConsentSettingsPage } from '../features/settings/pages/ConsentSettingsP
 import { OfflineInformationPage } from '../features/settings/pages/OfflineInformationPage'
 import { SettingsPage } from '../features/settings/pages/SettingsPage'
 import { SupportServiceDetailPage } from '../features/support-services/pages/SupportServiceDetailPage'
-import { SupportServicesPage } from '../features/support-services/pages/SupportServicesPage'
 import { WifiDetailPage } from '../features/wifi/pages/WifiDetailPage'
-import { WifiListPage } from '../features/wifi/pages/WifiListPage'
+import { MapPage } from '../features/map/pages/MapPage'
 import { AppShell } from '../shared/layout/AppShell'
 import { getSearchPostcode } from '../storage/searchLocationStorage'
 import { appRoutes } from './config/product'
@@ -71,9 +70,10 @@ export function AppRouter() {
           <Route path={appRoutes.crisis} element={<CrisisLandingPage />} />
           <Route path="/crisis/:kind" element={<CrisisDetailPage />} />
           <Route element={<RequireSearchLocation />}>
-            <Route path={appRoutes.wifi} element={<WifiListPage />} />
+            <Route path={appRoutes.map} element={<MapPage />} />
+            <Route path={appRoutes.wifi} element={<Navigate replace to={`${appRoutes.map}?category=wifi`} />} />
             <Route path="/wifi/:id" element={<WifiDetailPage />} />
-            <Route path={appRoutes.support} element={<SupportServicesPage />} />
+            <Route path={appRoutes.support} element={<Navigate replace to={`${appRoutes.map}?category=support`} />} />
             <Route path="/support/:id" element={<SupportServiceDetailPage />} />
           </Route>
           <Route path={appRoutes.settings} element={<SettingsPage />} />
