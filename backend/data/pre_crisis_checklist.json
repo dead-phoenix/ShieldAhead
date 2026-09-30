@@ -9,41 +9,35 @@
         {
           "itemId": "plan-reviewed",
           "task": "Write down your bushfire plan",
-          "description": "Complete this when your household has a written plan everyone can follow.",
+          "description": "Note what will make you leave early, your main and backup routes, and who does what.",
           "steps": [
-            "Choose the conditions that will prompt you to leave early.",
-            "Write down where you will go and your main and alternative routes.",
-            "Give each household member a clear responsibility."
+            "Note what will make you leave early, your main and backup routes, and who does what."
           ]
         },
         {
           "itemId": "leave-destination",
-          "task": "Confirm your early-leaving destination",
-          "description": "Complete this when everyone knows the destination and how to get there.",
+          "task": "Choose where you'll go",
+          "description": "Pick a lower-risk place, confirm you can stay there, and share the address with everyone.",
           "steps": [
-            "Choose a suitable place in a lower-risk area.",
-            "Check that the destination will be available when you need it.",
-            "Share the address and travel plan with the household."
+            "Pick a lower-risk place, confirm you can stay there, and share the address with everyone."
           ]
         },
         {
           "itemId": "kit-ready",
           "task": "Pack an emergency kit",
-          "description": "Complete this when essential supplies are together and easy to take.",
+          "description": "Include water, a torch, batteries, first-aid items, a charged power bank, medication and food. Keep it where everyone can grab it.",
           "steps": [
-            "Pack water, a torch, batteries, first-aid items and a charged power bank.",
-            "Add essential medication and suitable food.",
-            "Store the kit somewhere everyone can reach quickly."
+            "Include water, a torch, batteries, first-aid items, a charged power bank, medication and food.",
+            "Keep it where everyone can grab it."
           ]
         },
         {
           "itemId": "documents-ready",
-          "task": "Keep important documents ready",
-          "description": "Complete this when essential copies are protected and easy to take.",
+          "task": "Gather your important documents",
+          "description": "Collect ID, insurance details and prescriptions. Keep copies in a waterproof bag and tell someone where they are.",
           "steps": [
-            "Collect identification, insurance details and prescriptions.",
-            "Place copies in a protective folder or waterproof bag.",
-            "Tell another household member where they are stored."
+            "Collect ID, insurance details and prescriptions.",
+            "Keep copies in a waterproof bag and tell someone where they are."
           ]
         }
       ]
@@ -55,22 +49,18 @@
       "items": [
         {
           "itemId": "dependants-plan",
-          "task": "Plan support for children and dependants",
-          "description": "Complete this when each dependant has a named person to help them leave.",
+          "task": "Name a helper for each child or dependant",
+          "description": "Pack their medication, clothes and comfort items, and practise leaving together.",
           "steps": [
-            "Write down who will help each person.",
-            "Pack medication, clothing and comfort items they may need.",
-            "Practise how you will leave together."
+            "Pack their medication, clothes and comfort items, and practise leaving together."
           ]
         },
         {
           "itemId": "pet-plan",
-          "task": "Prepare to transport your pets",
-          "description": "Complete this when pet transport and essential supplies are ready.",
+          "task": "Get your pets ready to travel",
+          "description": "Keep a carrier or lead handy and pack food, water and medication.",
           "steps": [
-            "Keep a carrier, cage or lead where it is easy to reach.",
-            "Pack pet food, water and medication.",
-            "Include your pets in the household leaving plan."
+            "Keep a carrier or lead handy and pack food, water and medication."
           ]
         }
       ]
@@ -82,22 +72,19 @@
       "items": [
         {
           "itemId": "health-needs",
-          "task": "Prepare medication and accessibility support",
-          "description": "Complete this when essential health items and assistance are organised.",
+          "task": "Plan for medication and access needs",
+          "description": "List the medication and equipment that must come with you, and arrange help for mobility or communication needs.",
           "steps": [
-            "List medication and equipment that must travel with you.",
-            "Arrange help for mobility, communication or other access needs.",
-            "Keep the plan with your emergency kit."
+            "List the medication and equipment that must come with you, and arrange help for mobility or communication needs."
           ]
         },
         {
           "itemId": "contacts-ready",
-          "task": "Write down important contact details",
-          "description": "Complete this when contacts are available without internet access.",
+          "task": "Write down key phone numbers on paper",
+          "description": "Include household, carer and support-service contacts. Keep a copy in your kit and give one to another person.",
           "steps": [
-            "Write down household, carer and support-service numbers.",
-            "Keep a paper copy with the emergency kit.",
-            "Make sure at least one other person has a copy."
+            "Include household, carer and support-service contacts.",
+            "Keep a copy in your kit and give one to another person."
           ]
         }
       ]
@@ -110,41 +97,37 @@
         {
           "itemId": "local-information",
           "task": "Check your local flood risk",
-          "description": "Complete this when you know the safer places and routes near you.",
+          "description": "Find out if your home and usual routes are flood-prone. Choose a safer place on higher ground and write down a route that avoids low-lying roads and crossings.",
           "steps": [
-            "Check whether your home and usual routes are flood-prone.",
-            "Choose a safer place on higher ground.",
-            "Write down a route that avoids low-lying roads and crossings."
+            "Find out if your home and usual routes are flood-prone.",
+            "Choose a safer place on higher ground and write down a route that avoids low-lying roads and crossings."
           ]
         },
         {
           "itemId": "contact-plan",
           "task": "Write down your household contact plan",
-          "description": "Complete this when everyone knows how to reconnect if separated.",
+          "description": "Pick one contact in your household and one outside the area, and note their phone numbers. Agree on a meeting spot in case phones don't work.",
           "steps": [
-            "Choose one household contact and one contact outside the area.",
-            "Write down their phone numbers.",
-            "Agree where you will meet if phone services fail."
+            "Pick one contact in your household and one outside the area, and note their phone numbers.",
+            "Agree on a meeting spot in case phones don't work."
           ]
         },
         {
           "itemId": "kit-ready",
           "task": "Pack an emergency kit",
-          "description": "Complete this when essential supplies are together and easy to take.",
+          "description": "Include water, a torch, batteries, a charged power bank, medication, first-aid items and food. Store it above likely flood level.",
           "steps": [
-            "Pack water, a torch, batteries and a charged power bank.",
-            "Add medication, first-aid items and suitable food.",
-            "Store the kit above likely flood level."
+            "Include water, a torch, batteries, a charged power bank, medication, first-aid items and food.",
+            "Store it above likely flood level."
           ]
         },
         {
           "itemId": "items-lifted",
           "task": "Plan which items to move higher",
-          "description": "Complete this when important belongings can be protected before water rises.",
+          "description": "List the documents, medicines and valuables to lift out of reach of water. Choose where they'll go and have waterproof bags or containers ready.",
           "steps": [
-            "Identify documents, medicines and valuables that must be moved.",
-            "Choose a higher storage place.",
-            "Prepare waterproof bags or containers where practical."
+            "List the documents, medicines and valuables to lift out of reach of water.",
+            "Choose where they'll go and have waterproof bags or containers ready."
           ]
         }
       ]
@@ -156,22 +139,20 @@
       "items": [
         {
           "itemId": "dependants-plan",
-          "task": "Plan support for children and dependants",
-          "description": "Complete this when each dependant has a named person to help them.",
+          "task": "Name a helper for each child or dependant",
+          "description": "Pack their medication, clothes and comfort items. Explain the safer place in calm, simple words.",
           "steps": [
-            "Write down who will help each person.",
-            "Pack medication, clothing and comfort items.",
-            "Explain the safer place in calm, simple language."
+            "Pack their medication, clothes and comfort items.",
+            "Explain the safer place in calm, simple words."
           ]
         },
         {
           "itemId": "pet-plan",
-          "task": "Prepare to move your pets safely",
-          "description": "Complete this when pet transport and essential supplies are ready.",
+          "task": "Get your pets ready to move",
+          "description": "Keep a carrier or lead handy and pack food, water and medication. Find a safer destination that accepts pets.",
           "steps": [
-            "Keep a carrier, cage or lead ready.",
-            "Pack pet food, water and medication.",
-            "Identify a safer destination that accepts pets."
+            "Keep a carrier or lead handy and pack food, water and medication.",
+            "Find a safer destination that accepts pets."
           ]
         }
       ]
@@ -183,22 +164,20 @@
       "items": [
         {
           "itemId": "medicine-plan",
-          "task": "Prepare medication and accessibility support",
-          "description": "Complete this when health items and assistance can move with you.",
+          "task": "Plan for medication and access needs",
+          "description": "Keep medication and prescriptions ready to grab, and arrange help for mobility or communication needs. Store key instructions in a waterproof bag.",
           "steps": [
-            "Keep medication and prescriptions ready to take.",
-            "Arrange help for mobility, communication or other access needs.",
-            "Store important instructions in a waterproof bag."
+            "Keep medication and prescriptions ready to grab, and arrange help for mobility or communication needs.",
+            "Store key instructions in a waterproof bag."
           ]
         },
         {
           "itemId": "contacts-ready",
-          "task": "Write down flood emergency contacts",
-          "description": "Complete this when important numbers are available without internet.",
+          "task": "Write down emergency numbers on paper",
+          "description": "Include VICSES 132 500 and your household contacts, and keep a copy in your kit. Call Triple Zero (000) for life-threatening danger.",
           "steps": [
-            "Write down VICSES 132 500 and household contacts.",
-            "Keep a paper copy with your emergency kit.",
-            "Remember that Triple Zero (000) is for life-threatening danger."
+            "Include VICSES 132 500 and your household contacts, and keep a copy in your kit.",
+            "Call Triple Zero (000) for life-threatening danger."
           ]
         }
       ]
@@ -210,42 +189,35 @@
       "items": [
         {
           "itemId": "outage-plan",
-          "task": "Prepare essential supplies for 72 hours",
-          "description": "Complete this when your household can manage basic needs for at least three days.",
+          "task": "Set aside 72 hours of supplies",
+          "description": "Store drinking water and non-perishable food for at least three days. Add a battery-powered radio if you have one, and replace expired items regularly.",
           "steps": [
-            "Set aside drinking water and non-perishable food.",
-            "Prepare safe lighting, batteries and a battery-powered radio if available.",
-            "Check the supplies regularly and replace expired items."
+            "Store drinking water and non-perishable food for at least three days.",
+            "Add a battery-powered radio if you have one, and replace expired items regularly."
           ]
         },
         {
           "itemId": "lighting-plan",
           "task": "Put backup lighting somewhere easy to find",
-          "description": "Complete this when safe lighting is ready before the power fails.",
+          "description": "Place torches or battery lights in known spots, check they work, and keep spare batteries nearby.",
           "steps": [
-            "Place torches or battery-operated lights in known locations.",
-            "Check that they work.",
-            "Store compatible spare batteries nearby."
+            "Place torches or battery lights in known spots, check they work, and keep spare batteries nearby."
           ]
         },
         {
           "itemId": "power-bank",
           "task": "Charge your phone and power bank",
-          "description": "Complete this when the devices and correct cables are together.",
+          "description": "Fully charge both, check the cable fits your phone, and keep them together where you can reach them.",
           "steps": [
-            "Fully charge the phone and power bank.",
-            "Check that the cable fits your phone.",
-            "Store them somewhere easy to reach."
+            "Fully charge both, check the cable fits your phone, and keep them together where you can reach them."
           ]
         },
         {
           "itemId": "distributor-ready",
-          "task": "Write down your energy distributor details",
-          "description": "Complete this when you can report an outage without internet.",
+          "task": "Write down your energy distributor's details",
+          "description": "Find the name and faults number on your energy bill, write it on paper, and keep it with your household plan.",
           "steps": [
-            "Find the distributor name and faults number on your energy bill.",
-            "Write the details on paper.",
-            "Keep the paper with your household plan."
+            "Find the name and faults number on your energy bill, write it on paper, and keep it with your household plan."
           ]
         }
       ]
@@ -258,21 +230,18 @@
         {
           "itemId": "dependants-plan",
           "task": "Prepare supplies for children and dependants",
-          "description": "Complete this when essential care items are ready.",
+          "description": "Pack food, clothing, comfort items, medication and care instructions. Plan activities that don't need electricity.",
           "steps": [
-            "Pack suitable food, clothing and comfort items.",
-            "Add required medication and care instructions.",
-            "Plan activities or support that do not require electricity."
+            "Pack food, clothing, comfort items, medication and care instructions.",
+            "Plan activities that don't need electricity."
           ]
         },
         {
           "itemId": "pet-plan",
-          "task": "Prepare essential supplies for pets",
-          "description": "Complete this when food, water and medication are available.",
+          "task": "Prepare supplies for pets",
+          "description": "Set aside enough food and water, check their medication, and keep a carrier or lead accessible in case you need to leave.",
           "steps": [
-            "Set aside enough pet food and water.",
-            "Check that required medication is available.",
-            "Keep a carrier, cage or lead accessible if you may need to leave."
+            "Set aside enough food and water, check their medication, and keep a carrier or lead accessible in case you need to leave."
           ]
         }
       ]
@@ -285,21 +254,19 @@
         {
           "itemId": "powered-equipment",
           "task": "Make a backup plan for powered medical equipment",
-          "description": "Complete this when the equipment, backup time and contacts are written down.",
+          "description": "Write down each device and how long its battery lasts. Ask the equipment provider what to do in a long outage, and keep their number on paper.",
           "steps": [
             "Write down each device and how long its battery lasts.",
-            "Ask the equipment provider what to do during a long outage.",
-            "Keep the provider and emergency contact numbers available offline."
+            "Ask the equipment provider what to do in a long outage, and keep their number on paper."
           ]
         },
         {
           "itemId": "medicine-plan",
           "task": "Ask how to protect refrigerated medicine",
-          "description": "Complete this after receiving advice for your specific medicine.",
+          "description": "Ask a pharmacist or healthcare professional how long your medicine can stay unrefrigerated. Write down their instructions and any backup storage plan.",
           "steps": [
-            "Ask a pharmacist or healthcare professional how long the medicine can be unrefrigerated.",
-            "Write down the safe storage instructions.",
-            "Prepare an appropriate backup storage plan if advised."
+            "Ask a pharmacist or healthcare professional how long your medicine can stay unrefrigerated.",
+            "Write down their instructions and any backup storage plan."
           ]
         }
       ]

@@ -39,6 +39,7 @@
 
 /* Home: put useful destinations before supporting product information. */
 .app-shell:has(.landing-page--focused) {
+  overflow-x: clip;
   background: transparent;
 }
 .landing-page--focused {
@@ -53,25 +54,63 @@
   display: none;
 }
 .landing-page--focused .landing-hero {
+  position: relative;
   order: 0;
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(18rem, 25rem);
-  align-items: center;
-  gap: clamp(2rem, 6vw, 5rem);
-  min-height: 18rem;
+  display: block;
+  width: 100vw;
+  max-width: 100vw;
+  min-height: min(46rem, 88vh);
+  margin-left: calc(50% - 50vw);
+  overflow: hidden;
+  border-radius: 0;
+  background: #d7e4ee;
+}
+.landing-hero__bg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: 72% center;
+}
+.landing-hero__layout {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: clamp(1.5rem, 4vh, 2.5rem);
+  width: min(100% - 2.5rem, 68rem);
+  min-height: min(46rem, 88vh);
+  margin-inline: auto;
+  padding: clamp(2.25rem, 6vh, 4rem) 0 clamp(1.5rem, 3vh, 2.25rem);
 }
 .landing-page--focused .landing-hero__message {
   display: grid;
-  gap: 1.5rem;
+  align-content: start;
+  gap: 1.15rem;
+  max-width: 34rem;
 }
 .landing-page--focused .landing-about h1 {
-  max-width: 18ch;
+  max-width: 12em;
   margin: 0;
+  color: var(--spatial-ink);
   font-family: 'Fraunces', 'Atkinson Hyperlegible Next', serif;
-  font-size: clamp(2.25rem, 4.5vw, 3.75rem);
+  font-size: clamp(3rem, 5.6vw, 4.6rem);
   font-weight: 600;
-  line-height: 1.06;
+  line-height: 1.02;
   letter-spacing: -0.035em;
+}
+.landing-page--focused .landing-hero__message .landing-about__actions {
+  justify-content: flex-start;
+  margin-top: 0.35rem;
+}
+.landing-hero__card {
+  width: min(100%, 40rem);
+  min-height: 13.5rem;
+  border-radius: 1.6rem;
+  background: #fff;
+  box-shadow: 0 18px 48px rgba(11, 24, 48, 0.14);
 }
 .landing-page--focused .landing-about__copy {
   max-width: 40rem;
@@ -79,6 +118,11 @@
   font-size: 1.0625rem;
   line-height: 1.8;
   color: var(--spatial-muted);
+}
+.landing-page--focused .landing-hero__message .landing-about__copy {
+  max-width: 34rem;
+  color: #314966;
+  line-height: 1.55;
 }
 .landing-hero__visual {
   position: relative;
@@ -626,9 +670,10 @@
 }
 @media(max-width: 39.99rem) {
   .landing-page--focused { gap: 1.5rem; }
-  .landing-page--focused .landing-hero { grid-template-columns: 1fr; gap: .75rem; min-height: 0; }
+  .landing-page--focused .landing-hero,
+  .landing-hero__layout { min-height: 36rem; }
   .landing-page--focused .landing-hero__message { gap: 1rem; }
-  .landing-hero__visual { min-height: 13.5rem; transform: scale(.88); margin: -1rem 0; }
+  .landing-hero__card { min-height: 9.5rem; }
   .landing-page--focused .landing-feature { gap: .75rem; }
   .landing-page--focused .landing-stats dd { font-size: 1.2rem; }
   .landing-overview { gap: 1.75rem; padding: 1.35rem; border-radius: 22px; }

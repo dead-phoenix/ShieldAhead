@@ -15,8 +15,8 @@ describe('home landing page', () => {
   it('introduces ShieldAhead, then explains the complete preparation journey', () => {
     renderHome()
 
-    expect(screen.getByRole('heading', { name: /Local help.*Within reach/i })).toBeVisible()
-    expect(screen.getByText('Within reach.')).toBeVisible()
+    expect(screen.getByRole('heading', { name: /Shield Ahead.*Before it happens/i })).toBeVisible()
+    expect(screen.getByText(/save local information to your device now/i)).toBeVisible()
     expect(screen.getByRole('link', { name: 'Find what’s near you' })).toHaveAttribute('href', '/location')
     expect(screen.getByRole('link', { name: 'See how it works' })).toHaveAttribute('href', '#how-it-works')
     expect(screen.getByText('Prevention, not crisis response')).toBeVisible()
@@ -29,12 +29,10 @@ describe('home landing page', () => {
     expect(screen.getByRole('heading', { name: 'See what is nearby.' })).toBeVisible()
     expect(screen.getByRole('heading', { name: 'Check before travelling.' })).toBeVisible()
     expect(screen.getByRole('heading', { name: 'Keep it on your phone.' })).toBeVisible()
-
-    const supportLink = screen.getByRole('link', { name: /Explore local support/i })
-    const wifiLink = screen.getByRole('link', { name: /Choose your location/i })
-    expect(supportLink).toHaveAttribute('href', '/map?category=support')
-    expect(wifiLink).toHaveAttribute('href', '/location')
-    expect(wifiLink.compareDocumentPosition(supportLink) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+    expect(screen.getByRole('img', { name: 'An older woman sitting on a sofa and using a phone' })).toBeVisible()
+    expect(screen.getByRole('img', { name: 'Two people looking at information together on a mobile phone' })).toBeVisible()
+    expect(screen.getByRole('img', { name: 'The entrance of the State Library Victoria in Melbourne' })).toBeVisible()
+    expect(screen.getByRole('img', { name: 'A person using a mobile phone' })).toBeVisible()
   })
 
   it('provides clear preparation destinations and explains on-device privacy', () => {

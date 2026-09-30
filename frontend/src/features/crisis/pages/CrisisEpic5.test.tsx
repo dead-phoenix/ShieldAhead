@@ -131,7 +131,18 @@ describe('Epic 5 crisis preparation pages', () => {
       }
       if (url.includes('/api/helplines')) {
         return jsonResponse({
-          records: [],
+          records: [
+            {
+              id: 'ses-132-500',
+              name: 'VICSES',
+              serviceType: 'Flood and storm assistance',
+              phone: '132 500',
+              description: 'Help with flood and storm damage that is not life-threatening.',
+              availability: '24 hours',
+              coverageArea: 'Victoria',
+              verifiedAgainst: 'https://www.ses.vic.gov.au/',
+            },
+          ],
           metadata: {
             version: '1.0',
             generatedAt: '2026-09-16T00:00:00.000Z',
@@ -162,18 +173,16 @@ describe('Epic 5 crisis preparation pages', () => {
     const { unmount } = render(<AppRouter />)
 
     expect(await screen.findByRole('heading', { name: 'Prepare for flood' })).toBeVisible()
-    expect(await screen.findByRole('heading', { name: 'Household preparation checklist' })).toBeVisible()
+    expect(await screen.findByRole('heading', { name: 'Flood Household Checklist' })).toBeVisible()
+    expect(await screen.findByRole('heading', { name: 'Helpline numbers' })).toBeVisible()
+    expect(screen.getByRole('link', { name: '132 500' })).toHaveAttribute('href', 'tel:132500')
+    expect(screen.queryByText('Content source')).not.toBeInTheDocument()
+    expect(screen.queryByRole('heading', { name: 'Preparation guidance' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /guide/i })).not.toBeInTheDocument()
     expect(await screen.findByText('0 of 8 complete')).toBeVisible()
-    fireEvent.click(screen.getByRole('button', { name: 'Open during a flood guide' }))
-    expect(screen.getByRole('dialog')).toBeVisible()
-    expect(screen.getByRole('heading', { name: 'Never enter floodwater' })).toBeVisible()
-    expect(screen.getAllByRole('link', { name: /VICSES/i }).length).toBeGreaterThan(0)
-    fireEvent.click(screen.getByRole('button', { name: 'Close guide' }))
 
     expect(screen.getByText('Your next step')).toBeVisible()
-    expect(screen.getByText('Check whether your home and usual routes are flood-prone.')).not.toBeVisible()
-    fireEvent.click(screen.getAllByText('How to complete this')[0])
-    expect(screen.getByText('Check whether your home and usual routes are flood-prone.')).toBeVisible()
+    expect(screen.queryByText('How to complete this')).not.toBeInTheDocument()
 
     fireEvent.click(screen.getByRole('checkbox', { name: /Check your local flood risk/i }))
     expect(screen.getByText('1 of 8 complete')).toBeVisible()

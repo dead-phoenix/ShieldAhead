@@ -1,7 +1,11 @@
 import { readFileSync, writeFileSync } from 'node:fs'
+import { dirname, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
+import tailwindcss from '@tailwindcss/vite'
 import react from '@vitejs/plugin-react'
 import { defineConfig, type Plugin } from 'vite'
+
+const rootDir = dirname(fileURLToPath(import.meta.url))
 
 function writeCoverageCount(fileUrl: URL, count: number) {
   const filePath = fileURLToPath(fileUrl)
@@ -102,5 +106,10 @@ self.addEventListener('fetch', (event) => {
 
 // https://vite.dev/config/
 export default defineConfig({
-  plugins: [react(), coverageJsonSnapshot(), shieldAheadServiceWorker()],
+  plugins: [react(), tailwindcss(), coverageJsonSnapshot(), shieldAheadServiceWorker()],
+  resolve: {
+    alias: [
+      { find: '@', replacement: resolve(rootDir, 'src') },
+    ],
+  },
 })
