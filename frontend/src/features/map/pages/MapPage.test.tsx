@@ -80,12 +80,43 @@ describe('unified Map page', () => {
     expect(screen.queryByRole('button', { name: 'Police' })).not.toBeInTheDocument()
   })
 
+  it('returns to results when a restored place is no longer in the current result set', async () => {
+    window.sessionStorage.setItem('shieldahead.map.session.v1', JSON.stringify({
+      area: { postcode: '3453', label: 'Harcourt 3453' },
+      query: 'Harcourt 3453',
+      selectedKinds: ['wifi', 'support'],
+      selectedPlaceId: 'wifi:removed-place',
+      panelMode: 'details',
+      mobileView: 'map',
+      panelSize: 'half',
+      listScrollTop: 0,
+    }))
+
+    render(<MemoryRouter initialEntries={['/map?area=3453&category=wifi']}><MapPage /></MemoryRouter>)
+
+    expect(await screen.findByText('Library Wi-Fi')).toBeVisible()
+    await waitFor(() => {
+      expect(screen.queryByText('This place is no longer in these results')).not.toBeInTheDocument()
+      expect(screen.getByRole('heading', { name: 'Places near Harcourt 3453' })).toBeVisible()
+    })
+    expect(screen.getByTestId('map-marker-count')).toHaveTextContent('1')
+    expect(screen.getByRole('button', { name: 'Free Wi-Fi' })).toHaveAttribute('aria-pressed', 'true')
+    expect(screen.queryByText('Community House')).not.toBeInTheDocument()
+  })
+
   it('opens one shared detail state and enters route planning without losing the selected place', async () => {
     render(<MemoryRouter initialEntries={['/map']}><MapPage /></MemoryRouter>)
     fireEvent.click(await screen.findByRole('button', { name: /Library Wi-Fi/ }))
 
     expect(screen.getByRole('heading', { name: 'Library Wi-Fi' })).toBeVisible()
     expect(screen.getByRole('button', { name: 'Directions' })).toBeVisible()
+    const panelHandle = screen.getByRole('separator', { name: 'Resize information panel' })
+    expect(panelHandle).toHaveAttribute('aria-valuenow', '1')
+    fireEvent.keyDown(panelHandle, { key: 'ArrowUp' })
+    expect(panelHandle).toHaveAttribute('aria-valuenow', '2')
+    fireEvent.keyDown(panelHandle, { key: 'ArrowDown' })
+    expect(panelHandle).toHaveAttribute('aria-valuenow', '1')
+    expect(screen.getByTestId('map-marker-count')).toHaveTextContent('1')
     expect(screen.queryByRole('link', { name: 'Call' })).not.toBeInTheDocument()
 
     fireEvent.click(screen.getByRole('button', { name: 'Directions' }))

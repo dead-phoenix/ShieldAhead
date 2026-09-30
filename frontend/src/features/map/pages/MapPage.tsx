@@ -1,19 +1,15 @@
 import {
   ArrowLeft,
-  CaretDown,
-  CaretUp,
   Crosshair,
   HandHeart,
-  ListBullets,
   MagnifyingGlass,
   MapPin,
   NavigationArrow,
   Phone,
   WifiHigh,
 } from '@phosphor-icons/react'
-import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } from 'react'
-import { Link, useSearchParams } from 'react-router-dom'
-import { appRoutes } from '../../../app/config/product'
+import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties, type FormEvent } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { EmptyState } from '../../../shared/components/EmptyState'
 import { LoadingState } from '../../../shared/components/LoadingState'
 import { StatusBanner } from '../../../shared/components/StatusBanner'
@@ -47,15 +43,10 @@ import {
 } from '../model/mapSessionStorage'
 import './MapPage.css'
 
-function initialKinds(category: string | null): MapPlaceKind[] {
-  return category === 'wifi' || category === 'support'
-    ? [category]
-    : [...enabledMapPlaceKinds]
-}
-
 function restoredKinds(kinds: MapPlaceKind[] | undefined, category: string | null): MapPlaceKind[] {
+  if (category === 'wifi' || category === 'support') return [category]
   const enabled = kinds?.filter((kind) => enabledMapPlaceKinds.includes(kind)) ?? []
-  return enabled.length > 0 ? enabled : initialKinds(category)
+  return enabled.length > 0 ? enabled : [...enabledMapPlaceKinds]
 }
 
 function placeAddress(place: MapPlace): string {
@@ -128,6 +119,9 @@ export function MapPage() {
   const listScrollTopRef = useRef(restoredSession?.listScrollTop ?? 0)
   const panelContentRef = useRef<HTMLDivElement>(null)
   const searchInputRef = useRef<HTMLInputElement>(null)
+  const panelDragStartRef = useRef<number | undefined>(undefined)
+  const panelDragStartHeightRef = useRef<number | undefined>(undefined)
+  const [panelDragHeight, setPanelDragHeight] = useState<number | undefined>(undefined)
   const isOnline = useOnlineStatus()
 
   useEffect(() => {
@@ -179,15 +173,37 @@ export function MapPage() {
     [filteredPlaces],
   )
   const mapRecords = useMemo(() => mapPlacesToMapRecords(visiblePlaces), [visiblePlaces])
-  const routeMapRecords = useMemo(
-    () => panelMode === 'directions' && selectedPlaceId
-      ? mapRecords.filter((record) => record.id === selectedPlaceId)
-      : mapRecords,
-    [mapRecords, panelMode, selectedPlaceId],
-  )
-  const selectedMapIds = useMemo(() => selectedPlaceId ? [selectedPlaceId] : [], [selectedPlaceId])
   const selectedPlace = visiblePlaces.find(({ id }) => id === selectedPlaceId)
+  const hasInvalidSelection = Boolean(!isLoading && result && selectedPlaceId && !selectedPlace)
+  const displayedPanelMode: MapPanelMode = hasInvalidSelection ? 'results' : panelMode
+  const displayedSelectedPlaceId = hasInvalidSelection ? undefined : selectedPlaceId
+  const routeMapRecords = useMemo(
+    () => displayedPanelMode !== 'results' && displayedSelectedPlaceId
+      ? mapRecords.filter((record) => record.id === displayedSelectedPlaceId)
+      : mapRecords,
+    [displayedPanelMode, displayedSelectedPlaceId, mapRecords],
+  )
+  const selectedMapIds = useMemo(
+    () => displayedSelectedPlaceId ? [displayedSelectedPlaceId] : [],
+    [displayedSelectedPlaceId],
+  )
   const allSelected = selectedKinds.length === enabledMapPlaceKinds.length
+
+  useEffect(() => {
+    if (isLoading || !result || !selectedPlaceId || selectedPlace) return
+
+    // A saved selection can become invalid when its area, filters or result set changes.
+    // Return to the usable results state instead of leaving a stale detail panel over the map.
+    queueMicrotask(() => {
+      setSelectedPlaceId(undefined)
+      setPanelMode('results')
+      setPanelSize('half')
+      setRoutePreview(undefined)
+      setDirectionsState(undefined)
+      setSelectedMapStart(undefined)
+      setIsSelectingMapStart(false)
+    })
+  }, [isLoading, result, selectedPlace, selectedPlaceId])
 
   const updateCategoryParam = useCallback((kinds: MapPlaceKind[]) => {
     const next = new URLSearchParams(searchParams)
@@ -303,7 +319,8 @@ export function MapPage() {
     } else {
       setPanelMode('details')
     }
-    setPanelSize('full')
+    setPanelSize('half')
+    setMobileView('map')
   }
 
   function backToResults() {
@@ -325,6 +342,35 @@ export function MapPage() {
     setMobileView('map')
   }
 
+  function resizePanel(direction: 'up' | 'down') {
+    const sizes: MobilePanelSize[] = ['compact', 'half', 'full']
+    const currentIndex = sizes.indexOf(panelSize)
+    const nextIndex = direction === 'up'
+      ? Math.min(currentIndex + 1, sizes.length - 1)
+      : Math.max(currentIndex - 1, 0)
+    setPanelSize(sizes[nextIndex])
+  }
+
+  function movePanelDrag(clientY: number) {
+    const startY = panelDragStartRef.current
+    const startHeight = panelDragStartHeightRef.current
+    if (startY === undefined || startHeight === undefined) return
+    const minimumHeight = 112
+    const maximumHeight = Math.max(minimumHeight, window.innerHeight - 132)
+    setPanelDragHeight(Math.min(maximumHeight, Math.max(minimumHeight, startHeight + startY - clientY)))
+  }
+
+  function finishPanelDrag() {
+    const height = panelDragHeight
+    panelDragStartRef.current = undefined
+    panelDragStartHeightRef.current = undefined
+    setPanelDragHeight(undefined)
+    if (height === undefined) return
+    if (height < window.innerHeight * 0.25) setPanelSize('compact')
+    else if (height > window.innerHeight * 0.62) setPanelSize('full')
+    else setPanelSize('half')
+  }
+
   const handleDirectionsStateChange = useCallback((state: DirectionsPanelState) => {
     setDirectionsState(state)
   }, [])
@@ -339,7 +385,7 @@ export function MapPage() {
     searchInputRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })
   }
 
-  const panelContent = panelMode === 'directions' && selectedPlace && mapPlaceHasCoordinates(selectedPlace) ? (
+  const panelContent = displayedPanelMode === 'directions' && selectedPlace && mapPlaceHasCoordinates(selectedPlace) ? (
     <section className="unified-map-directions" aria-label="Route planning">
       <button className="unified-map-back" type="button" onClick={() => {
         setPanelMode('details')
@@ -366,7 +412,7 @@ export function MapPage() {
       />
       <p className="unified-map-directions__destination-note">Select another map marker to change the destination. Your current filters and search area will stay in place.</p>
     </section>
-  ) : panelMode === 'details' && selectedPlace ? (
+  ) : displayedPanelMode === 'details' && selectedPlace ? (
     <article className="unified-map-detail" aria-labelledby="selected-place-title">
       <button className="unified-map-back" type="button" onClick={backToResults}>
         <ArrowLeft aria-hidden="true" size={18} /> Back to results
@@ -376,25 +422,9 @@ export function MapPage() {
         <div>
           <h2 id="selected-place-title">{selectedPlace.name}</h2>
           <p>{mapPlaceKindPresentation[selectedPlace.kind].singularLabel}</p>
+          <p className="unified-map-detail__summary-address"><MapPin aria-hidden="true" size={15} /> {placeAddress(selectedPlace)}</p>
         </div>
       </div>
-      <dl className="unified-map-facts">
-        <div><dt>Address</dt><dd>{placeAddress(selectedPlace)}</dd></div>
-        <div><dt>Distance</dt><dd>{selectedPlace.distanceKm === undefined ? 'Not confirmed' : `${selectedPlace.distanceKm} km`}</dd></div>
-        {selectedPlace.phone ? <div><dt>Phone</dt><dd><Phone aria-hidden="true" size={16} /> {selectedPlace.phone}</dd></div> : null}
-        {selectedPlace.openingHours ? <div><dt>Opening hours</dt><dd>{selectedPlace.openingHours}</dd></div> : null}
-        {selectedPlace.eligibility ? <div><dt>Eligibility</dt><dd>{selectedPlace.eligibility}</dd></div> : null}
-        {selectedPlace.accessConditions?.length ? <div><dt>Access conditions</dt><dd>{selectedPlace.accessConditions.join('; ')}</dd></div> : null}
-        <div><dt>Updated</dt><dd>{formatDate(selectedPlace.dataUpdatedAt)}</dd></div>
-        <div><dt>Information</dt><dd>{selectedPlace.dataOrigin === 'cache' ? 'Saved on this device' : 'Loaded online'}</dd></div>
-      </dl>
-      {selectedPlace.serviceTypes?.length ? (
-        <section className="unified-map-service-types" aria-labelledby="service-types-title">
-          <h3 id="service-types-title">Published information may indicate</h3>
-          <div className="service-tags">{selectedPlace.serviceTypes.map((type) => <span key={type}>{type}</span>)}</div>
-          <p>Service types are inferred from published charity information and may be incomplete. Check with the organisation before travelling.</p>
-        </section>
-      ) : null}
       <div className="unified-map-detail__actions">
         {mapPlaceHasCoordinates(selectedPlace) ? (
           <button className="button button--primary" type="button" onClick={showDirections}>
@@ -402,17 +432,28 @@ export function MapPage() {
           </button>
         ) : <p className="directions-warning">Directions are unavailable because this record has no confirmed map coordinates.</p>}
         {selectedPlace.phone ? <a className="button button--quiet" href={`tel:${selectedPlace.phone}`}><Phone aria-hidden="true" size={18} /> Call</a> : null}
-        <Link
-          className="button button--quiet"
-          to={selectedPlace.source === 'wifi'
-            ? appRoutes.wifiDetail(selectedPlace.sourceId)
-            : appRoutes.supportDetail(selectedPlace.sourceId)}
-        >
-          View full details
-        </Link>
+      </div>
+      <div className="unified-map-detail__expanded">
+        <dl className="unified-map-facts">
+          <div><dt>Address</dt><dd>{placeAddress(selectedPlace)}</dd></div>
+          <div><dt>Distance</dt><dd>{selectedPlace.distanceKm === undefined ? 'Not confirmed' : `${selectedPlace.distanceKm} km`}</dd></div>
+          {selectedPlace.phone ? <div><dt>Phone</dt><dd><Phone aria-hidden="true" size={16} /> {selectedPlace.phone}</dd></div> : null}
+          {selectedPlace.openingHours ? <div><dt>Opening hours</dt><dd>{selectedPlace.openingHours}</dd></div> : null}
+          {selectedPlace.eligibility ? <div><dt>Eligibility</dt><dd>{selectedPlace.eligibility}</dd></div> : null}
+          {selectedPlace.accessConditions?.length ? <div><dt>Access conditions</dt><dd>{selectedPlace.accessConditions.join('; ')}</dd></div> : null}
+          <div><dt>Updated</dt><dd>{formatDate(selectedPlace.dataUpdatedAt)}</dd></div>
+          <div><dt>Information</dt><dd>{selectedPlace.dataOrigin === 'cache' ? 'Saved on this device' : 'Loaded online'}</dd></div>
+        </dl>
+        {selectedPlace.serviceTypes?.length ? (
+          <section className="unified-map-service-types" aria-labelledby="service-types-title">
+            <h3 id="service-types-title">Published information may indicate</h3>
+            <div className="service-tags">{selectedPlace.serviceTypes.map((type) => <span key={type}>{type}</span>)}</div>
+            <p>Service types are inferred from published charity information and may be incomplete. Check with the organisation before travelling.</p>
+          </section>
+        ) : null}
       </div>
     </article>
-  ) : selectedPlaceId && !isLoading ? (
+  ) : displayedPanelMode !== 'results' && selectedPlaceId && !isLoading ? (
     <EmptyState title="This place is no longer in these results" action={<button className="button button--quiet" type="button" onClick={backToResults}>Back to results</button>}>
       <p>The saved selection may belong to an older dataset or another search area. The rest of your Map state has been kept.</p>
     </EmptyState>
@@ -497,9 +538,13 @@ export function MapPage() {
 
   return (
     <section className="unified-map-page" aria-labelledby="unified-map-title">
-      <div className={`unified-map-workspace unified-map-workspace--${mobileView}${panelMode === 'directions' ? ' unified-map-workspace--directions' : ''}`}>
-        <aside className={`unified-map-panel unified-map-panel--${panelSize}${panelMode === 'directions' ? ' unified-map-panel--directions' : ''}`} aria-label={panelMode === 'directions' ? 'Route planning' : 'Nearby place information'}>
-          {panelMode !== 'directions' ? <div className="unified-map-controls">
+      <div className={`unified-map-workspace unified-map-workspace--${mobileView} unified-map-workspace--${displayedPanelMode}`}>
+        <aside
+          className={`unified-map-panel unified-map-panel--${panelSize}${panelDragHeight === undefined ? '' : ' is-dragging'}${displayedPanelMode === 'directions' ? ' unified-map-panel--directions' : ''}`}
+          aria-label={displayedPanelMode === 'directions' ? 'Route planning' : 'Nearby place information'}
+          style={panelDragHeight === undefined ? undefined : { '--mobile-panel-height': `${panelDragHeight}px` } as CSSProperties}
+        >
+          {displayedPanelMode === 'results' ? <div className="unified-map-controls">
             <div className="unified-map-intro">
               <h1 id="unified-map-title">Nearby places</h1>
               <p>Find public Wi-Fi and community support near your chosen area.</p>
@@ -541,10 +586,29 @@ export function MapPage() {
             </p>
             <MapFilters selectedKinds={selectedKinds} onChooseAll={chooseAll} onToggleKind={toggleKind} />
           </div> : null}
-          <div className="unified-map-panel__size" aria-label="Resize information panel">
-            <button aria-pressed={panelSize === 'compact'} type="button" onClick={() => setPanelSize('compact')}><CaretDown aria-hidden="true" size={17} /> Collapse</button>
-            <button aria-pressed={panelSize === 'half'} type="button" onClick={() => setPanelSize('half')}><ListBullets aria-hidden="true" size={17} /> Half</button>
-            <button aria-pressed={panelSize === 'full'} type="button" onClick={() => setPanelSize('full')}><CaretUp aria-hidden="true" size={17} /> Expand</button>
+          <div
+            className="unified-map-panel__size"
+            role="separator"
+            tabIndex={0}
+            aria-label="Resize information panel"
+            aria-orientation="horizontal"
+            aria-valuemin={0}
+            aria-valuemax={2}
+            aria-valuenow={panelSize === 'compact' ? 0 : panelSize === 'half' ? 1 : 2}
+            onKeyDown={(event) => {
+              if (event.key === 'ArrowUp') { event.preventDefault(); resizePanel('up') }
+              if (event.key === 'ArrowDown') { event.preventDefault(); resizePanel('down') }
+            }}
+            onPointerDown={(event) => {
+              event.currentTarget.setPointerCapture(event.pointerId)
+              panelDragStartRef.current = event.clientY
+              panelDragStartHeightRef.current = panelContentRef.current?.getBoundingClientRect().height
+            }}
+            onPointerMove={(event) => movePanelDrag(event.clientY)}
+            onPointerUp={(event) => { event.currentTarget.releasePointerCapture(event.pointerId); finishPanelDrag() }}
+            onPointerCancel={finishPanelDrag}
+          >
+            <span className="unified-map-panel__handle" aria-hidden="true" />
           </div>
           <div
             className="unified-map-panel__content"
@@ -567,19 +631,20 @@ export function MapPage() {
                 onViewportChange={setMapViewport}
                 route={routePreview}
                 routeRecentreKey={routeRecentreKey}
+                focusSelectedMarker={displayedPanelMode === 'details'}
                 isSelectingStart={isSelectingMapStart}
                 onSelectStart={handleSelectMapStart}
               />
-              {movedMapCenter && panelMode !== 'directions' ? (
+              {movedMapCenter && displayedPanelMode !== 'directions' ? (
                 <button className="button button--quiet unified-map-search-area" type="button" onClick={() => void searchMovedMapArea()} disabled={isSearching}>
                   Search this area
                 </button>
               ) : null}
-              {panelMode !== 'directions' ? <MapLegend items={[
+              {displayedPanelMode !== 'directions' ? <MapLegend items={[
                 { label: 'Free Wi-Fi', variant: 'confirmed' },
                 { label: 'Charity and community support', variant: 'support' },
               ]} /> : null}
-              {panelMode === 'directions' && routePreview ? (
+              {displayedPanelMode === 'directions' && routePreview ? (
                 <button className="button button--quiet unified-map-recentre" type="button" onClick={() => setRouteRecentreKey((current) => current + 1)}>
                   <Crosshair aria-hidden="true" size={18} /> Re-centre route
                 </button>

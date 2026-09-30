@@ -15,6 +15,7 @@
   --color-background: var(--color-bg);
   --color-text: var(--color-ink);
   --color-surface: var(--color-card-bg);
+  --color-surface-opaque: #ffffff;
   --color-accent-strong: var(--color-accent);
   --color-accent-soft: var(--color-accent-tint);
   --color-secondary: var(--color-accent);

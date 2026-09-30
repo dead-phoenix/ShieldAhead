@@ -76,6 +76,7 @@ interface MapViewProps {
   initialViewport?: MapViewport
   onViewportChange?: (viewport: MapViewport) => void
   routeRecentreKey?: number
+  focusSelectedMarker?: boolean
 }
 
 export interface MapViewport extends RoutePoint {
@@ -91,7 +92,7 @@ function groupMarkersByPosition(markers: MapRecord[]): MapRecord[][] {
   return [...groups.values()]
 }
 
-export function MapView({ ariaLabel, markers, selectedIds = [], onSelect, onReturnToList, route, isSelectingStart = false, onSelectStart, onViewportSettled, initialViewport, onViewportChange, routeRecentreKey = 0 }: MapViewProps) {
+export function MapView({ ariaLabel, markers, selectedIds = [], onSelect, onReturnToList, route, isSelectingStart = false, onSelectStart, onViewportSettled, initialViewport, onViewportChange, routeRecentreKey = 0, focusSelectedMarker = false }: MapViewProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const mapRef = useRef<MapLibreMap | null>(null)
   const markerRefs = useRef<Marker[]>([])
@@ -197,13 +198,18 @@ export function MapView({ ariaLabel, markers, selectedIds = [], onSelect, onRetu
         .addTo(map)
     })
 
-    if (skipInitialMarkerFitRef.current) {
+    if (skipInitialMarkerFitRef.current && !focusSelectedMarker) {
       skipInitialMarkerFitRef.current = false
     } else if (markers.length === 1) {
+      skipInitialMarkerFitRef.current = false
+      const isMobile = window.matchMedia('(max-width: 55.99rem)').matches
       map.easeTo({
         center: [markers[0].longitude, markers[0].latitude],
         zoom: 14,
-        duration: 0,
+        padding: focusSelectedMarker && isMobile
+          ? { top: 72, right: 24, bottom: 300, left: 24 }
+          : undefined,
+        duration: focusSelectedMarker ? 350 : 0,
       })
     } else if (markers.length > 1) {
       const bounds = new LngLatBounds()
@@ -218,7 +224,7 @@ export function MapView({ ariaLabel, markers, selectedIds = [], onSelect, onRetu
       markerRefs.current = []
       markerButtons.clear()
     }
-  }, [markers])
+  }, [focusSelectedMarker, markers])
 
   useEffect(() => {
     markerButtonsRef.current.forEach((button, id) => {
