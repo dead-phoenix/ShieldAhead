@@ -13,7 +13,7 @@ import { GetTheAppButton } from '../components/GetTheAppButton'
 
 const primaryNavigation = [
   { to: appRoutes.home, label: 'Home', end: true, icon: House },
-  { to: appRoutes.map, label: 'Map', icon: MapTrifold },
+  { to: appRoutes.map, label: 'Support', icon: MapTrifold },
   { to: appRoutes.crisis, label: 'Crisis', icon: Lifebuoy },
 ]
 

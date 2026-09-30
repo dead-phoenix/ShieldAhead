@@ -597,7 +597,7 @@ export function MapPage() {
         >
           {displayedPanelMode === 'results' ? <div className="unified-map-controls">
             <div className="unified-map-intro">
-              <h1 id="unified-map-title">Nearby places</h1>
+              <h1 id="unified-map-title">Support</h1>
               <p>Find public Wi-Fi and community support near your chosen area.</p>
             </div>
             <form className="unified-map-search" onSubmit={(event) => void handleSearch(event)}>

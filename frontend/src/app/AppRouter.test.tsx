@@ -35,7 +35,7 @@ describe('first-run routing', () => {
 
     render(<AppRouter />)
 
-    expect(await screen.findByRole('heading', { name: 'Nearby places' })).toBeVisible()
+    expect(await screen.findByRole('heading', { name: 'Support' })).toBeVisible()
     expect(window.location.pathname).toBe('/map')
     expect(window.location.search).toBe('?category=support')
   })
@@ -61,7 +61,7 @@ describe('first-run routing', () => {
     const primaryNavigation = screen.getAllByRole('navigation', { name: 'Primary navigation' })
     primaryNavigation.forEach((navigation) => {
       expect(navigation).toHaveTextContent('Home')
-      expect(navigation).toHaveTextContent('Map')
+      expect(navigation).toHaveTextContent('Support')
       expect(navigation).toHaveTextContent('Crisis')
       expect(navigation).not.toHaveTextContent('Profile')
     })
