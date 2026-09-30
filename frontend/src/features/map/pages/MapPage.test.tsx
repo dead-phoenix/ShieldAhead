@@ -1,0 +1,118 @@
+import { fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { MemoryRouter } from 'react-router-dom'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { storageKeys } from '../../../app/config/product'
+import type { MapPlaceResult } from '../model/mapTypes'
+import { MapPage } from './MapPage'
+
+const mapResult: MapPlaceResult = {
+  places: [
+    {
+      id: 'wifi:w1', sourceId: 'w1', source: 'wifi', kind: 'wifi', name: 'Library Wi-Fi',
+      postcode: '3453', suburb: 'Harcourt', latitude: -36.99, longitude: 144.26,
+      dataUpdatedAt: '2026-09-30T00:00:00.000Z', dataOrigin: 'network',
+    },
+    {
+      id: 'support:s1', sourceId: 's1', source: 'support', kind: 'support', name: 'Community House',
+      postcode: '3453', suburb: 'Harcourt', latitude: -36.98, longitude: 144.25,
+      dataUpdatedAt: '2026-09-30T00:00:00.000Z', dataOrigin: 'network', serviceTypes: ['Food support'],
+    },
+    {
+      id: 'support:s2', sourceId: 's2', source: 'support', kind: 'support', name: 'Regional Pantry',
+      postcode: '3453', suburb: 'Harcourt',
+      dataUpdatedAt: '2026-09-30T00:00:00.000Z', dataOrigin: 'network',
+    },
+  ],
+  generatedAt: '2026-09-30T00:00:00.000Z',
+  limitations: [],
+  dataOrigin: 'network',
+  datasets: [],
+  sourceErrors: [],
+}
+
+vi.mock('../data/mapPlaceRepository', () => ({
+  getMapPlaceRepository: () => ({ findNearby: vi.fn().mockResolvedValue(mapResult) }),
+}))
+
+vi.mock('../../../shared/map/LazyMapView', () => ({
+  LazyMapView: ({ markers }: { markers: unknown[] }) => <div data-testid="map-marker-count">{markers.length}</div>,
+}))
+
+describe('unified Map page', () => {
+  beforeEach(() => {
+    window.sessionStorage.clear()
+    Object.defineProperty(window.navigator, 'onLine', { configurable: true, value: true })
+    window.localStorage.setItem(storageKeys.searchLocation, JSON.stringify({ postcode: '3453', label: 'Harcourt 3453' }))
+    delete mapResult.places.find((place) => place.id === 'support:s1')?.phone
+  })
+
+  it('keeps the list and map on the same filtered result set', async () => {
+    render(<MemoryRouter initialEntries={['/map']}><MapPage /></MemoryRouter>)
+
+    expect(await screen.findByText('Library Wi-Fi')).toBeVisible()
+    expect(screen.getByText('Community House')).toBeVisible()
+    expect(screen.getByText('Regional Pantry')).toBeVisible()
+    expect(screen.getByTestId('map-marker-count')).toHaveTextContent('2')
+    expect(screen.getByText('Not shown on map — coordinates not provided')).toBeVisible()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Free Wi-Fi' }))
+
+    expect(screen.getByText('Library Wi-Fi')).toBeVisible()
+    expect(screen.queryByText('Community House')).not.toBeInTheDocument()
+    expect(screen.queryByText('Regional Pantry')).not.toBeInTheDocument()
+    expect(screen.getByTestId('map-marker-count')).toHaveTextContent('1')
+  })
+
+  it('uses OR logic when both category filters are selected', async () => {
+    render(<MemoryRouter initialEntries={['/map?category=wifi']}><MapPage /></MemoryRouter>)
+    expect(await screen.findByText('Library Wi-Fi')).toBeVisible()
+    expect(screen.queryByText('Community House')).not.toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Charity and community support' }))
+    await waitFor(() => expect(screen.getByText('Community House')).toBeVisible())
+    expect(screen.getByRole('button', { name: 'All' })).toHaveAttribute('aria-pressed', 'true')
+  })
+
+  it('does not expose unconfirmed emergency filters', async () => {
+    render(<MemoryRouter initialEntries={['/map']}><MapPage /></MemoryRouter>)
+    await screen.findByText('Library Wi-Fi')
+    expect(screen.queryByRole('button', { name: 'Hospitals' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Police' })).not.toBeInTheDocument()
+  })
+
+  it('opens one shared detail state and enters route planning without losing the selected place', async () => {
+    render(<MemoryRouter initialEntries={['/map']}><MapPage /></MemoryRouter>)
+    fireEvent.click(await screen.findByRole('button', { name: /Library Wi-Fi/ }))
+
+    expect(screen.getByRole('heading', { name: 'Library Wi-Fi' })).toBeVisible()
+    expect(screen.getByRole('button', { name: 'Directions' })).toBeVisible()
+    expect(screen.queryByRole('link', { name: 'Call' })).not.toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Directions' }))
+    expect(screen.getByRole('heading', { name: 'Plan a route' })).toBeVisible()
+    expect(screen.getByDisplayValue('Library Wi-Fi')).toBeVisible()
+    expect(screen.getByRole('button', { name: 'Walking' })).toHaveAttribute('aria-pressed', 'true')
+  })
+
+  it('shows inferred support types with their limitation and exposes Call only when supplied', async () => {
+    const supportWithPhone = mapResult.places.find((place) => place.id === 'support:s1')
+    if (supportWithPhone) supportWithPhone.phone = '03 5555 0100'
+    render(<MemoryRouter initialEntries={['/map']}><MapPage /></MemoryRouter>)
+    fireEvent.click(await screen.findByRole('button', { name: /Community House/ }))
+
+    expect(screen.getByText('Food support')).toBeVisible()
+    expect(screen.getByText(/inferred from published charity information/)).toBeVisible()
+    expect(screen.getByRole('link', { name: 'Call' })).toHaveAttribute('href', 'tel:03 5555 0100')
+  })
+
+  it('requires a saved postcode instead of attempting a suburb lookup while offline', async () => {
+    Object.defineProperty(window.navigator, 'onLine', { configurable: true, value: false })
+    render(<MemoryRouter initialEntries={['/map']}><MapPage /></MemoryRouter>)
+    const input = screen.getByRole('textbox', { name: 'Search area' })
+
+    fireEvent.change(input, { target: { value: 'Ballarat' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Search' }))
+
+    expect(await screen.findByRole('alert')).toHaveTextContent('Suburb search needs an internet connection')
+  })
+})

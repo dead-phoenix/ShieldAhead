@@ -148,13 +148,13 @@ export function HomePage() {
               <span>Prepare useful Wi-Fi and support information while connected, then read the saved copy offline.</span>
               <small>Available when the network is not</small>
             </Link>
-            <Link className="landing-overview__feature landing-overview__feature--wifi" to={appRoutes.wifi}>
+            <Link className="landing-overview__feature landing-overview__feature--wifi" to={`${appRoutes.map}?category=wifi`}>
               <span className="landing-overview__feature-icon"><WifiHigh aria-hidden="true" weight="duotone" /></span>
               <strong>Nearby Wi-Fi</strong>
               <span>Review public Wi-Fi and possible fallback locations before deciding where to travel.</span>
               <small>Check the listing before travelling</small>
             </Link>
-            <Link className="landing-overview__feature landing-overview__feature--support" to={appRoutes.support}>
+            <Link className="landing-overview__feature landing-overview__feature--support" to={`${appRoutes.map}?category=support`}>
               <span className="landing-overview__feature-icon"><UsersThree aria-hidden="true" weight="duotone" /></span>
               <strong>Nearby support</strong>
               <span>Explore food, financial, housing and emergency support details near your selected area.</span>
@@ -204,7 +204,7 @@ export function HomePage() {
             <span className="journey-step__signal"><HandHeart aria-hidden="true" weight="fill" /> Know before you go</span>
             <h3>Check before travelling.</h3>
             <p>Review distance, address, service type and availability notes before choosing where to go. Unconfirmed information is clearly identified.</p>
-            <Link className="journey-step__action" to={appRoutes.support}>Explore local support <ArrowRight aria-hidden="true" weight="bold" /></Link>
+            <Link className="journey-step__action" to={`${appRoutes.map}?category=support`}>Explore local support <ArrowRight aria-hidden="true" weight="bold" /></Link>
           </div>
           <div className="journey-step__media journey-step__media--interface" aria-label="Example support service information">
             <div className="journey-preview">

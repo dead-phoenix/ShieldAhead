@@ -72,6 +72,14 @@ interface MapViewProps {
   route?: RoutePreview
   isSelectingStart?: boolean
   onSelectStart?: (point: RoutePoint) => void
+  onViewportSettled?: (point: RoutePoint) => void
+  initialViewport?: MapViewport
+  onViewportChange?: (viewport: MapViewport) => void
+  routeRecentreKey?: number
+}
+
+export interface MapViewport extends RoutePoint {
+  zoom: number
 }
 
 function groupMarkersByPosition(markers: MapRecord[]): MapRecord[][] {
@@ -83,14 +91,21 @@ function groupMarkersByPosition(markers: MapRecord[]): MapRecord[][] {
   return [...groups.values()]
 }
 
-export function MapView({ ariaLabel, markers, selectedIds = [], onSelect, onReturnToList, route, isSelectingStart = false, onSelectStart }: MapViewProps) {
+export function MapView({ ariaLabel, markers, selectedIds = [], onSelect, onReturnToList, route, isSelectingStart = false, onSelectStart, onViewportSettled, initialViewport, onViewportChange, routeRecentreKey = 0 }: MapViewProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const mapRef = useRef<MapLibreMap | null>(null)
   const markerRefs = useRef<Marker[]>([])
   const markerButtonsRef = useRef(new Map<string, HTMLButtonElement>())
   const previewPopupRef = useRef<Popup | null>(null)
+  const onSelectRef = useRef(onSelect)
   const [isReady, setIsReady] = useState(false)
   const [hasFailed, setHasFailed] = useState(false)
+  const initialViewportRef = useRef(initialViewport)
+  const skipInitialMarkerFitRef = useRef(Boolean(initialViewport))
+
+  useEffect(() => {
+    onSelectRef.current = onSelect
+  }, [onSelect])
 
   useEffect(() => {
     if (!containerRef.current) return
@@ -101,8 +116,10 @@ export function MapView({ ariaLabel, markers, selectedIds = [], onSelect, onRetu
       const map = new MapLibreMap({
         container: containerRef.current,
         style: import.meta.env.VITE_MAP_STYLE_URL?.trim() || defaultStyleUrl,
-        center: [144.9631, -37.8136],
-        zoom: 9,
+        center: initialViewportRef.current
+          ? [initialViewportRef.current.longitude, initialViewportRef.current.latitude]
+          : [144.9631, -37.8136],
+        zoom: initialViewportRef.current?.zoom ?? 9,
         attributionControl: {},
         cooperativeGestures: true,
       })
@@ -157,7 +174,7 @@ export function MapView({ ariaLabel, markers, selectedIds = [], onSelect, onRetu
       appendMarkerContents(button, record, group.length)
       button.addEventListener('click', (event) => {
         event.stopPropagation()
-        onSelect(groupIds)
+        onSelectRef.current(groupIds)
       })
       const showPreview = () => {
         previewPopupRef.current?.remove()
@@ -180,7 +197,9 @@ export function MapView({ ariaLabel, markers, selectedIds = [], onSelect, onRetu
         .addTo(map)
     })
 
-    if (markers.length === 1) {
+    if (skipInitialMarkerFitRef.current) {
+      skipInitialMarkerFitRef.current = false
+    } else if (markers.length === 1) {
       map.easeTo({
         center: [markers[0].longitude, markers[0].latitude],
         zoom: 14,
@@ -199,7 +218,7 @@ export function MapView({ ariaLabel, markers, selectedIds = [], onSelect, onRetu
       markerRefs.current = []
       markerButtons.clear()
     }
-  }, [markers, onSelect])
+  }, [markers])
 
   useEffect(() => {
     markerButtonsRef.current.forEach((button, id) => {
@@ -224,6 +243,32 @@ export function MapView({ ariaLabel, markers, selectedIds = [], onSelect, onRetu
       map.getCanvas().style.cursor = ''
     }
   }, [isReady, isSelectingStart, onSelectStart])
+
+  useEffect(() => {
+    const map = mapRef.current
+    if (!map || !isReady || !onViewportSettled) return
+    const handleDragEnd = () => {
+      const center = map.getCenter()
+      onViewportSettled({ latitude: center.lat, longitude: center.lng })
+    }
+    map.on('dragend', handleDragEnd)
+    return () => {
+      map.off('dragend', handleDragEnd)
+    }
+  }, [isReady, onViewportSettled])
+
+  useEffect(() => {
+    const map = mapRef.current
+    if (!map || !isReady || !onViewportChange) return
+    const handleMoveEnd = () => {
+      const center = map.getCenter()
+      onViewportChange({ latitude: center.lat, longitude: center.lng, zoom: map.getZoom() })
+    }
+    map.on('moveend', handleMoveEnd)
+    return () => {
+      map.off('moveend', handleMoveEnd)
+    }
+  }, [isReady, onViewportChange])
 
   useEffect(() => {
     const map = mapRef.current
@@ -257,6 +302,14 @@ export function MapView({ ariaLabel, markers, selectedIds = [], onSelect, onRetu
       if (map.getSource(sourceId)) map.removeSource(sourceId)
     }
   }, [isReady, route])
+
+  useEffect(() => {
+    const map = mapRef.current
+    if (!map || !isReady || !route || routeRecentreKey === 0) return
+    const bounds = new LngLatBounds()
+    route.coordinates.forEach((point) => bounds.extend(point))
+    map.fitBounds(bounds, { padding: 72, maxZoom: 15, duration: 500 })
+  }, [isReady, route, routeRecentreKey])
 
   if (hasFailed) {
     return (

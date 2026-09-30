@@ -2,6 +2,7 @@ import { Component, lazy, Suspense, type ReactNode } from 'react'
 import type { MapRecord } from './mapRecords'
 import type { RoutePreview } from '../../data/api/directionsApi'
 import type { RoutePoint } from '../../data/api/directionsApi'
+import type { MapViewport } from './MapView'
 
 const MapView = lazy(async () => {
   const module = await import('./MapView')
@@ -17,6 +18,10 @@ interface LazyMapViewProps {
   route?: RoutePreview
   isSelectingStart?: boolean
   onSelectStart?: (point: RoutePoint) => void
+  onViewportSettled?: (point: RoutePoint) => void
+  initialViewport?: MapViewport
+  onViewportChange?: (viewport: MapViewport) => void
+  routeRecentreKey?: number
 }
 
 class MapLoadBoundary extends Component<{ children: ReactNode; onReturnToList: () => void }, { failed: boolean }> {
