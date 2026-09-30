@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 800">
+  <defs>
+    <linearGradient id="wash" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#e5f5ff"/>
+      <stop offset="1" stop-color="#e8e9ff"/>
+    </linearGradient>
+  </defs>
+  <rect width="640" height="800" fill="url(#wash)"/>
+  <rect x="150" y="150" width="340" height="500" rx="28" fill="#ffffff" fill-opacity="0.94"/>
+  <rect x="186" y="190" width="56" height="56" rx="14" fill="#0878f9" fill-opacity="0.12"/>
+  <path d="M204 218c5-7 18-7 23 2 3 6-2 11-7 14-3 2-6 5-5 10h-7c2-7-1-10-5-13-5-5-6-10 1-13z" fill="#005dcc"/>
+  <text x="186" y="286" fill="#005dcc" font-family="Segoe UI, sans-serif" font-size="15" font-weight="700">Support service</text>
+  <text x="186" y="340" fill="#0b1830" font-family="Georgia, serif" font-size="28">Help near your</text>
+  <text x="186" y="378" fill="#0b1830" font-family="Georgia, serif" font-size="28">saved area</text>
+  <text x="186" y="430" fill="#4a607d" font-family="Segoe UI, sans-serif" font-size="16">Address and distance shown</text>
+  <rect x="186" y="470" width="268" height="92" rx="14" fill="#fff7da"/>
+  <text x="206" y="508" fill="#6c5b30" font-family="Segoe UI, sans-serif" font-size="16" font-weight="700">Check service details</text>
+  <text x="206" y="534" fill="#6c5b30" font-family="Segoe UI, sans-serif" font-size="14">Review the listing</text>
+</svg>

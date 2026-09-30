@@ -52,8 +52,7 @@ export function HomePage() {
     <div ref={pageRef} className="landing-page landing-page--focused">
       <section className="landing-about" aria-labelledby="about-title">
         <div className="landing-hero">
-          <img className="landing-hero__bg" src="/images/hero-prepare.jpg" alt="An older woman sitting on a sofa and using a phone" />
-          <div className="landing-hero__layout">
+          <div className="landing-hero__copy">
             <div className="landing-hero__message">
               <h1 id="about-title">
                 Shield Ahead.
@@ -75,8 +74,10 @@ export function HomePage() {
                 </a>
               </div>
             </div>
-            <div className="landing-hero__card" />
           </div>
+          <figure className="landing-hero__photo">
+            <img src="/images/hero-prepare.jpg" alt="An older woman sitting on a sofa and using a phone" />
+          </figure>
         </div>
         <dl className="landing-stats">
           <div>

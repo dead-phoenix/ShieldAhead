@@ -1,0 +1,12 @@
+/*
+  Tailwind is only for the journey flip stack.
+  Preflight is omitted so it does not reset the rest of the app.
+  Theme tokens stay in a layer, so the existing unlayered palette wins.
+*/
+@layer theme, base, components, utilities;
+
+@import "tailwindcss/theme.css" layer(theme);
+@import "tailwindcss/utilities.css" layer(utilities) source(none) important;
+
+@source "../components/ui";
+@source "../features/home";
