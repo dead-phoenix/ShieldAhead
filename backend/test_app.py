@@ -17,6 +17,7 @@ from services.acnc_service import (
 from services.geocoding import (
     _locality_names_from_address,
     postcode_to_coords,
+    search_victorian_locations,
 )
 
 
@@ -49,6 +50,58 @@ def reset_caches():
 # ============================================================
 # Victoria / locality filtering (no network needed)
 # ============================================================
+
+def test_address_search_keeps_victorian_street_matches():
+    photon_response = Mock()
+    photon_response.raise_for_status.return_value = None
+    photon_response.json.return_value = {
+        "features": [
+            {
+                "geometry": {"coordinates": [144.967, -37.815]},
+                "properties": {
+                    "country": "Australia",
+                    "state": "Victoria",
+                    "city": "Melbourne",
+                    "postcode": "3000",
+                    "street": "Collins Street",
+                    "housenumber": "100",
+                },
+            },
+            {
+                "geometry": {"coordinates": [151.2, -33.8]},
+                "properties": {
+                    "country": "Australia",
+                    "state": "New South Wales",
+                    "city": "Sydney",
+                    "postcode": "2000",
+                    "street": "Collins Street",
+                },
+            },
+        ],
+    }
+
+    with patch("services.geocoding.http_requests.get", return_value=photon_response):
+        records = search_victorian_locations("100 Collins Street Melbourne")
+
+    assert records == [{
+        "postcode": "3000",
+        "label": "100 Collins Street, Melbourne 3000",
+        "latitude": -37.815,
+        "longitude": 144.967,
+    }]
+
+
+def test_location_search_route_returns_victorian_addresses(client):
+    with patch(
+        "routes.locations_routes.search_victorian_locations",
+        return_value=[{"postcode": "3550", "label": "123 High Street, Bendigo 3550"}],
+    ):
+        response = client.get("/api/locations/search?q=123%20High%20Street%20Bendigo")
+
+    assert response.status_code == 200
+    assert response.json["records"][0]["postcode"] == "3550"
+    assert "High Street" in response.json["records"][0]["label"]
+
 
 def test_postcode_lookup_uses_exact_postal_result_and_caches():
     postal_response = Mock()

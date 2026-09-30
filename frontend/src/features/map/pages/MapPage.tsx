@@ -119,6 +119,8 @@ export function MapPage() {
   const listScrollTopRef = useRef(restoredSession?.listScrollTop ?? 0)
   const panelContentRef = useRef<HTMLDivElement>(null)
   const searchInputRef = useRef<HTMLInputElement>(null)
+  const appliedQueryRef = useRef(restoredSession?.query ?? savedLocation?.label ?? fallbackPostcode)
+  const suggestionRequestRef = useRef(0)
   const panelDragStartRef = useRef<number | undefined>(undefined)
   const panelDragStartHeightRef = useRef<number | undefined>(undefined)
   const [panelDragHeight, setPanelDragHeight] = useState<number | undefined>(undefined)
@@ -245,9 +247,13 @@ export function MapPage() {
     setArea(nextArea)
     setIsLoading(true)
     setLoadError('')
+    setSearchError('')
     setResult(null)
+    appliedQueryRef.current = location.label
+    suggestionRequestRef.current += 1
     setQuery(location.label)
     setSearchResults([])
+    setIsSearching(false)
     setSelectedPlaceId(undefined)
     setPanelMode('results')
     setRoutePreview(undefined)
@@ -261,29 +267,83 @@ export function MapPage() {
     setSearchParams(next, { replace: true })
   }
 
-  async function handleSearch(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault()
-    setSearchError('')
-    setSearchResults([])
-    if (!query.trim()) {
-      setSearchError('Enter a Victorian suburb or postcode.')
+  useEffect(() => {
+    const trimmed = query.trim()
+    if (trimmed === appliedQueryRef.current.trim()) {
+      suggestionRequestRef.current += 1
+      setSearchResults([])
+      setIsSearching(false)
       return
     }
-    if (!isOnline && !/\b3\d{3}\b/.test(query)) {
+    if (trimmed.length < 3 && !/^3\d{3}$/.test(trimmed)) {
+      suggestionRequestRef.current += 1
+      setSearchResults([])
+      setIsSearching(false)
+      return
+    }
+    if (!isOnline && !/^3\d{3}$/.test(trimmed)) {
+      suggestionRequestRef.current += 1
+      setSearchResults([])
+      setIsSearching(false)
+      setSearchError('Suburb search needs an internet connection. Enter the postcode of an area you saved earlier, or reconnect and try again.')
+      return
+    }
+
+    const requestId = ++suggestionRequestRef.current
+    const timer = window.setTimeout(() => {
+      void (async () => {
+        setIsSearching(true)
+        setSearchError('')
+        try {
+          const matches = await searchLocations(trimmed)
+          if (requestId !== suggestionRequestRef.current) return
+          setSearchResults(matches)
+          if (matches.length === 0) {
+            setSearchError('No Victorian address matched that search. Check the spelling or enter a postcode.')
+          }
+        } catch (reason) {
+          if (requestId !== suggestionRequestRef.current) return
+          setSearchResults([])
+          setSearchError(reason instanceof Error
+            ? reason.message
+            : 'We could not search for that area. Enter a Victorian postcode or try again.')
+        } finally {
+          if (requestId === suggestionRequestRef.current) setIsSearching(false)
+        }
+      })()
+    }, 300)
+
+    return () => window.clearTimeout(timer)
+  }, [isOnline, query])
+
+  async function handleSearch(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    suggestionRequestRef.current += 1
+    setSearchError('')
+    const trimmed = query.trim()
+    if (!trimmed) {
+      setSearchResults([])
+      setSearchError('Enter a Victorian address, suburb, or postcode.')
+      return
+    }
+    if (!isOnline && !/^3\d{3}$/.test(trimmed)) {
+      setSearchResults([])
       setSearchError('Suburb search needs an internet connection. Enter the postcode of an area you saved earlier, or reconnect and try again.')
       return
     }
     setIsSearching(true)
     try {
-      const matches = await searchLocations(query)
+      const matches = await searchLocations(trimmed)
       if (matches.length === 0) {
-        setSearchError('No Victorian area matched that search. Check the spelling or enter a postcode.')
+        setSearchResults([])
+        setSearchError('No Victorian address matched that search. Check the spelling or enter a postcode.')
       } else if (matches.length === 1) {
         applyArea(matches[0])
       } else {
         setSearchResults(matches)
       }
     } catch (reason) {
+      setSearchResults([])
       setSearchError(reason instanceof Error
         ? reason.message
         : 'We could not search for that area. Enter a Victorian postcode or try again.')
@@ -483,15 +543,6 @@ export function MapPage() {
           <p>The latest online update was not available. Saved records remain visible with their update dates.</p>
         </StatusBanner>
       ) : null}
-      {result?.limitations.length ? (
-        <details className="unified-map-limitations">
-          <summary>Data limitations</summary>
-          <div>
-            <p>Check these notes before relying on a listing.</p>
-            <ul>{result.limitations.map((limitation) => <li key={limitation}>{limitation}</li>)}</ul>
-          </div>
-        </details>
-      ) : null}
       {isLoading ? <LoadingState /> : null}
       {loadError ? (
         <div className="error-state" role="alert">
@@ -556,23 +607,31 @@ export function MapPage() {
                 <input
                   id="map-area-search"
                   ref={searchInputRef}
+                  role="combobox"
                   value={query}
                   onChange={(event) => setQuery(event.target.value)}
-                  placeholder="Suburb or postcode"
-                  aria-describedby="map-search-help"
+                  onKeyDown={(event) => {
+                    if (event.key === 'Escape') {
+                      suggestionRequestRef.current += 1
+                      setSearchResults([])
+                    }
+                  }}
+                  placeholder="Address, suburb, or postcode"
+                  autoComplete="off"
+                  aria-autocomplete="list"
+                  aria-controls="map-area-suggestions"
+                  aria-expanded={searchResults.length > 0}
                   aria-invalid={Boolean(searchError)}
-                  disabled={isSearching}
                 />
                 <button className="button button--primary" type="submit" disabled={isSearching}>
                   {isSearching ? 'Searching…' : 'Search'}
                 </button>
               </div>
-              <p id="map-search-help">Search runs only when you choose Search.</p>
               {searchError ? <p className="field-error" role="alert">{searchError}</p> : null}
-              {searchResults.length > 1 ? (
-                <div className="unified-map-suggestions" aria-label="Search results">
+              {searchResults.length > 0 ? (
+                <div className="unified-map-suggestions" id="map-area-suggestions" role="listbox" aria-label="Matching places">
                   {searchResults.map((location) => (
-                    <button key={`${location.postcode}-${location.label}`} type="button" onClick={() => applyArea(location)}>
+                    <button key={`${location.postcode}-${location.label}`} type="button" role="option" onClick={() => applyArea(location)}>
                       <MapPin aria-hidden="true" size={18} />
                       <span><strong>{location.label}</strong><small>Victoria {location.postcode}</small></span>
                     </button>
@@ -580,10 +639,6 @@ export function MapPage() {
                 </div>
               ) : null}
             </form>
-            <p className="unified-map-context" role="status">
-              <MapPin aria-hidden="true" size={18} weight="fill" />
-              <span>Showing places near <strong>{area.label}</strong></span>
-            </p>
             <MapFilters selectedKinds={selectedKinds} onChooseAll={chooseAll} onToggleKind={toggleKind} />
           </div> : null}
           <div

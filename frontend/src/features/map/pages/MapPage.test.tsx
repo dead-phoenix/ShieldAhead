@@ -2,6 +2,7 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { storageKeys } from '../../../app/config/product'
+import { searchLocations } from '../data/locationSearchApi'
 import type { MapPlaceResult } from '../model/mapTypes'
 import { MapPage } from './MapPage'
 
@@ -32,6 +33,11 @@ const mapResult: MapPlaceResult = {
 
 vi.mock('../data/mapPlaceRepository', () => ({
   getMapPlaceRepository: () => ({ findNearby: vi.fn().mockResolvedValue(mapResult) }),
+}))
+
+vi.mock('../data/locationSearchApi', () => ({
+  searchLocations: vi.fn().mockResolvedValue([]),
+  resolveCoordinates: vi.fn(),
 }))
 
 vi.mock('../../../shared/map/LazyMapView', () => ({
@@ -139,11 +145,31 @@ describe('unified Map page', () => {
   it('requires a saved postcode instead of attempting a suburb lookup while offline', async () => {
     Object.defineProperty(window.navigator, 'onLine', { configurable: true, value: false })
     render(<MemoryRouter initialEntries={['/map']}><MapPage /></MemoryRouter>)
-    const input = screen.getByRole('textbox', { name: 'Search area' })
+    const input = screen.getByRole('combobox', { name: 'Search area' })
 
     fireEvent.change(input, { target: { value: 'Ballarat' } })
     fireEvent.click(screen.getByRole('button', { name: 'Search' }))
 
     expect(await screen.findByRole('alert')).toHaveTextContent('Suburb search needs an internet connection')
+  })
+
+  it('suggests places while typing and loads the area only after one is chosen', async () => {
+    vi.mocked(searchLocations).mockResolvedValue([
+      { postcode: '3350', label: 'Ballarat 3350' },
+      { postcode: '3352', label: 'Ballarat East 3352' },
+    ])
+    render(<MemoryRouter initialEntries={['/map']}><MapPage /></MemoryRouter>)
+    expect(await screen.findByText('Library Wi-Fi')).toBeVisible()
+
+    fireEvent.change(screen.getByRole('combobox', { name: 'Search area' }), { target: { value: 'Ballarat' } })
+
+    expect(await screen.findByRole('option', { name: /Ballarat 3350/ })).toBeVisible()
+    expect(screen.getByRole('option', { name: /Ballarat East 3352/ })).toBeVisible()
+    expect(screen.getByRole('heading', { name: 'Places near Harcourt 3453' })).toBeVisible()
+
+    fireEvent.click(screen.getByRole('option', { name: /Ballarat 3350/ }))
+
+    expect(screen.getByRole('heading', { name: 'Places near Ballarat 3350' })).toBeVisible()
+    expect(screen.queryByRole('option', { name: /Ballarat East 3352/ })).not.toBeInTheDocument()
   })
 })

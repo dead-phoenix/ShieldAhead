@@ -34,8 +34,7 @@ function normalizeRecord(value: unknown): SearchLocationResult | null {
 
 export async function searchLocations(query: string): Promise<SearchLocationResult[]> {
   const trimmed = query.trim()
-  const postcode = trimmed.match(/\b(3\d{3})\b/)?.[1]
-  if (postcode) return [{ postcode, label: postcode }]
+  if (/^3\d{3}$/.test(trimmed)) return [{ postcode: trimmed, label: trimmed }]
 
   const url = new URL('/api/locations/search', `${apiOrigin()}/`)
   url.searchParams.set('q', trimmed)

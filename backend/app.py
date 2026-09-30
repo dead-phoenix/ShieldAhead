@@ -7,6 +7,7 @@ from routes.refresh_routes import refresh_bp
 from routes.spa_routes import spa_bp
 from routes.directions_routes import directions_bp
 from routes.helplines_routes import helplines_bp
+from routes.locations_routes import locations_bp
 from services.refresh_service import maybe_refresh_on_startup
 
 init_db()
@@ -19,6 +20,7 @@ app.register_blueprint(refresh_bp)
 app.register_blueprint(spa_bp)
 app.register_blueprint(directions_bp)
 app.register_blueprint(helplines_bp)
+app.register_blueprint(locations_bp)
 
 #  Start server
 
