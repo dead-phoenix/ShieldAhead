@@ -22,6 +22,7 @@ interface LazyMapViewProps {
   initialViewport?: MapViewport
   onViewportChange?: (viewport: MapViewport) => void
   routeRecentreKey?: number
+  focusSelectedMarker?: boolean
 }
 
 class MapLoadBoundary extends Component<{ children: ReactNode; onReturnToList: () => void }, { failed: boolean }> {
