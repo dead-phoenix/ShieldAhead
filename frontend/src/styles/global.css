@@ -2261,6 +2261,33 @@ input[type='checkbox'] {
 .directions-field small { color: var(--color-text-muted); font-size: var(--text-xs); }
 .directions-field strong { overflow-wrap: anywhere; }
 
+.directions-suggestions {
+  display: grid;
+  max-height: 14rem;
+  overflow-y: auto;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-raised);
+}
+
+.directions-suggestions button {
+  display: flex;
+  min-height: 3.25rem;
+  gap: var(--space-3);
+  align-items: center;
+  padding: var(--space-3);
+  border: 0;
+  background: transparent;
+  color: var(--color-text);
+  text-align: left;
+}
+
+.directions-suggestions button + button { border-top: 1px solid var(--color-border); }
+.directions-suggestions span { display: grid; }
+.directions-suggestions small { color: var(--color-text-muted); }
+.directions-search-status { color: var(--color-text-muted); font-size: var(--text-sm); }
+
 .directions-origin-actions {
   display: flex;
   flex-wrap: wrap;

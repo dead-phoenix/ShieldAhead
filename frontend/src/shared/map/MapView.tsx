@@ -107,6 +107,7 @@ export function MapView({ ariaLabel, markers, selectedIds = [], onSelect, onRetu
   const mapRef = useRef<MapLibreMap | null>(null)
   const markerRefs = useRef<Marker[]>([])
   const searchMarkerRef = useRef<Marker | null>(null)
+  const routeOriginMarkerRef = useRef<Marker | null>(null)
   const markerButtonsRef = useRef(new Map<string, HTMLButtonElement>())
   const previewPopupRef = useRef<Popup | null>(null)
   const onSelectRef = useRef(onSelect)
@@ -326,6 +327,8 @@ export function MapView({ ariaLabel, markers, selectedIds = [], onSelect, onRetu
     if (map.getLayer(lineId)) map.removeLayer(lineId)
     if (map.getLayer(outlineId)) map.removeLayer(outlineId)
     if (map.getSource(sourceId)) map.removeSource(sourceId)
+    routeOriginMarkerRef.current?.remove()
+    routeOriginMarkerRef.current = null
     if (!route) return
 
     map.addSource(sourceId, {
@@ -338,6 +341,18 @@ export function MapView({ ariaLabel, markers, selectedIds = [], onSelect, onRetu
     })
     map.addLayer({ id: outlineId, type: 'line', source: sourceId, paint: { 'line-color': '#ffffff', 'line-width': 8, 'line-opacity': 0.92 } })
     map.addLayer({ id: lineId, type: 'line', source: sourceId, paint: { 'line-color': '#176b87', 'line-width': 5, 'line-opacity': 1 } })
+
+    // The route's own first point is the starting point — the destination
+    // already has its own marker (the selected wifi/support place), so this
+    // just fills the one missing pin, like Google Maps' start/end markers.
+    const originPoint = route.coordinates[0]
+    if (originPoint) {
+      routeOriginMarkerRef.current = new Marker({ color: '#16a34a' })
+        .setLngLat(originPoint)
+        .setPopup(new Popup({ closeButton: false, offset: 32, maxWidth: '14rem' }).setText('Starting point'))
+        .addTo(map)
+    }
+
     const bounds = new LngLatBounds()
     route.coordinates.forEach((point) => bounds.extend(point))
     map.fitBounds(bounds, { padding: 72, maxZoom: 15, duration: 500 })
@@ -346,6 +361,8 @@ export function MapView({ ariaLabel, markers, selectedIds = [], onSelect, onRetu
       if (map.getLayer(lineId)) map.removeLayer(lineId)
       if (map.getLayer(outlineId)) map.removeLayer(outlineId)
       if (map.getSource(sourceId)) map.removeSource(sourceId)
+      routeOriginMarkerRef.current?.remove()
+      routeOriginMarkerRef.current = null
     }
   }, [isReady, route])
 

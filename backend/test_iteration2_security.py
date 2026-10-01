@@ -389,7 +389,7 @@ def test_directions_rate_limit_blocks_excess_requests(client):
                 "/api/directions",
                 json=valid_directions_payload()
             )
-            for _ in range(11)
+            for _ in range(31)
         ]
 
     assert responses[-1].status_code == 429

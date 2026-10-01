@@ -1,5 +1,5 @@
 import { ArrowClockwise, Car, Crosshair, CursorClick, MapPin, PersonSimpleWalk, Warning } from '@phosphor-icons/react'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import {
   getDirections,
   type DirectionsProfile,
@@ -7,6 +7,7 @@ import {
   type RoutePreview,
 } from '../../data/api/directionsApi'
 import { LocationResolveError, readBrowserPosition } from '../../features/location/resolveSearchLocation'
+import { searchLocations, type SearchLocationResult } from '../../features/map/data/locationSearchApi'
 
 interface DirectionsPanelProps {
   destination: RoutePoint & { name: string }
@@ -50,10 +51,67 @@ export function DirectionsPanel({ destination, onRouteChange, destinationIsAppro
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
   const [originLabel, setOriginLabel] = useState(initialState?.originLabel ?? '')
+  const [originSuggestions, setOriginSuggestions] = useState<SearchLocationResult[]>([])
+  const [isSearchingOrigin, setIsSearchingOrigin] = useState(false)
+  const appliedOriginLabelRef = useRef(initialState?.originLabel ?? '')
+  const originRequestRef = useRef(0)
 
   useEffect(() => {
     onStateChange?.({ profile, origin, originLabel, route })
   }, [onStateChange, origin, originLabel, profile, route])
+
+  useEffect(() => {
+    const trimmed = originLabel.trim()
+    if (trimmed === appliedOriginLabelRef.current.trim()) {
+      originRequestRef.current += 1
+      setOriginSuggestions([])
+      setIsSearchingOrigin(false)
+      return
+    }
+    if (trimmed.length < 3 && !/^3\d{3}$/.test(trimmed)) {
+      originRequestRef.current += 1
+      setOriginSuggestions([])
+      setIsSearchingOrigin(false)
+      return
+    }
+    if (!isOnline) {
+      originRequestRef.current += 1
+      setOriginSuggestions([])
+      setIsSearchingOrigin(false)
+      return
+    }
+
+    const requestId = ++originRequestRef.current
+    const timer = window.setTimeout(() => {
+      void (async () => {
+        setIsSearchingOrigin(true)
+        try {
+          const matches = await searchLocations(trimmed)
+          if (requestId !== originRequestRef.current) return
+          // A route needs a precise point, not just a postcode area.
+          setOriginSuggestions(matches.filter((match) => match.latitude != null && match.longitude != null))
+        } catch {
+          if (requestId !== originRequestRef.current) return
+          setOriginSuggestions([])
+        } finally {
+          if (requestId === originRequestRef.current) setIsSearchingOrigin(false)
+        }
+      })()
+    }, 300)
+
+    return () => window.clearTimeout(timer)
+  }, [isOnline, originLabel])
+
+  function selectOriginSuggestion(location: SearchLocationResult) {
+    if (location.latitude == null || location.longitude == null) return
+    originRequestRef.current += 1
+    setOriginSuggestions([])
+    appliedOriginLabelRef.current = location.label
+    setOriginLabel(location.label)
+    const nextOrigin = { latitude: location.latitude, longitude: location.longitude }
+    setOrigin(nextOrigin)
+    void calculate(profile, nextOrigin)
+  }
 
   async function calculate(nextProfile: DirectionsProfile, nextOrigin: RoutePoint) {
     if (!isOnline) {
@@ -85,6 +143,9 @@ export function DirectionsPanel({ destination, onRouteChange, destinationIsAppro
         longitude: position.coords.longitude,
       }
       setOrigin(nextOrigin)
+      originRequestRef.current += 1
+      setOriginSuggestions([])
+      appliedOriginLabelRef.current = 'Your current location'
       setOriginLabel('Your current location')
       await calculate(profile, nextOrigin)
     } catch (reason) {
@@ -99,6 +160,9 @@ export function DirectionsPanel({ destination, onRouteChange, destinationIsAppro
     if (!selectedMapStart) return
     queueMicrotask(() => {
       setOrigin(selectedMapStart)
+      originRequestRef.current += 1
+      setOriginSuggestions([])
+      appliedOriginLabelRef.current = 'Point selected on map'
       setOriginLabel('Point selected on map')
       void calculate(profile, selectedMapStart)
     })
@@ -145,15 +209,37 @@ export function DirectionsPanel({ destination, onRouteChange, destinationIsAppro
             <Crosshair aria-hidden="true" size={20} />
             <input
               id="directions-start"
-              value={origin ? originLabel : ''}
-              placeholder="Choose a starting point"
-              readOnly
-              onClick={onRequestMapStart}
+              value={originLabel}
+              onChange={(event) => setOriginLabel(event.target.value)}
+              onKeyDown={(event) => {
+                if (event.key === 'Escape') {
+                  originRequestRef.current += 1
+                  setOriginSuggestions([])
+                }
+              }}
+              placeholder="Address, suburb, or postcode"
+              autoComplete="off"
+              role="combobox"
+              aria-autocomplete="list"
+              aria-controls="directions-start-suggestions"
+              aria-expanded={originSuggestions.length > 0}
               aria-describedby="directions-start-help"
               disabled={isLoading || !isOnline}
             />
           </div>
         </label>
+        {originSuggestions.length > 0 ? (
+          <div className="directions-suggestions" id="directions-start-suggestions" role="listbox" aria-label="Matching starting points">
+            {originSuggestions.map((location) => (
+              <button key={`${location.postcode}-${location.label}`} type="button" role="option" onClick={() => selectOriginSuggestion(location)}>
+                <MapPin aria-hidden="true" size={18} />
+                <span><strong>{location.label}</strong><small>Victoria {location.postcode}</small></span>
+              </button>
+            ))}
+          </div>
+        ) : isSearchingOrigin ? (
+          <p className="directions-search-status" role="status">Searching…</p>
+        ) : null}
         <label className="directions-search-field" htmlFor="directions-destination">
           <span>Destination</span>
           <div>

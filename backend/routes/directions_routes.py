@@ -44,7 +44,7 @@ def _in_victoria(lat, lng):
 
 
 @directions_bp.route("/api/directions", methods=["POST"])
-@limiter.limit("10 per minute")
+@limiter.limit("30 per minute")
 def post_directions():
     """Proxy an ORS directions request. Stateless — coordinates are not stored."""
     body = request.get_json(silent=True)
