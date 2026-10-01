@@ -24,6 +24,7 @@ export const appRoutes = {
   supportDetail: (id: string) => `/support/${id}`,
   crisis: '/crisis',
   crisisDetail: (kind: string) => `/crisis/${kind}`,
+  crisisGuidance: (kind: string) => `/crisis/${kind}/guidance`,
   emergencyPack: '/emergency-pack',
   settings: '/settings',
   editProfile: '/settings/edit-profile',
