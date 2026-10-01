@@ -1,4 +1,4 @@
-import { ArrowLeft, ArrowSquareOut, Check, CheckCircle, CloudCheck, Info, Phone } from '@phosphor-icons/react'
+import { ArrowLeft, ArrowRight, ArrowSquareOut, Check, CheckCircle, CloudCheck, Info, Phone } from '@phosphor-icons/react'
 import { useMemo, useState } from 'react'
 import { Link, Navigate, useParams } from 'react-router-dom'
 import { appRoutes } from '../../../app/config/product'
@@ -38,7 +38,7 @@ export function CrisisDetailPage() {
   return <section className="content-page crisis-page crisis-detail-page" aria-labelledby="crisis-detail-title">
     <Link className="page-back-link" to={appRoutes.crisis}><ArrowLeft aria-hidden="true" size={18} /> Back to Crisis</Link>
     <header className="crisis-detail-hero">
-      <div><span className="crisis-local-label"><CloudCheck aria-hidden="true" size={18} /> Checklist saved on this device</span><h1 id="crisis-detail-title">{content.title}</h1><p>{content.summary}</p></div>
+      <div><span className="crisis-local-label"><CloudCheck aria-hidden="true" size={18} /> Checklist saved on this device</span><h1 id="crisis-detail-title">{content.title}</h1><p>{content.summary}</p><Link className="button button--quiet" to={appRoutes.crisisGuidance(content.kind)}>View preparation guidance <ArrowRight aria-hidden="true" size={18} weight="bold" /></Link></div>
       {helplines.length > 0 && <aside className="crisis-helpline-card" aria-labelledby="helplines-title">
         <h2 id="helplines-title"><Phone aria-hidden="true" size={22} weight="fill" /> Helpline numbers</h2>
         <ul>

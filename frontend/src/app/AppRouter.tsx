@@ -4,6 +4,7 @@ import { useLocation } from 'react-router-dom'
 import { HomePage } from '../features/home/pages/HomePage'
 import { CrisisLandingPage } from '../features/crisis/pages/CrisisLandingPage'
 import { CrisisDetailPage } from '../features/crisis/pages/CrisisDetailPage'
+import { CrisisGuidancePage } from '../features/crisis/pages/CrisisGuidancePage'
 import { ChooseLocationPage } from '../features/location/pages/ChooseLocationPage'
 import { HouseholdBasicsPage } from '../features/onboarding/pages/HouseholdBasicsPage'
 import { HouseholdNeedsPage } from '../features/onboarding/pages/HouseholdNeedsPage'
@@ -71,6 +72,7 @@ export function AppRouter() {
           <Route path={appRoutes.crisis} element={<CrisisLandingPage />} />
           <Route path={appRoutes.emergencyPack} element={<EmergencyPackPage />} />
           <Route path="/crisis/:kind" element={<CrisisDetailPage />} />
+          <Route path="/crisis/:kind/guidance" element={<CrisisGuidancePage />} />
           <Route element={<RequireSearchLocation />}>
             <Route path={appRoutes.map} element={<MapPage />} />
             <Route path={appRoutes.wifi} element={<Navigate replace to={`${appRoutes.map}?category=wifi`} />} />
