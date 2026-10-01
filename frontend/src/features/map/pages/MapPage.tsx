@@ -249,6 +249,10 @@ export function MapPage() {
     setLoadError('')
     setSearchError('')
     setResult(null)
+    // area.postcode may be unchanged (re-selecting the same place) — the
+    // fetch effect only re-runs when its dependencies change, so bump
+    // retryKey too or isLoading would stay stuck true forever.
+    setRetryKey((current) => current + 1)
     appliedQueryRef.current = location.label
     suggestionRequestRef.current += 1
     setQuery(location.label)
