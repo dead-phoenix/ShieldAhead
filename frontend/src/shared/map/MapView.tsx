@@ -63,6 +63,12 @@ function createPreviewContent(record: MapRecord, count: number): HTMLDivElement 
   return content
 }
 
+export interface SearchMarkerPoint {
+  latitude: number
+  longitude: number
+  label: string
+}
+
 interface MapViewProps {
   ariaLabel: string
   markers: MapRecord[]
@@ -77,6 +83,10 @@ interface MapViewProps {
   onViewportChange?: (viewport: MapViewport) => void
   routeRecentreKey?: number
   focusSelectedMarker?: boolean
+  /** A single pin for the place the user searched for, shown distinctly
+   * from the wifi/support markers — like Google Maps drops a pin exactly
+   * where you searched. The map centres on it when it's set. */
+  searchMarker?: SearchMarkerPoint
 }
 
 export interface MapViewport extends RoutePoint {
@@ -92,10 +102,11 @@ function groupMarkersByPosition(markers: MapRecord[]): MapRecord[][] {
   return [...groups.values()]
 }
 
-export function MapView({ ariaLabel, markers, selectedIds = [], onSelect, onReturnToList, route, isSelectingStart = false, onSelectStart, onViewportSettled, initialViewport, onViewportChange, routeRecentreKey = 0, focusSelectedMarker = false }: MapViewProps) {
+export function MapView({ ariaLabel, markers, selectedIds = [], onSelect, onReturnToList, route, isSelectingStart = false, onSelectStart, onViewportSettled, initialViewport, onViewportChange, routeRecentreKey = 0, focusSelectedMarker = false, searchMarker }: MapViewProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const mapRef = useRef<MapLibreMap | null>(null)
   const markerRefs = useRef<Marker[]>([])
+  const searchMarkerRef = useRef<Marker | null>(null)
   const markerButtonsRef = useRef(new Map<string, HTMLButtonElement>())
   const previewPopupRef = useRef<Popup | null>(null)
   const onSelectRef = useRef(onSelect)
@@ -147,6 +158,8 @@ export function MapView({ ariaLabel, markers, selectedIds = [], onSelect, onRetu
       previewPopupRef.current = null
       markerRefs.current.forEach((marker) => marker.remove())
       markerRefs.current = []
+      searchMarkerRef.current?.remove()
+      searchMarkerRef.current = null
       if (loadTimer) window.clearTimeout(loadTimer)
       mapRef.current?.remove()
       mapRef.current = null
@@ -233,6 +246,33 @@ export function MapView({ ariaLabel, markers, selectedIds = [], onSelect, onRetu
       button.setAttribute('aria-pressed', String(isSelected))
     })
   }, [selectedIds])
+
+  useEffect(() => {
+    const map = mapRef.current
+    if (!map || !isReady) return
+
+    searchMarkerRef.current?.remove()
+    searchMarkerRef.current = null
+    if (!searchMarker) return
+
+    const marker = new Marker({ color: '#e11d48' })
+      .setLngLat([searchMarker.longitude, searchMarker.latitude])
+      .setPopup(new Popup({ closeButton: false, offset: 32, maxWidth: '18rem' }).setText(searchMarker.label))
+      .addTo(map)
+    marker.togglePopup()
+    searchMarkerRef.current = marker
+
+    map.easeTo({ center: [searchMarker.longitude, searchMarker.latitude], zoom: 15, duration: 350 })
+
+    return () => {
+      marker.remove()
+      if (searchMarkerRef.current === marker) searchMarkerRef.current = null
+    }
+    // Keyed on the point's own fields, not the object reference, so a
+    // caller re-rendering with an equivalent-but-new object literal each
+    // time doesn't re-create and re-centre the pin on every render.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isReady, searchMarker?.latitude, searchMarker?.longitude, searchMarker?.label])
 
   useEffect(() => {
     const map = mapRef.current

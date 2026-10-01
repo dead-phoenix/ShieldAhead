@@ -26,7 +26,7 @@ import {
 } from '../../../storage/searchLocationStorage'
 import { resolveCoordinates, searchLocations, type SearchLocationResult } from '../data/locationSearchApi'
 import type { RoutePoint, RoutePreview } from '../../../data/api/directionsApi'
-import type { MapViewport } from '../../../shared/map/MapView'
+import type { MapViewport, SearchMarkerPoint } from '../../../shared/map/MapView'
 import { mapPlaceHasCoordinates, mapPlacesToMapRecords } from '../data/mapPlaceMapRecords'
 import { getMapPlaceRepository } from '../data/mapPlaceRepository'
 import { MapFilters } from '../components/MapFilters'
@@ -111,6 +111,7 @@ export function MapPage() {
   const [panelSize, setPanelSize] = useState<MobilePanelSize>(restoredSession?.panelSize ?? 'half')
   const [movedMapCenter, setMovedMapCenter] = useState<RoutePoint>()
   const [mapViewport, setMapViewport] = useState<MapViewport | undefined>(restoredSession?.viewport)
+  const [searchPoint, setSearchPoint] = useState<SearchMarkerPoint | undefined>()
   const [routePreview, setRoutePreview] = useState<RoutePreview | undefined>(restoredSession?.directions?.route)
   const [directionsState, setDirectionsState] = useState<DirectionsPanelState | undefined>(restoredSession?.directions)
   const [selectedMapStart, setSelectedMapStart] = useState<RoutePoint>()
@@ -253,6 +254,11 @@ export function MapPage() {
     // fetch effect only re-runs when its dependencies change, so bump
     // retryKey too or isLoading would stay stuck true forever.
     setRetryKey((current) => current + 1)
+    setSearchPoint(
+      location.latitude != null && location.longitude != null
+        ? { latitude: location.latitude, longitude: location.longitude, label: location.label }
+        : undefined,
+    )
     appliedQueryRef.current = location.label
     suggestionRequestRef.current += 1
     setQuery(location.label)
@@ -693,6 +699,7 @@ export function MapPage() {
                 focusSelectedMarker={displayedPanelMode === 'details'}
                 isSelectingStart={isSelectingMapStart}
                 onSelectStart={handleSelectMapStart}
+                searchMarker={searchPoint}
               />
               {movedMapCenter && displayedPanelMode !== 'directions' ? (
                 <button className="button button--quiet unified-map-search-area" type="button" onClick={() => void searchMovedMapArea()} disabled={isSearching}>
