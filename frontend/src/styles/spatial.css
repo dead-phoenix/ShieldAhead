@@ -1075,6 +1075,10 @@ h3 {
     box-shadow: 0 12px 36px rgba(45, 88, 139, 0.1);
   }
 
+  .desktop-nav.nav-flow {
+    width: clamp(28rem, 38vw, 36rem);
+  }
+
   .desktop-nav {
     width: auto;
     border-radius: 0;
