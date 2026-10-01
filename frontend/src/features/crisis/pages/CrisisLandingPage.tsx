@@ -3,7 +3,7 @@ import { lazy, Suspense, useCallback, useState, type FormEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { appRoutes } from '../../../app/config/product'
 import { crisisContent } from '../crisisContent'
-import { matchCrisisKind } from '../matchCrisisQuery'
+import { matchCrisisKind, matchCrisisStage } from '../matchCrisisQuery'
 
 const AccordionGallery = lazy(() => import('../../../shared/components/AccordionGallery').then((module) => ({ default: module.AccordionGallery })))
 
@@ -22,7 +22,8 @@ export function CrisisLandingPage() {
       return
     }
     setSearchError('')
-    navigate(appRoutes.crisisGuidance(kind))
+    const stage = matchCrisisStage(query)
+    navigate(appRoutes.crisisGuidance(kind), stage ? { state: { stage } } : undefined)
   }
 
   return (

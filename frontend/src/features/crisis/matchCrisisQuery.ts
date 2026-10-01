@@ -27,3 +27,32 @@ export function matchCrisisKind(query: string): CrisisKind | undefined {
   if (!trimmed) return undefined
   return CRISIS_KEYWORD_PATTERNS.find(({ pattern }) => pattern.test(trimmed))?.kind
 }
+
+export type CrisisStage = 'before' | 'during' | 'after'
+
+// Checked in this order (during, after, before) since "during" and "after"
+// are the more specific/active signals — e.g. "is came"/"is coming"/"has
+// started" only make sense mid-event, so they're checked first. "before"
+// is checked last since its signal words ("plan", "prepare") are common
+// and safe to treat as the fallback reading when nothing more specific
+// matched.
+const STAGE_KEYWORD_PATTERNS: { stage: CrisisStage; pattern: RegExp }[] = [
+  {
+    stage: 'during',
+    pattern: /\bduring\b|\bright\s+now\b|\bhappening\s+now\b|\bcurrently\b|\bin\s+progress\b|\bwhile\s+it'?s?\s+happening\b|\b(is|was|are|has|have)\s+(come|coming|came|arriv\w*|here|happen(ing|ed)?|started|starting)\b/i,
+  },
+  {
+    stage: 'after',
+    pattern: /\bafter\b|\bonce\s+it'?s?\s+(over|passed|finished|ended)\b|\bpost[\s-]?(bushfire|flood|outage)\b|\brecovery\b|\bclean(ing)?[\s-]?up\b|\baftermath\b/i,
+  },
+  {
+    stage: 'before',
+    pattern: /\bbefore\b|\bprepar(e|ing|ation|edness)\b|\bget(ting)?\s+ready\b|\bplan(ning)?\b|\bin\s+advance\b|\bahead\s+of\s+time\b/i,
+  },
+]
+
+export function matchCrisisStage(query: string): CrisisStage | undefined {
+  const trimmed = query.trim()
+  if (!trimmed) return undefined
+  return STAGE_KEYWORD_PATTERNS.find(({ pattern }) => pattern.test(trimmed))?.stage
+}

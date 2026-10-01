@@ -3512,14 +3512,31 @@ input[type='checkbox'] {
   border-top: 1px solid var(--color-border);
 }
 
+.crisis-guidance-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+  padding: var(--space-1);
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  background: var(--color-surface-muted);
+  width: fit-content;
+}
+.crisis-guidance-tabs button {
+  min-height: 2.75rem;
+  padding: 0.45rem 1.1rem;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--color-text-muted);
+  font-weight: 700;
+}
+.crisis-guidance-tabs button.is-active { background: var(--color-accent); color: var(--color-on-primary); }
+
 .crisis-guidance-stage {
   display: grid;
   gap: var(--space-3);
-  padding-bottom: var(--space-4);
-  border-bottom: 1px solid var(--color-border-soft);
 }
-.crisis-guidance-stage:last-child { padding-bottom: 0; border-bottom: 0; }
-.crisis-guidance-stage h3 { font-family: var(--font-display); font-size: var(--text-xl); }
 .crisis-guidance-stage__intro { max-width: 68ch; color: var(--color-text-muted); }
 
 .crisis-guidance-stage__items { display: grid; gap: var(--space-3); }
@@ -3529,7 +3546,7 @@ input[type='checkbox'] {
   border-radius: var(--radius-md);
   background: var(--color-surface);
 }
-.crisis-guidance-item h4 { font-size: var(--text-base); }
+.crisis-guidance-item h3 { font-size: var(--text-base); }
 .crisis-guidance-item p { margin-top: var(--space-1); color: var(--color-text-secondary); }
 .crisis-guidance-item ul { display: grid; gap: var(--space-1); margin-top: var(--space-2); padding-inline-start: var(--space-5); color: var(--color-text-secondary); font-size: var(--text-sm); }
 .crisis-guidance-item__sources { display: flex; flex-wrap: wrap; gap: var(--space-3); margin-top: var(--space-3); }

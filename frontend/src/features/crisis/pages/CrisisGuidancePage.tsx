@@ -1,13 +1,21 @@
 import { ArrowLeft, ArrowSquareOut, CalendarBlank, ShieldWarning } from '@phosphor-icons/react'
-import { Navigate, Link, useParams } from 'react-router-dom'
+import { useState } from 'react'
+import { Navigate, Link, useLocation, useParams } from 'react-router-dom'
 import { appRoutes } from '../../../app/config/product'
-import { getCrisisContent } from '../crisisContent'
+import { getCrisisContent, type CrisisGuidanceStage } from '../crisisContent'
 
 export function CrisisGuidancePage() {
   const { kind } = useParams()
+  const location = useLocation()
   const content = getCrisisContent(kind)
+  const requestedStage = (location.state as { stage?: CrisisGuidanceStage['id'] } | null)?.stage
+  const [activeStageId, setActiveStageId] = useState<CrisisGuidanceStage['id']>(
+    requestedStage ?? content?.guidance[0]?.id ?? 'before',
+  )
 
   if (!content) return <Navigate replace to={appRoutes.crisis} />
+
+  const activeStage = content.guidance.find((stage) => stage.id === activeStageId) ?? content.guidance[0]
 
   return <section className="content-page crisis-page crisis-guidance-page" aria-labelledby="crisis-guidance-title">
     <Link className="page-back-link" to={appRoutes.crisisDetail(content.kind)}><ArrowLeft aria-hidden="true" size={18} /> Back to {content.title}</Link>
@@ -25,26 +33,44 @@ export function CrisisGuidancePage() {
         <span className="crisis-source-panel__date"><CalendarBlank aria-hidden="true" size={16} /> Last checked {content.lastVerified}</span>
       </div>
     </header>
-    <section className="crisis-guidance" aria-label="Preparation guidance by stage">
+    <div className="crisis-guidance-tabs" role="tablist" aria-label="Preparation guidance stage">
       {content.guidance.map((stage) => (
-        <div className="crisis-guidance-stage" key={stage.id}>
-          <h2>{stage.title}</h2>
-          {stage.introduction && <p className="crisis-guidance-stage__intro">{stage.introduction}</p>}
-          <div className="crisis-guidance-stage__items">
-            {stage.items.map((item) => (
-              <article className="crisis-guidance-item" key={item.id}>
-                <h3>{item.title}</h3>
-                <p>{item.summary}</p>
-                {item.steps && <ul>{item.steps.map((step) => <li key={step}>{step}</li>)}</ul>}
-                <div className="crisis-guidance-item__sources">
-                  <a href={item.sourceUrl} rel="noreferrer" target="_blank">Source: {item.sourceName} <ArrowSquareOut aria-hidden="true" size={15} /></a>
-                  {item.officialDetailsUrl && <a href={item.officialDetailsUrl} rel="noreferrer" target="_blank">For official details, check VICSES <ArrowSquareOut aria-hidden="true" size={15} /></a>}
-                </div>
-              </article>
-            ))}
-          </div>
-        </div>
+        <button
+          aria-controls={`crisis-guidance-panel-${stage.id}`}
+          aria-selected={stage.id === activeStage.id}
+          className={stage.id === activeStage.id ? 'is-active' : ''}
+          id={`crisis-guidance-tab-${stage.id}`}
+          key={stage.id}
+          onClick={() => setActiveStageId(stage.id)}
+          role="tab"
+          type="button"
+        >
+          {stage.title}
+        </button>
       ))}
+    </div>
+    <section
+      aria-labelledby={`crisis-guidance-tab-${activeStage.id}`}
+      className="crisis-guidance"
+      id={`crisis-guidance-panel-${activeStage.id}`}
+      role="tabpanel"
+    >
+      <div className="crisis-guidance-stage">
+        {activeStage.introduction && <p className="crisis-guidance-stage__intro">{activeStage.introduction}</p>}
+        <div className="crisis-guidance-stage__items">
+          {activeStage.items.map((item) => (
+            <article className="crisis-guidance-item" key={item.id}>
+              <h3>{item.title}</h3>
+              <p>{item.summary}</p>
+              {item.steps && <ul>{item.steps.map((step) => <li key={step}>{step}</li>)}</ul>}
+              <div className="crisis-guidance-item__sources">
+                <a href={item.sourceUrl} rel="noreferrer" target="_blank">Source: {item.sourceName} <ArrowSquareOut aria-hidden="true" size={15} /></a>
+                {item.officialDetailsUrl && <a href={item.officialDetailsUrl} rel="noreferrer" target="_blank">For official details, check VICSES <ArrowSquareOut aria-hidden="true" size={15} /></a>}
+              </div>
+            </article>
+          ))}
+        </div>
+      </div>
     </section>
   </section>
 }
