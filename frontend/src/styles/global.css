@@ -3319,6 +3319,25 @@ input[type='checkbox'] {
   gap: var(--space-2);
 }
 
+.crisis-query-search__suggestions {
+  display: grid;
+  max-height: 16rem;
+  overflow-y: auto;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+}
+.crisis-query-search__suggestions button {
+  min-height: 3rem;
+  padding: var(--space-3);
+  border: 0;
+  background: transparent;
+  color: var(--color-text);
+  text-align: left;
+}
+.crisis-query-search__suggestions button + button { border-top: 1px solid var(--color-border); }
+.crisis-query-search__suggestions button:hover { background: var(--color-surface-muted); }
+
 .crisis-query-search__error { color: var(--color-danger); font-size: var(--text-sm); }
 
 .crisis-local-label {

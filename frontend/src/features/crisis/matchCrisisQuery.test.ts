@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { matchCrisisKind, matchCrisisStage, type CrisisStage } from './matchCrisisQuery'
+import { matchCrisisKind, matchCrisisStage, SUGGESTED_CRISIS_QUERIES, type CrisisStage } from './matchCrisisQuery'
 import type { CrisisKind } from './crisisContent'
 
 describe('matchCrisisKind', () => {
@@ -203,5 +203,24 @@ describe('matchCrisisKind + matchCrisisStage — full combination matrix', () =>
   it.each(matrix)('"%s" -> kind %s, stage %s', (query, expectedKind, expectedStage) => {
     expect(matchCrisisKind(query)).toBe(expectedKind)
     expect(matchCrisisStage(query)).toBe(expectedStage)
+  })
+})
+
+describe('SUGGESTED_CRISIS_QUERIES', () => {
+  it('covers exactly one example per (hazard x stage) combination', () => {
+    const combos = SUGGESTED_CRISIS_QUERIES.map((q) => `${matchCrisisKind(q)}:${matchCrisisStage(q)}`)
+    expect(new Set(combos).size).toBe(SUGGESTED_CRISIS_QUERIES.length)
+    expect(new Set(combos)).toEqual(new Set([
+      'bushfire:before', 'bushfire:during', 'bushfire:after',
+      'flood:before', 'flood:during', 'flood:after',
+      'power-outage:before', 'power-outage:during', 'power-outage:after',
+    ]))
+  })
+
+  it('every suggestion actually resolves to a hazard and a stage, never undefined', () => {
+    for (const query of SUGGESTED_CRISIS_QUERIES) {
+      expect(matchCrisisKind(query), query).toBeDefined()
+      expect(matchCrisisStage(query), query).toBeDefined()
+    }
   })
 })

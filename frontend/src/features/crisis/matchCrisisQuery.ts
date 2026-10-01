@@ -161,3 +161,20 @@ export function matchCrisisStage(query: string): CrisisStage | undefined {
   if (DURING_FALLBACK_ACTION_PATTERN.test(trimmed) || REPEATED_WORD_PATTERN.test(trimmed)) return 'during'
   return undefined
 }
+
+// Example questions shown as clickable suggestions under the search box —
+// one per (hazard x stage) combination, each verified to actually resolve
+// to that exact kind/stage pair by matchCrisisKind/matchCrisisStage (see
+// matchCrisisQuery.test.ts), so a suggestion never leads somewhere the
+// text itself wouldn't.
+export const SUGGESTED_CRISIS_QUERIES: string[] = [
+  'How should I prepare for bushfire',
+  'What should I do when bushfire is here',
+  'How do I clean up after a bushfire',
+  'How do I prepare for flood',
+  'Water is rising, what do I do',
+  'Is tap water safe to drink after a flood',
+  'How do I prepare for a power outage',
+  'The power just went out',
+  'When should I reconnect appliances after a power outage',
+]

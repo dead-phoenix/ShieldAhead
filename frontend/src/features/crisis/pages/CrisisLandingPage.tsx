@@ -1,9 +1,9 @@
 import { MagnifyingGlass } from '@phosphor-icons/react'
-import { lazy, Suspense, useCallback, useState, type FormEvent } from 'react'
+import { lazy, Suspense, useCallback, useRef, useState, type FormEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { appRoutes } from '../../../app/config/product'
 import { crisisContent } from '../crisisContent'
-import { matchCrisisKind, matchCrisisStage } from '../matchCrisisQuery'
+import { matchCrisisKind, matchCrisisStage, SUGGESTED_CRISIS_QUERIES } from '../matchCrisisQuery'
 
 const AccordionGallery = lazy(() => import('../../../shared/components/AccordionGallery').then((module) => ({ default: module.AccordionGallery })))
 
@@ -13,6 +13,15 @@ export function CrisisLandingPage() {
   const navigate = useNavigate()
   const [query, setQuery] = useState('')
   const [searchError, setSearchError] = useState('')
+  const [showSuggestions, setShowSuggestions] = useState(false)
+  const hideSuggestionsTimer = useRef<number>()
+
+  function goToMatch(kind: NonNullable<ReturnType<typeof matchCrisisKind>>, q: string) {
+    setSearchError('')
+    setShowSuggestions(false)
+    const stage = matchCrisisStage(q)
+    navigate(appRoutes.crisisGuidance(kind), stage ? { state: { stage } } : undefined)
+  }
 
   function handleSearch(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -21,9 +30,25 @@ export function CrisisLandingPage() {
       setSearchError("We couldn't match that to bushfire, flood, or power outage guidance. Choose a hazard below instead.")
       return
     }
-    setSearchError('')
-    const stage = matchCrisisStage(query)
-    navigate(appRoutes.crisisGuidance(kind), stage ? { state: { stage } } : undefined)
+    goToMatch(kind, query)
+  }
+
+  function selectSuggestion(suggestion: string) {
+    setQuery(suggestion)
+    const kind = matchCrisisKind(suggestion)
+    if (kind) goToMatch(kind, suggestion)
+  }
+
+  // A brief delay (rather than hiding on blur immediately) so a click on a
+  // suggestion button registers before the dropdown disappears — blur
+  // fires before the button's own click event otherwise.
+  function handleBlur() {
+    hideSuggestionsTimer.current = window.setTimeout(() => setShowSuggestions(false), 150)
+  }
+
+  function handleFocus() {
+    if (hideSuggestionsTimer.current) window.clearTimeout(hideSuggestionsTimer.current)
+    setShowSuggestions(true)
   }
 
   return (
@@ -47,14 +72,35 @@ export function CrisisLandingPage() {
           <input
             id="crisis-query-input"
             onChange={(event) => setQuery(event.target.value)}
+            onFocus={handleFocus}
+            onBlur={handleBlur}
             placeholder="How should I prepare for bushfire?"
             type="text"
             value={query}
+            autoComplete="off"
+            role="combobox"
+            aria-autocomplete="list"
+            aria-controls="crisis-query-suggestions"
+            aria-expanded={showSuggestions}
           />
           <button className="button button--primary" type="submit">
             <MagnifyingGlass aria-hidden="true" size={18} /> Search
           </button>
         </div>
+        {showSuggestions ? (
+          <div className="crisis-query-search__suggestions" id="crisis-query-suggestions" role="listbox" aria-label="Example questions">
+            {SUGGESTED_CRISIS_QUERIES.map((suggestion) => (
+              <button
+                key={suggestion}
+                type="button"
+                role="option"
+                onClick={() => selectSuggestion(suggestion)}
+              >
+                {suggestion}
+              </button>
+            ))}
+          </div>
+        ) : null}
         {searchError ? <p className="crisis-query-search__error" role="alert">{searchError}</p> : null}
       </form>
       <Suspense fallback={<p className="crisis-gallery-loading" role="status">Loading preparation topics…</p>}>
