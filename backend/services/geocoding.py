@@ -32,6 +32,30 @@ _ROAD_TYPE_WORDS = {
     "walk", "track", "esp", "esplanade",
 }
 
+# Matches the actual street-address portion of a longer string — used to
+# strip a leading suite/level/building-name prefix (e.g. ACNC's raw charity
+# addresses are often "Level 36, Collins Square, Tower 2, 727 Collins
+# Street, Docklands, VIC, 3008") that otherwise confuses a free-text
+# geocoder into finding nothing at all.
+_STREET_ADDRESS_START = re.compile(
+    r"\d+[A-Za-z]?\s+[A-Za-z0-9'.-]+(?:\s+[A-Za-z0-9'.-]+)*?\s+(?:"
+    + "|".join(sorted(_ROAD_TYPE_WORDS, key=len, reverse=True))
+    + r")\b",
+    re.IGNORECASE,
+)
+
+
+def _simplify_street_address(address):
+    """The last 'number + street name + street type' match in the string,
+    through to the end — drops anything before it (suite/level/building
+    name noise). Returns None if the address doesn't contain that shape,
+    or simplifying wouldn't actually change anything."""
+    matches = list(_STREET_ADDRESS_START.finditer(address))
+    if not matches:
+        return None
+    simplified = address[matches[-1].start():].strip().strip(",").strip()
+    return simplified if simplified and simplified != address else None
+
 
 def _trailing_suburb_hint(rest_of_query):
     """The last word of whatever follows the street-name prefix, if it looks
@@ -167,20 +191,14 @@ def reverse_geocode_locality(latitude, longitude):
         return empty
 
 
-def geocode_address(address):
-    """Convert a street address to coordinates, cached for this process."""
-    if not address:
-        return None, None
-    if address in _address_cache and _address_cache[address] != (None, None):
-        return _address_cache[address]
-
+def _geocode_query(query):
     try:
         # Photon is a public OSM geocoder that works for server-side address
         # lookups without requiring an API key.
         resp = http_requests.get(
             "https://photon.komoot.io/api/",
             params={
-                "q": f"{address}, Australia",
+                "q": f"{query}, Australia",
                 "limit": 1,
             },
             headers={"User-Agent": "ShieldAhead/1.0"},
@@ -191,9 +209,7 @@ def geocode_address(address):
         if features:
             coordinates = features[0].get("geometry", {}).get("coordinates") or []
             if len(coordinates) >= 2:
-                result = (float(coordinates[1]), float(coordinates[0]))
-                _address_cache[address] = result
-                return result
+                return (float(coordinates[1]), float(coordinates[0]))
     except Exception:
         pass
 
@@ -203,7 +219,7 @@ def geocode_address(address):
         resp = http_requests.get(
             "https://nominatim.openstreetmap.org/search",
             params={
-                "q": address,
+                "q": query,
                 "format": "json",
                 "limit": 1,
                 "countrycodes": "au",
@@ -214,13 +230,37 @@ def geocode_address(address):
         resp.raise_for_status()
         results = resp.json()
         if results:
-            coords = (float(results[0]["lat"]), float(results[0]["lon"]))
-            _address_cache[address] = coords
-            return coords
+            return (float(results[0]["lat"]), float(results[0]["lon"]))
     except Exception:
         pass
-    _address_cache[address] = (None, None)
     return None, None
+
+
+def geocode_address(address):
+    """Convert a street address to coordinates, cached for this process.
+
+    ACNC's raw charity addresses often carry a leading suite/level/building
+    name ("Level 36, Collins Square, Tower 2, 727 Collins Street,
+    Docklands, VIC, 3008") that a free-text geocoder can fail to parse at
+    all — confirmed: Photon/Nominatim return nothing for the full string
+    but resolve correctly once that prefix is stripped. So when the full
+    address fails, this retries with just the street-address portion
+    before giving up, rather than silently leaving the record at its
+    postcode-centroid fallback forever.
+    """
+    if not address:
+        return None, None
+    if address in _address_cache and _address_cache[address] != (None, None):
+        return _address_cache[address]
+
+    result = _geocode_query(address)
+    if result[0] is None:
+        simplified = _simplify_street_address(address)
+        if simplified:
+            result = _geocode_query(simplified)
+
+    _address_cache[address] = result
+    return result
 
 
 def _victorian_postcode(value):

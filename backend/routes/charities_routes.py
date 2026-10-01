@@ -24,17 +24,29 @@ def _flask_app():
     return app
 
 
-def _needs_address_coordinate_refresh(records):
-    """Detect old postcode-centroid-only charity data in a stored response."""
+def _needs_address_coordinate_refresh(records, centroid=None):
+    """Detect stale postcode-centroid charity coordinates in a stored
+    response — either every address-bearing record sharing one point
+    (never individually geocoded at all), or several different addresses
+    stuck at the exact postcode centroid while others nearby succeeded
+    (geocoding failed for just those, e.g. a messy ACNC suite/level
+    address the free-text geocoder couldn't parse)."""
     with_addresses = [record for record in records if record.get("address")]
     if len(with_addresses) < 2:
         return False
-    coordinates = {
+    coordinates = [
         (record.get("latitude"), record.get("longitude"))
         for record in with_addresses
         if record.get("latitude") is not None and record.get("longitude") is not None
-    }
-    return len(coordinates) <= 1
+    ]
+    if not coordinates:
+        return False
+    if len(set(coordinates)) <= 1:
+        return True
+    if centroid and centroid[0] is not None and centroid[1] is not None:
+        if sum(1 for point in coordinates if point == centroid) >= 2:
+            return True
+    return False
 
 
 @charities_bp.route("/api/charities")
@@ -96,7 +108,7 @@ def get_charities():
 
             if all_records:
                 expired = stale_timestamp is None or (now - stale_timestamp) >= CHARITY_CACHE_TTL_SECONDS
-                if expired or _needs_address_coordinate_refresh(all_records):
+                if expired or _needs_address_coordinate_refresh(all_records, (user_lat, user_lng)):
                     freshness_status = "stale"
                     schedule_charity_refresh(postcode, place_names)
             else:
@@ -114,7 +126,7 @@ def get_charities():
                         "error": "The charity data source is currently unavailable. Please try again later."
                     }), 503
 
-        if all_records and _needs_address_coordinate_refresh(all_records):
+        if all_records and _needs_address_coordinate_refresh(all_records, (user_lat, user_lng)):
             freshness_status = "stale"
             schedule_charity_refresh(postcode, place_names)
 
@@ -154,7 +166,7 @@ def get_charities():
             )
         if fetch_error:
             limitations.append("ACNC charity data unavailable this refresh — showing the last successfully cached results")
-        if _needs_address_coordinate_refresh(all_records):
+        if _needs_address_coordinate_refresh(all_records, (user_lat, user_lng)):
             limitations.append("Some map points are approximate while street addresses are being geocoded")
 
         coverage = ["Victoria"]
