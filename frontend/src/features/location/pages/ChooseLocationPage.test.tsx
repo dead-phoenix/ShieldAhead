@@ -16,7 +16,7 @@ describe('choose location page', () => {
   it('saves a typed Victorian postcode and uses it for later searches', async () => {
     renderLocation('/support')
 
-    fireEvent.change(screen.getByLabelText('Suburb or postcode'), { target: { value: '3453' } })
+    fireEvent.change(screen.getByLabelText('Address, suburb, or postcode'), { target: { value: '3453' } })
     fireEvent.click(screen.getByRole('button', { name: 'Search' }))
 
     await waitFor(() => {
