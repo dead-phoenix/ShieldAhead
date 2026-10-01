@@ -25,6 +25,14 @@ FEATURE_SERVER_QUERY_URL = (
     "Vicmap_Features_of_Interest/FeatureServer/1/query"
 )
 
+# Vicmap Address (DTP, CC BY 4.0) — structured house-number/street-name
+# address points, used for real prefix-matched search suggestions.
+# https://discover.data.vic.gov.au/dataset/vicmap-address-rest-api
+VICMAP_ADDRESS_QUERY_URL = (
+    "https://services-ap1.arcgis.com/P744lA0wf4LlBZ84/arcgis/rest/services/"
+    "Vicmap_Address/FeatureServer/0/query"
+)
+
 HEADERS_CKAN = {
     "User-Agent": "CrisisSupportApp/1.0 (student-project)"
 }

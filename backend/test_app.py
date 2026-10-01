@@ -51,7 +51,43 @@ def reset_caches():
 # Victoria / locality filtering (no network needed)
 # ============================================================
 
+def test_address_search_resolves_via_vicmap_address_fast_path():
+    """A 'house number + street name [+ suburb]' query is resolved against
+    the structured Vicmap Address dataset first, not the free-text Photon
+    search — this is what actually serves "100 Collins Street Melbourne"."""
+    vicmap_response = Mock()
+    vicmap_response.raise_for_status.return_value = None
+    vicmap_response.json.return_value = {
+        "features": [
+            {
+                "geometry": {"x": 144.967, "y": -37.815},
+                "attributes": {
+                    "house_number_1": 100,
+                    "house_suffix_1": None,
+                    "road_name": "COLLINS",
+                    "road_type": "STREET",
+                    "road_suffix": None,
+                    "locality_name": "MELBOURNE",
+                    "postcode": "3000",
+                },
+            },
+        ],
+    }
+
+    with patch("services.geocoding.http_requests.post", return_value=vicmap_response):
+        records = search_victorian_locations("100 Collins Street Melbourne")
+
+    assert records == [{
+        "postcode": "3000",
+        "label": "100 Collins Street, Melbourne 3000",
+        "latitude": -37.815,
+        "longitude": 144.967,
+    }]
+
+
 def test_address_search_keeps_victorian_street_matches():
+    """Queries without a leading house number fall through to the Photon
+    free-text search, which must still filter out non-Victorian matches."""
     photon_response = Mock()
     photon_response.raise_for_status.return_value = None
     photon_response.json.return_value = {
@@ -81,7 +117,7 @@ def test_address_search_keeps_victorian_street_matches():
     }
 
     with patch("services.geocoding.http_requests.get", return_value=photon_response):
-        records = search_victorian_locations("100 Collins Street Melbourne")
+        records = search_victorian_locations("Collins Street Melbourne")
 
     assert records == [{
         "postcode": "3000",

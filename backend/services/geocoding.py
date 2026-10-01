@@ -3,11 +3,46 @@ import time
 import requests as http_requests
 
 from cache import _address_cache, _location_search_cache, _postcode_cache, _reverse_geocode_cache
+from config import VICMAP_ADDRESS_QUERY_URL
 
 
 LGA_NAME_MARKERS = ("city of", "council", "shire of", "rural city")
 VIC_POSTCODE = re.compile(r"^3\d{3}$")
 _NOMINATIM_HEADERS = {"User-Agent": "CrisisSupportApp/1.0 (student-project)"}
+# Live, as-you-type search can try up to three providers in sequence
+# (Vicmap Address, Photon, Nominatim) when earlier ones find nothing. Each
+# provider call is capped short, and this is a hard ceiling on the total
+# time spent across all of them, so a slow/unreachable provider can't make
+# a single keystroke's search hang for the sum of every provider's timeout.
+_SEARCH_TIME_BUDGET_SECONDS = 6.0
+# A house number followed by the start of a street name, e.g. "14 vi" or
+# "100 Collins Street" — only this shape gets the Vicmap Address fast path;
+# anything else (a bare suburb, etc.) keeps using the existing Photon/
+# Nominatim search below, unchanged.
+_HOUSE_NUMBER_QUERY = re.compile(r"^(\d+)\s+([A-Za-z]+)(.*)$")
+
+# Common Australian road-type words — if the last word of the query is one
+# of these, it's part of the street name, not a trailing suburb hint (e.g.
+# "14 Viridian Dr" shouldn't be read as searching for a suburb called "Dr").
+_ROAD_TYPE_WORDS = {
+    "st", "street", "rd", "road", "ave", "avenue", "dr", "drive", "ct",
+    "court", "ln", "lane", "cres", "crescent", "way", "pl", "place",
+    "cct", "circuit", "tce", "terrace", "pde", "parade", "cl", "close",
+    "gr", "grove", "hwy", "highway", "blvd", "boulevard", "sq", "square",
+    "walk", "track", "esp", "esplanade",
+}
+
+
+def _trailing_suburb_hint(rest_of_query):
+    """The last word of whatever follows the street-name prefix, if it looks
+    like a suburb rather than another part of the street name/type."""
+    words = re.findall(r"[A-Za-z]+", rest_of_query)
+    if not words:
+        return ""
+    candidate = words[-1]
+    if len(candidate) < 3 or candidate.lower() in _ROAD_TYPE_WORDS:
+        return ""
+    return candidate
 
 # Nominatim's usage policy caps requests at 1/second. Tracked globally so a
 # call only sleeps the remaining gap since the last one, instead of always
@@ -216,6 +251,71 @@ def _record(postcode, label, latitude=None, longitude=None):
     return record
 
 
+def _escape_sql_literal(value):
+    return value.replace("'", "''")
+
+
+def _vicmap_address_records(house_number, street_prefix, limit, locality_hint=""):
+    """Real structured address prefix-matching (house number + street name)
+    against Victoria's own open Vicmap Address dataset — gives genuine
+    autocomplete suggestions (like Google Maps) instead of Photon/Nominatim's
+    fuzzy free-text matching, which can't do this for short prefixes."""
+    where = (
+        f"house_number_1 = {int(house_number)} "
+        f"AND UPPER(road_name) LIKE '{_escape_sql_literal(street_prefix.upper())}%' "
+        "AND is_primary = 'Y'"
+    )
+    if locality_hint:
+        where += f" AND UPPER(locality_name) LIKE '{_escape_sql_literal(locality_hint.upper())}%'"
+    resp = http_requests.post(
+        VICMAP_ADDRESS_QUERY_URL,
+        data={
+            "where": where,
+            "outFields": "house_number_1,house_suffix_1,road_name,road_type,road_suffix,locality_name,postcode",
+            "outSR": "4326",
+            "resultRecordCount": limit * 4,  # overfetch a little since exact-duplicate address points get merged below
+            "f": "json",
+        },
+        headers={"User-Agent": "ShieldAhead/1.0"},
+        timeout=4,
+    )
+    resp.raise_for_status()
+    data = resp.json()
+    if "error" in data:
+        raise RuntimeError(f"Vicmap Address API error: {data['error']}")
+
+    seen = set()
+    records = []
+    for feature in data.get("features", []):
+        attrs = feature.get("attributes") or {}
+        postcode = str(attrs.get("postcode") or "").strip()
+        if not postcode:
+            continue
+        house = str(attrs.get("house_number_1") or "").strip()
+        house_suffix = str(attrs.get("house_suffix_1") or "").strip()
+        road = " ".join(
+            part for part in (
+                str(attrs.get("road_name") or "").strip(),
+                str(attrs.get("road_type") or "").strip(),
+                str(attrs.get("road_suffix") or "").strip(),
+            ) if part
+        )
+        street_line = f"{house}{house_suffix} {road}".strip().title()
+        locality = str(attrs.get("locality_name") or "").strip().title()
+        label = _place_label(street_line, locality, postcode)
+
+        dedupe_key = (postcode, label)
+        if dedupe_key in seen:
+            continue
+        seen.add(dedupe_key)
+
+        geometry = feature.get("geometry") or {}
+        records.append(_record(postcode, label, geometry.get("y"), geometry.get("x")))
+        if len(records) >= limit:
+            break
+    return records
+
+
 def _photon_records(query, limit):
     resp = http_requests.get(
         "https://photon.komoot.io/api/",
@@ -226,7 +326,7 @@ def _photon_records(query, limit):
             "lon": 144.78,
         },
         headers={"User-Agent": "ShieldAhead/1.0"},
-        timeout=8,
+        timeout=4,
     )
     resp.raise_for_status()
     records = []
@@ -248,7 +348,11 @@ def _photon_records(query, limit):
             ),
             "",
         )
-        street_line = " ".join(part for part in (house, street) if part) or name
+        # Prefer a named place's own name over its street — "Southern Cross
+        # Station" is far more recognisable than "Collins Street", which is
+        # all Photon otherwise shows for a landmark that happens to front
+        # onto a named road rather than sit at a numbered address.
+        street_line = name or " ".join(part for part in (house, street) if part)
         coordinates = (feature.get("geometry") or {}).get("coordinates") or []
         latitude = float(coordinates[1]) if len(coordinates) >= 2 else None
         longitude = float(coordinates[0]) if len(coordinates) >= 2 else None
@@ -270,7 +374,7 @@ def _nominatim_records(query, limit):
             "countrycodes": "au",
         },
         headers=_NOMINATIM_HEADERS,
-        timeout=8,
+        timeout=4,
     )
     resp.raise_for_status()
     records = []
@@ -312,6 +416,31 @@ def search_victorian_locations(query, limit=5):
     if cached is not None:
         return cached
 
+    deadline = time.monotonic() + _SEARCH_TIME_BUDGET_SECONDS
+
+    def _out_of_time():
+        return time.monotonic() >= deadline
+
+    house_number_match = _HOUSE_NUMBER_QUERY.match(text)
+    if house_number_match:
+        house_number, street_prefix, rest_of_query = house_number_match.groups()
+        locality_hint = _trailing_suburb_hint(rest_of_query)
+        try:
+            records = []
+            if locality_hint:
+                records = _vicmap_address_records(house_number, street_prefix, limit, locality_hint)
+            if not records and not _out_of_time():
+                # No suburb typed yet, or that suburb hint didn't match anything real.
+                records = _vicmap_address_records(house_number, street_prefix, limit)
+            if records:
+                _location_search_cache[cache_key] = records
+                return records
+        except Exception:
+            pass
+
+    if _out_of_time():
+        return []
+
     try:
         records = _photon_records(text, limit)
         if records:
@@ -319,6 +448,10 @@ def search_victorian_locations(query, limit=5):
             return records
     except Exception:
         records = []
+
+    if _out_of_time():
+        _location_search_cache[cache_key] = records
+        return records
 
     try:
         records = _nominatim_records(text, limit)
