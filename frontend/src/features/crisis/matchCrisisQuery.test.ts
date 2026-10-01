@@ -20,6 +20,50 @@ describe('matchCrisisKind', () => {
     expect(matchCrisisKind('heavy rain all night is my area safe')).toBe('flood')
   })
 
+  it('matches "house" synonyms (home, place, apartment, flat) and bare water-presence phrasing', () => {
+    expect(matchCrisisKind('too much water in my home')).toBe('flood')
+    expect(matchCrisisKind('water coming into my home')).toBe('flood')
+    expect(matchCrisisKind('water in my apartment')).toBe('flood')
+    expect(matchCrisisKind('my flat is under water')).toBe('flood')
+    expect(matchCrisisKind('water inside the place')).toBe('flood')
+    expect(matchCrisisKind('lots of water in my street')).toBe('flood')
+    expect(matchCrisisKind('water everywhere help')).toBe('flood')
+  })
+
+  // Not guessed — this is the literal set of misspellings a ~800-message
+  // real-world stress test produced repeatedly (people typing fast, under
+  // stress, on a phone keyboard, or not fluent in English). Kept as a
+  // permanent regression guard since these are shared typo-tolerant word
+  // fragments reused across many phrase patterns — a change to one could
+  // silently break many queries at once.
+  it('tolerates common misspellings of the hazard word itself', () => {
+    expect(matchCrisisKind('POWA OUT AGAIN')).toBe('power-outage')
+    expect(matchCrisisKind('poewr went out')).toBe('power-outage')
+    expect(matchCrisisKind('no pwr since 3 hours')).toBe('power-outage')
+    expect(matchCrisisKind('energy company say planned outrage tonight')).toBe('power-outage')
+    expect(matchCrisisKind('electrisity came back')).toBe('power-outage')
+    expect(matchCrisisKind('black out in echuca')).toBe('power-outage')
+    expect(matchCrisisKind('blackot in castlemaine')).toBe('power-outage')
+    expect(matchCrisisKind('my car got washed away in the flod')).toBe('flood')
+    expect(matchCrisisKind('floood water so fast')).toBe('flood')
+    expect(matchCrisisKind('roads reopen after flud')).toBe('flood')
+    expect(matchCrisisKind('the fload cut off our town')).toBe('flood')
+    expect(matchCrisisKind('lost everything in bush-fiire')).toBe('bushfire')
+    expect(matchCrisisKind('still smell smoke weeks after da bushfyre')).toBe('bushfire')
+    expect(matchCrisisKind('fire went through last week')).toBe('bushfire')
+    expect(matchCrisisKind('wildlife injured after the fier')).toBe('bushfire')
+  })
+
+  it('matches contextual hazard signals with no hazard-rooted word at all', () => {
+    expect(matchCrisisKind('is there going to be load shedding in Charlton tmrw')).toBe('power-outage')
+    expect(matchCrisisKind('heatwave coming and they say grid might fail')).toBe('power-outage')
+    expect(matchCrisisKind('is the Goulburn gonna break banks?')).toBe('flood')
+    expect(matchCrisisKind('the Murray is over the bridge right now')).toBe('flood')
+    expect(matchCrisisKind('we need sandbags before the water comes')).toBe('flood')
+    expect(matchCrisisKind('his street underwater now')).toBe('flood')
+    expect(matchCrisisKind('SES told us prepare to evacuate')).toBe('flood')
+  })
+
   it('matches power outage phrasing, including plain non-technical wording', () => {
     expect(matchCrisisKind('the power just went out')).toBe('power-outage')
     expect(matchCrisisKind('blackout in my suburb')).toBe('power-outage')
@@ -111,6 +155,16 @@ describe('matchCrisisKind + matchCrisisStage — full combination matrix', () =>
     ['recovery support after flood', 'flood', 'after'],
     ['is it safe after the floodwater goes down', 'flood', 'after'],
     ['what to check after flood', 'flood', 'after'],
+    // flood / "house" synonyms and bare water-presence phrasing
+    ['too much water in my home', 'flood', 'during'],
+    ['water coming into my home', 'flood', 'during'],
+    ['water in my apartment', 'flood', undefined],
+    ['my flat is under water', 'flood', undefined],
+    ['water inside the place', 'flood', undefined],
+    ['house is under water', 'flood', undefined],
+    ['lots of water in my street', 'flood', 'during'],
+    ['a lot of water outside my home', 'flood', 'during'],
+    ['water everywhere help', 'flood', 'during'],
     // power-outage / before
     ['how do i prepare for power outage', 'power-outage', 'before'],
     ['getting ready for blackout', 'power-outage', 'before'],
@@ -125,6 +179,20 @@ describe('matchCrisisKind + matchCrisisStage — full combination matrix', () =>
     ['clean up after power outage', 'power-outage', 'after'],
     ['recovery after blackout', 'power-outage', 'after'],
     ['is my food safe after power outage', 'power-outage', 'after'],
+    // bare urgency, no temporal word at all — reported as all defaulting
+    // to "before" incorrectly; should read as 'during' since someone
+    // typing this tersely is far more likely mid-emergency than planning
+    ['fire fire what to do', 'bushfire', 'during'],
+    ['power cut what to do', 'power-outage', 'during'],
+    ['bushfire whom should i call', 'bushfire', 'during'],
+    ['flood flood what do i do', 'flood', 'during'],
+    ['flood what to do', 'flood', 'during'],
+    ['who do i call flood', 'flood', 'during'],
+    ['blackout blackout help', 'power-outage', 'during'],
+    ['power cut who should i call', 'power-outage', 'during'],
+    ['emergency bushfire', 'bushfire', 'during'],
+    ['help flood water everywhere', 'flood', 'during'],
+    ['fire emergency what do i do', 'bushfire', 'during'],
     // ambiguous phrasing — no clear stage signal, so no tab should be forced
     ['can i survive bushfire', 'bushfire', undefined],
     // guard against a false positive: "when" followed by a question word
