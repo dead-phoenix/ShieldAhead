@@ -2,12 +2,26 @@ import re
 import time
 import requests as http_requests
 
-from cache import _address_cache, _postcode_cache, _reverse_geocode_cache
+from cache import _address_cache, _location_search_cache, _postcode_cache, _reverse_geocode_cache
 
 
 LGA_NAME_MARKERS = ("city of", "council", "shire of", "rural city")
 VIC_POSTCODE = re.compile(r"^3\d{3}$")
 _NOMINATIM_HEADERS = {"User-Agent": "CrisisSupportApp/1.0 (student-project)"}
+
+# Nominatim's usage policy caps requests at 1/second. Tracked globally so a
+# call only sleeps the remaining gap since the last one, instead of always
+# blocking a full second — consecutive live searches are usually already
+# spaced out by typing speed and the frontend's own debounce.
+_last_nominatim_call = 0.0
+
+
+def _wait_for_nominatim_slot():
+    global _last_nominatim_call
+    elapsed = time.monotonic() - _last_nominatim_call
+    if elapsed < 1:
+        time.sleep(1 - elapsed)
+    _last_nominatim_call = time.monotonic()
 
 
 def _zippopotam_vic_centroid(postcode):
@@ -245,7 +259,7 @@ def _photon_records(query, limit):
 
 
 def _nominatim_records(query, limit):
-    time.sleep(1)
+    _wait_for_nominatim_slot()
     resp = http_requests.get(
         "https://nominatim.openstreetmap.org/search",
         params={
@@ -293,14 +307,23 @@ def search_victorian_locations(query, limit=5):
     if VIC_POSTCODE.fullmatch(text):
         return [_record(text, text)]
 
+    cache_key = text.lower()
+    cached = _location_search_cache.get(cache_key)
+    if cached is not None:
+        return cached
+
     try:
         records = _photon_records(text, limit)
         if records:
+            _location_search_cache[cache_key] = records
             return records
     except Exception:
         records = []
 
     try:
-        return _nominatim_records(text, limit)
+        records = _nominatim_records(text, limit)
     except Exception:
-        return records
+        pass
+
+    _location_search_cache[cache_key] = records
+    return records

@@ -30,3 +30,9 @@ _reverse_geocode_cache = {}
 # (Nominatim doesn't always return a name in the exact form ACNC uses) and
 # is no longer needed now that postcode-based search is confirmed to work.
 _extra_postcode_cache = {}
+
+# Results for the live "search as you type" location box (suburb/address ->
+# postcode). Cached for the lifetime of this process like the caches above,
+# so retyping or backspacing during a live search doesn't repeat the same
+# external geocoding round trip.
+_location_search_cache = {}
