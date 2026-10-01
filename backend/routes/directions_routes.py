@@ -75,11 +75,16 @@ def post_directions():
         }), 400
 
     try:
-        route = get_route(start_lat, start_lng, end_lat, end_lng, profile=profile)
+        routes = get_route(start_lat, start_lng, end_lat, end_lng, profile=profile)
         return jsonify({
-            "distance_meters": route["distance_meters"],
-            "duration_seconds": route["duration_seconds"],
-            "geometry": route["geometry"],
+            "routes": [
+                {
+                    "distance_meters": route["distance_meters"],
+                    "duration_seconds": route["duration_seconds"],
+                    "geometry": route["geometry"],
+                }
+                for route in routes
+            ],
             "disclaimer": ROUTE_DISCLAIMER,
         })
     except ORSServiceError as e:

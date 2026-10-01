@@ -14,21 +14,31 @@ function jsonResponse(body: unknown, status: number) {
 }
 
 describe('getDirections', () => {
-  it('normalises a valid backend route preview', async () => {
+  it('normalises valid backend route alternatives', async () => {
     const fetcher = vi.fn().mockResolvedValue(jsonResponse({
-      distance_meters: 1250,
-      duration_seconds: 900,
-      geometry: { type: 'LineString', coordinates: [[144.96, -37.81], [144.97, -37.82]] },
+      routes: [
+        {
+          distance_meters: 1250,
+          duration_seconds: 900,
+          geometry: { type: 'LineString', coordinates: [[144.96, -37.81], [144.97, -37.82]] },
+        },
+        {
+          distance_meters: 1400,
+          duration_seconds: 860,
+          geometry: { type: 'LineString', coordinates: [[144.96, -37.81], [144.965, -37.815], [144.97, -37.82]] },
+        },
+      ],
       disclaimer: 'Standard route only.',
     }, 200))
     vi.stubGlobal('fetch', fetcher)
 
-    const route = await getDirections(start, end, 'foot-walking')
+    const alternatives = await getDirections(start, end, 'foot-walking')
 
-    expect(route).toEqual({
-      distanceMeters: 1250,
-      durationSeconds: 900,
-      coordinates: [[144.96, -37.81], [144.97, -37.82]],
+    expect(alternatives).toEqual({
+      routes: [
+        { distanceMeters: 1250, durationSeconds: 900, coordinates: [[144.96, -37.81], [144.97, -37.82]] },
+        { distanceMeters: 1400, durationSeconds: 860, coordinates: [[144.96, -37.81], [144.965, -37.815], [144.97, -37.82]] },
+      ],
       disclaimer: 'Standard route only.',
     })
     expect(fetcher).toHaveBeenCalledWith(expect.any(URL), expect.objectContaining({ method: 'POST' }))

@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from 'react'
 import {
   getDirections,
   type DirectionsProfile,
+  type RouteOption,
   type RoutePoint,
   type RoutePreview,
 } from '../../data/api/directionsApi'
@@ -47,7 +48,11 @@ const FALLBACK_DISCLAIMER = (
 export function DirectionsPanel({ destination, onRouteChange, destinationIsApproximate = false, selectedMapStart, isSelectingMapStart = false, onRequestMapStart, isOnline = true, initialState, onStateChange, onRecentreRoute, showHeading = true }: DirectionsPanelProps) {
   const [profile, setProfile] = useState<DirectionsProfile>(initialState?.profile ?? 'foot-walking')
   const [origin, setOrigin] = useState<RoutePoint | undefined>(initialState?.origin)
-  const [route, setRoute] = useState<RoutePreview | undefined>(initialState?.route)
+  const [routeOptions, setRouteOptions] = useState<RouteOption[]>(
+    initialState?.route ? [initialState.route] : [],
+  )
+  const [selectedRouteIndex, setSelectedRouteIndex] = useState(0)
+  const [disclaimer, setDisclaimer] = useState(initialState?.route?.disclaimer ?? '')
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
   const [originLabel, setOriginLabel] = useState(initialState?.originLabel ?? '')
@@ -56,9 +61,16 @@ export function DirectionsPanel({ destination, onRouteChange, destinationIsAppro
   const appliedOriginLabelRef = useRef(initialState?.originLabel ?? '')
   const originRequestRef = useRef(0)
 
+  const route: RoutePreview | undefined = routeOptions[selectedRouteIndex]
+    ? { ...routeOptions[selectedRouteIndex], disclaimer }
+    : undefined
+
   useEffect(() => {
     onStateChange?.({ profile, origin, originLabel, route })
-  }, [onStateChange, origin, originLabel, profile, route])
+    // route is derived fresh every render from routeOptions/selectedRouteIndex/disclaimer;
+    // depending on those directly avoids re-running this effect on every render.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [onStateChange, origin, originLabel, profile, routeOptions, selectedRouteIndex, disclaimer])
 
   useEffect(() => {
     const trimmed = originLabel.trim()
@@ -121,16 +133,26 @@ export function DirectionsPanel({ destination, onRouteChange, destinationIsAppro
     setIsLoading(true)
     setError('')
     try {
-      const nextRoute = await getDirections(nextOrigin, destination, nextProfile)
-      setRoute(nextRoute)
-      onRouteChange(nextRoute)
+      const alternatives = await getDirections(nextOrigin, destination, nextProfile)
+      setRouteOptions(alternatives.routes)
+      setSelectedRouteIndex(0)
+      setDisclaimer(alternatives.disclaimer)
+      onRouteChange(alternatives.routes[0] ? { ...alternatives.routes[0], disclaimer: alternatives.disclaimer } : undefined)
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : 'A route could not be calculated.')
-      setRoute(undefined)
+      setRouteOptions([])
+      setSelectedRouteIndex(0)
+      setDisclaimer('')
       onRouteChange(undefined)
     } finally {
       setIsLoading(false)
     }
+  }
+
+  function selectRouteOption(index: number) {
+    if (index === selectedRouteIndex || !routeOptions[index]) return
+    setSelectedRouteIndex(index)
+    onRouteChange({ ...routeOptions[index], disclaimer })
   }
 
   async function useCurrentLocation() {
@@ -266,6 +288,24 @@ export function DirectionsPanel({ destination, onRouteChange, destinationIsAppro
             <strong>{formatDuration(route.durationSeconds)}</strong>
             <span>{formatDistance(route.distanceMeters)}</span>
           </p>
+          {routeOptions.length > 1 ? (
+            <div className="directions-route-options" role="listbox" aria-label="Route options">
+              {routeOptions.map((option, index) => (
+                <button
+                  key={index}
+                  type="button"
+                  role="option"
+                  aria-selected={index === selectedRouteIndex}
+                  className={index === selectedRouteIndex ? 'is-active' : ''}
+                  onClick={() => selectRouteOption(index)}
+                >
+                  <span>Route {index + 1}{index === 0 ? ' · Recommended' : ''}</span>
+                  <strong>{formatDuration(option.durationSeconds)}</strong>
+                  <small>{formatDistance(option.distanceMeters)}</small>
+                </button>
+              ))}
+            </div>
+          ) : null}
           <p className="directions-disclaimer" role="note">
             <Warning aria-hidden="true" size={22} weight="fill" />
             <span>{route.disclaimer || FALLBACK_DISCLAIMER}</span>

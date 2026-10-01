@@ -224,7 +224,7 @@ def test_directions_external_failure_does_not_expose_details(client):
 # Backend, Configuration and Dependency Testing
 
 def test_valid_directions_request_returns_route(client):
-    fake_route = {
+    fake_routes = [{
         "distance_meters": 1500,
         "duration_seconds": 420,
         "geometry": {
@@ -234,11 +234,11 @@ def test_valid_directions_request_returns_route(client):
                 [144.9671, -37.8183]
             ]
         }
-    }
+    }]
 
     with patch(
         "routes.directions_routes.get_route",
-        return_value=fake_route
+        return_value=fake_routes
     ):
         response = client.post(
             "/api/directions",
@@ -246,9 +246,9 @@ def test_valid_directions_request_returns_route(client):
         )
 
     assert response.status_code == 200
-    assert response.json["distance_meters"] == 1500
-    assert response.json["duration_seconds"] == 420
-    assert response.json["geometry"]["type"] == "LineString"
+    assert response.json["routes"][0]["distance_meters"] == 1500
+    assert response.json["routes"][0]["duration_seconds"] == 420
+    assert response.json["routes"][0]["geometry"]["type"] == "LineString"
     assert "disclaimer" in response.json
 
 
@@ -371,18 +371,18 @@ def test_charities_handles_record_without_coordinates_safely(client):
     assert response.json["records"][0]["name"] == "Test Support Service"
 
 def test_directions_rate_limit_blocks_excess_requests(client):
-    fake_route = {
+    fake_routes = [{
         "distance_meters": 1000,
         "duration_seconds": 300,
         "geometry": {
             "type": "LineString",
             "coordinates": []
         }
-    }
+    }]
 
     with patch(
         "routes.directions_routes.get_route",
-        return_value=fake_route
+        return_value=fake_routes
     ):
         responses = [
             client.post(

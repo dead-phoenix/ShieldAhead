@@ -5,10 +5,18 @@ export interface RoutePoint {
   longitude: number
 }
 
-export interface RoutePreview {
+export interface RouteOption {
   distanceMeters: number
   durationSeconds: number
   coordinates: [number, number][]
+}
+
+export interface RoutePreview extends RouteOption {
+  disclaimer: string
+}
+
+export interface RouteAlternatives {
+  routes: RouteOption[]
   disclaimer: string
 }
 
@@ -47,11 +55,29 @@ async function readJson(response: Response): Promise<Record<string, unknown> | n
   }
 }
 
+function normalizeRouteOption(value: unknown): RouteOption | null {
+  if (typeof value !== 'object' || value === null) return null
+  const record = value as Record<string, unknown>
+  const geometry = record.geometry as { type?: unknown; coordinates?: unknown } | undefined
+  if (geometry?.type !== 'LineString' || !Array.isArray(geometry.coordinates)) return null
+  const coordinates = geometry.coordinates.filter((point): point is [number, number] => (
+    Array.isArray(point)
+    && point.length >= 2
+    && typeof point[0] === 'number'
+    && typeof point[1] === 'number'
+  ))
+  if (coordinates.length < 2) return null
+  const distanceMeters = Number(record.distance_meters)
+  const durationSeconds = Number(record.duration_seconds)
+  if (!Number.isFinite(distanceMeters) || !Number.isFinite(durationSeconds)) return null
+  return { distanceMeters, durationSeconds, coordinates }
+}
+
 export async function getDirections(
   start: RoutePoint,
   end: RoutePoint,
   profile: DirectionsProfile,
-): Promise<RoutePreview> {
+): Promise<RouteAlternatives> {
   const controller = new AbortController()
   const timeout = window.setTimeout(() => controller.abort(), 20_000)
 
@@ -70,26 +96,15 @@ export async function getDirections(
     if (!response.ok) {
       throw new Error(messageForStatus(response.status))
     }
-    if (!payload) {
+    if (!payload || !Array.isArray(payload.routes)) {
       throw new Error(DIRECTIONS_ERROR.invalidRoute)
     }
 
-    const geometry = payload.geometry as { type?: unknown; coordinates?: unknown } | undefined
-    if (geometry?.type !== 'LineString' || !Array.isArray(geometry.coordinates)) {
-      throw new Error(DIRECTIONS_ERROR.invalidRoute)
-    }
-    const coordinates = geometry.coordinates.filter((point): point is [number, number] => (
-      Array.isArray(point)
-      && point.length >= 2
-      && typeof point[0] === 'number'
-      && typeof point[1] === 'number'
-    ))
-    if (coordinates.length < 2) throw new Error(DIRECTIONS_ERROR.incompleteRoute)
+    const routes = payload.routes.map(normalizeRouteOption).filter((route): route is RouteOption => route !== null)
+    if (routes.length === 0) throw new Error(DIRECTIONS_ERROR.incompleteRoute)
 
     return {
-      distanceMeters: Number(payload.distance_meters),
-      durationSeconds: Number(payload.duration_seconds),
-      coordinates,
+      routes,
       disclaimer: typeof payload.disclaimer === 'string' ? payload.disclaimer : '',
     }
   } catch (reason) {

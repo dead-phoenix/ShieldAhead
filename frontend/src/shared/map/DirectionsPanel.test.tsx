@@ -15,9 +15,11 @@ describe('Directions panel', () => {
   beforeEach(() => {
     getDirectionsMock.mockReset()
     getDirectionsMock.mockResolvedValue({
-      distanceMeters: 1500,
-      durationSeconds: 900,
-      coordinates: [[144.27, -36.76], [144.28, -36.75]],
+      routes: [{
+        distanceMeters: 1500,
+        durationSeconds: 900,
+        coordinates: [[144.27, -36.76], [144.28, -36.75]],
+      }],
       disclaimer: 'Standard route only. Check official advice.',
     })
   })

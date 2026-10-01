@@ -42,7 +42,8 @@ def _is_rate_limited(status_code, message):
 
 
 def get_route(start_lat, start_lng, end_lat, end_lng, profile="driving-car"):
-    """Request a route from ORS Directions (GeoJSON) and return a compact dict.
+    """Request route alternatives from ORS Directions (GeoJSON) and return a
+    list of compact route dicts, ORS's own primary/best route first.
 
     Coordinates are sent to ORS only; they are not logged or stored here.
     """
@@ -63,7 +64,13 @@ def get_route(start_lat, start_lng, end_lat, end_lng, profile="driving-car"):
         "coordinates": [
             [float(start_lng), float(start_lat)],
             [float(end_lng), float(end_lat)],
-        ]
+        ],
+        # Ask for up to 3 genuinely different paths (not just the same road
+        # with minor variation) so the user can pick between them, the way
+        # Google Maps offers alternate routes. ORS returns however many
+        # distinct enough alternatives actually exist, which can be fewer
+        # than 3 depending on the road network between the two points.
+        "alternative_routes": {"target_count": 3, "weight_factor": 1.6, "share_factor": 0.6},
     }
 
     try:
@@ -88,18 +95,23 @@ def get_route(start_lat, start_lng, end_lat, end_lng, profile="driving-car"):
     if not features:
         raise ORSServiceError("ORS returned no route features")
 
-    feature = features[0] or {}
-    properties = feature.get("properties") or {}
-    summary = properties.get("summary") or {}
-    geometry = feature.get("geometry")
-    distance = summary.get("distance")
-    duration = summary.get("duration")
+    routes = []
+    for feature in features:
+        feature = feature or {}
+        properties = feature.get("properties") or {}
+        summary = properties.get("summary") or {}
+        geometry = feature.get("geometry")
+        distance = summary.get("distance")
+        duration = summary.get("duration")
+        if geometry is None or distance is None or duration is None:
+            continue
+        routes.append({
+            "distance_meters": distance,
+            "duration_seconds": duration,
+            "geometry": geometry,
+        })
 
-    if geometry is None or distance is None or duration is None:
+    if not routes:
         raise ORSServiceError("ORS response was missing distance, duration, or geometry")
 
-    return {
-        "distance_meters": distance,
-        "duration_seconds": duration,
-        "geometry": geometry,
-    }
+    return routes
