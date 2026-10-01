@@ -1,4 +1,4 @@
-import { ArrowClockwise, Car, Crosshair, CursorClick, MapPin, PersonSimpleWalk, Warning } from '@phosphor-icons/react'
+import { ArrowClockwise, Car, Crosshair, CursorClick, MapPin, PersonSimpleBike, PersonSimpleWalk, Warning } from '@phosphor-icons/react'
 import { useEffect, useRef, useState } from 'react'
 import {
   getDirections,
@@ -196,6 +196,9 @@ export function DirectionsPanel({ destination, onRouteChange, destinationIsAppro
           </button>
           <button type="button" className={profile === 'driving-car' ? 'is-active' : ''} aria-pressed={profile === 'driving-car'} onClick={() => changeProfile('driving-car')}>
             <Car aria-hidden="true" size={21} /> Driving
+          </button>
+          <button type="button" className={profile === 'cycling-regular' ? 'is-active' : ''} aria-pressed={profile === 'cycling-regular'} onClick={() => changeProfile('cycling-regular')}>
+            <PersonSimpleBike aria-hidden="true" size={21} /> Cycling
           </button>
         </div>
       </div>

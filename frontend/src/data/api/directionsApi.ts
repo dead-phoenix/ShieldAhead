@@ -1,4 +1,4 @@
-export type DirectionsProfile = 'foot-walking' | 'driving-car'
+export type DirectionsProfile = 'foot-walking' | 'driving-car' | 'cycling-regular'
 
 export interface RoutePoint {
   latitude: number

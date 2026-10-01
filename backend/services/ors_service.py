@@ -2,7 +2,7 @@ import requests as http_requests
 
 from config import HEADERS_CKAN, ORS_API_KEY, ORS_DIRECTIONS_URL
 
-ALLOWED_PROFILES = ("driving-car", "foot-walking")
+ALLOWED_PROFILES = ("driving-car", "foot-walking", "cycling-regular")
 
 
 class ORSServiceError(Exception):

@@ -2214,6 +2214,7 @@ input[type='checkbox'] {
 
 .directions-modes {
   display: flex;
+  flex-wrap: wrap;
   gap: 0.35rem;
   padding: 0.25rem;
   border: 1px solid var(--color-border);

@@ -71,7 +71,7 @@ def post_directions():
     profile = body.get("profile", "driving-car")
     if profile not in ALLOWED_PROFILES:
         return jsonify({
-            "error": 'profile must be "driving-car" or "foot-walking"'
+            "error": 'profile must be "driving-car", "foot-walking", or "cycling-regular"'
         }), 400
 
     try:
