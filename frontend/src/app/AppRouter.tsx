@@ -19,6 +19,7 @@ import { OfflineInformationPage } from '../features/settings/pages/OfflineInform
 import { SettingsPage } from '../features/settings/pages/SettingsPage'
 import { SupportServiceDetailPage } from '../features/support-services/pages/SupportServiceDetailPage'
 import { WifiDetailPage } from '../features/wifi/pages/WifiDetailPage'
+import { EmergencyPackPage } from '../features/emergency-pack/pages/EmergencyPackPage'
 import { MapPage } from '../features/map/pages/MapPage'
 import { AppShell } from '../shared/layout/AppShell'
 import { getSearchPostcode } from '../storage/searchLocationStorage'
@@ -68,6 +69,7 @@ export function AppRouter() {
           <Route path={appRoutes.setupComplete} element={<SetupCompletePage />} />
           <Route path={appRoutes.location} element={<ChooseLocationPage />} />
           <Route path={appRoutes.crisis} element={<CrisisLandingPage />} />
+          <Route path={appRoutes.emergencyPack} element={<EmergencyPackPage />} />
           <Route path="/crisis/:kind" element={<CrisisDetailPage />} />
           <Route element={<RequireSearchLocation />}>
             <Route path={appRoutes.map} element={<MapPage />} />
