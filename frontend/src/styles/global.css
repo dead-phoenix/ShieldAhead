@@ -3289,6 +3289,38 @@ input[type='checkbox'] {
   color: var(--color-text-muted);
 }
 
+.crisis-query-search {
+  display: grid;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+}
+
+.crisis-query-search > label { font-weight: 700; }
+
+.crisis-query-search__row { display: flex; flex-wrap: wrap; gap: var(--space-3); }
+
+.crisis-query-search__row input {
+  flex: 1 1 20rem;
+  min-height: 3rem;
+  padding: 0 var(--space-4);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-background);
+  color: var(--color-text);
+}
+
+.crisis-query-search__row button {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.crisis-query-search__error { color: var(--color-danger); font-size: var(--text-sm); }
+
 .crisis-local-label {
   display: inline-flex;
   min-height: 2.5rem;
