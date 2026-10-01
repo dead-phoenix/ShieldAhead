@@ -1,32 +1,41 @@
-import { HandHeart, MapTrifold, WifiHigh } from '@phosphor-icons/react'
-import { enabledMapPlaceKinds, mapPlaceKindPresentation } from '../model/mapPlacePresentation'
-import type { MapPlaceKind } from '../model/mapTypes'
-
-function FilterIcon({ kind }: { kind: MapPlaceKind }) {
-  return kind === 'wifi'
-    ? <WifiHigh aria-hidden="true" size={20} weight="duotone" />
-    : <HandHeart aria-hidden="true" size={20} weight="duotone" />
-}
+import { MapTrifold, WifiHigh } from '@phosphor-icons/react'
+import { supportServiceFilters, type MapResultFilter } from '../model/supportServiceFilters'
 
 interface MapFiltersProps {
-  selectedKinds: MapPlaceKind[]
-  onChooseAll: () => void
-  onToggleKind: (kind: MapPlaceKind) => void
+  filter: MapResultFilter
+  onSelect: (filter: MapResultFilter) => void
 }
 
-export function MapFilters({ selectedKinds, onChooseAll, onToggleKind }: MapFiltersProps) {
-  const allSelected = selectedKinds.length === enabledMapPlaceKinds.length
-
+export function MapFilters({ filter, onSelect }: MapFiltersProps) {
   return (
     <div className="unified-map-filters" aria-label="Place categories" role="group">
-      <button className={allSelected ? 'filter-chip is-active' : 'filter-chip'} aria-pressed={allSelected} type="button" onClick={onChooseAll}>
+      <button
+        className={filter.mode === 'all' ? 'filter-chip is-active' : 'filter-chip'}
+        aria-pressed={filter.mode === 'all'}
+        type="button"
+        onClick={() => onSelect({ mode: 'all' })}
+      >
         <MapTrifold aria-hidden="true" size={20} /> All
       </button>
-      {enabledMapPlaceKinds.map((kind) => {
-        const active = !allSelected && selectedKinds.includes(kind)
+      <button
+        className={filter.mode === 'wifi' ? 'filter-chip is-active' : 'filter-chip'}
+        aria-pressed={filter.mode === 'wifi'}
+        type="button"
+        onClick={() => onSelect({ mode: 'wifi' })}
+      >
+        <WifiHigh aria-hidden="true" size={20} weight="duotone" /> Free Wi-Fi
+      </button>
+      {supportServiceFilters.map((item) => {
+        const active = filter.mode === 'tag' && filter.serviceType === item.serviceType
         return (
-          <button className={active ? 'filter-chip is-active' : 'filter-chip'} aria-pressed={active} key={kind} type="button" onClick={() => onToggleKind(kind)}>
-            <FilterIcon kind={kind} /> {mapPlaceKindPresentation[kind].label}
+          <button
+            className={active ? 'filter-chip is-active' : 'filter-chip'}
+            aria-pressed={active}
+            key={item.id}
+            type="button"
+            onClick={() => onSelect({ mode: 'tag', serviceType: item.serviceType })}
+          >
+            {item.label}
           </button>
         )
       })}
