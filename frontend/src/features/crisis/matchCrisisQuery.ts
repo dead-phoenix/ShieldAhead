@@ -18,7 +18,7 @@ const CRISIS_KEYWORD_PATTERNS: { kind: CrisisKind; pattern: RegExp }[] = [
   },
   {
     kind: 'power-outage',
-    pattern: /\bpower[\s-]?outages?\b|\bpower[\s-]?cuts?\b|\bpower[\s-]?failures?\b|\bblackouts?\b|\bno[\s-]?power\b|\bpower\s+(just\s+)?(went|goes|going|is|was|has)\s+out\b|\blost[\s-]?power\b|\bpower[\s-]?loss\b|\bno[\s-]?electricity\b|\belectricity\s+(is\s+)?(gone|out)\b|\bgenerators?\b|\bno[\s-]?lights?\b|\blights?\s+(went|are|is)\s+out\b|\beverything('s| is)?\s+(gone\s+)?dark\b/i,
+    pattern: /\bpower[\s-]?outages?\b|\bpower[\s-]?cuts?\b|\bpower[\s-]?failures?\b|\bblackouts?\b|\bno[\s-]?power\b|\bpower\s+(just\s+)?(went|goes|going|is|was)\s+out\b|\bpower\s+has\s+(just\s+)?gone\s+out\b|\blost[\s-]?power\b|\bpower[\s-]?loss\b|\bno[\s-]?electricity\b|\belectricity\s+(is\s+)?(gone|out)\b|\bgenerators?\b|\bno[\s-]?lights?\b|\blights?\s+(went|are|is|have\s+gone|has\s+gone)\s+out\b|\beverything('s| is)?\s+(gone\s+)?dark\b/i,
   },
 ]
 
@@ -39,7 +39,21 @@ export type CrisisStage = 'before' | 'during' | 'after'
 const STAGE_KEYWORD_PATTERNS: { stage: CrisisStage; pattern: RegExp }[] = [
   {
     stage: 'during',
-    pattern: /\bduring\b|\bright\s+now\b|\bhappening\s+now\b|\bcurrently\b|\bin\s+progress\b|\bwhile\s+it'?s?\s+happening\b|\b(is|was|are|has|have)\s+(come|coming|came|arriv\w*|here|happen(ing|ed)?|started|starting)\b/i,
+    // Three independent during-signals, beyond the obvious "during"/"right
+    // now"/"currently":
+    //  - an auxiliary verb ("is"/"was"/"has") + an ongoing/arriving verb
+    //    ("coming", "rising", "gone", "started") — covers "is happening",
+    //    "water is rising", "has gone out".
+    //  - a bare past-tense "it just happened" verb with no auxiliary at
+    //    all ("the power just went out", "water rising fast") — common
+    //    when a speaker drops the helping verb entirely.
+    //  - "when" immediately followed by the bare hazard noun with no verb
+    //    ("what should i do when power cut") — same dropped-verb pattern,
+    //    just phrased as a question. Only fires when a hazard word
+    //    directly follows "when" (optionally through "it/a/the"), so it
+    //    doesn't catch "when should I prepare for bushfire", where "when"
+    //    is followed by "should", not the hazard itself.
+    pattern: /\bduring\b|\bright\s+now\b|\bhappening\s+now\b|\bcurrently\b|\bin\s+progress\b|\bwhile\s+it'?s?\s+happening\b|\b(is|was|are|has|have)\s+(come|coming|came|arriv\w*|here|happen(ing|ed)?|started|starting|going|gone|rising)\b|\b(just\s+)?(went|gone)\s+out\b|\brising\s+(fast|quickly|water)\b|\bwater\s+is\s+rising\b|\bwhen\s+(it\s+|a\s+|the\s+)?(bush[\s-]?fires?|wild[\s-]?fires?|fires?|floods?|flooding|power[\s-]?cuts?|power[\s-]?outages?|blackouts?)\b/i,
   },
   {
     stage: 'after',
