@@ -11,7 +11,6 @@ export interface MapSessionState {
   area: SearchLocation
   query: string
   selectedKinds: MapPlaceKind[]
-  serviceFilter?: string
   selectedPlaceId?: string
   panelMode: MapPanelMode
   mobileView: ResultsView
@@ -34,7 +33,6 @@ export function readMapSessionState(): MapSessionState | null {
       area: value.area,
       query: typeof value.query === 'string' ? value.query : value.area.label,
       selectedKinds: value.selectedKinds,
-      ...(typeof value.serviceFilter === 'string' ? { serviceFilter: value.serviceFilter } : {}),
       selectedPlaceId: typeof value.selectedPlaceId === 'string' ? value.selectedPlaceId : undefined,
       panelMode: value.panelMode === 'details' || value.panelMode === 'directions' ? value.panelMode : 'results',
       mobileView: value.mobileView === 'list' ? 'list' : 'map',

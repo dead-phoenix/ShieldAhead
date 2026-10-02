@@ -34,14 +34,10 @@ import type { LivePositionPoint, MapViewport, SearchMarkerPoint } from '../../..
 import { mapPlaceHasCoordinates, mapPlacesToMapRecords } from '../data/mapPlaceMapRecords'
 import { getMapPlaceRepository } from '../data/mapPlaceRepository'
 import { MapFilters } from '../components/MapFilters'
-import { mapPlaceKindPresentation } from '../model/mapPlacePresentation'
 import {
-  filterKey,
-  kindsForFilter,
-  parseMapResultFilter,
-  placeMatchesFilter,
-  type MapResultFilter,
-} from '../model/supportServiceFilters'
+  enabledMapPlaceKinds,
+  mapPlaceKindPresentation,
+} from '../model/mapPlacePresentation'
 import type { MapPlace, MapPlaceKind, MapPlaceResult } from '../model/mapTypes'
 import {
   readMapSessionState,
@@ -51,13 +47,10 @@ import {
 } from '../model/mapSessionStorage'
 import './MapPage.css'
 
-function initialFilter(category: string | null, serviceFilter: string | undefined, kinds: MapPlaceKind[] | undefined): MapResultFilter {
-  if (category) return parseMapResultFilter(category) ?? { mode: 'all' }
-  const saved = parseMapResultFilter(serviceFilter)
-  if (saved) return saved
-  const enabled = (kinds ?? []).filter((kind) => kind === 'wifi' || kind === 'support')
-  if (enabled.length === 1) return { mode: enabled[0] }
-  return { mode: 'all' }
+function restoredKinds(kinds: MapPlaceKind[] | undefined, category: string | null): MapPlaceKind[] {
+  if (category === 'wifi' || category === 'support') return [category]
+  const enabled = kinds?.filter((kind) => enabledMapPlaceKinds.includes(kind)) ?? []
+  return enabled.length > 0 ? enabled : [...enabledMapPlaceKinds]
 }
 
 function placeAddress(place: MapPlace): string {
@@ -149,8 +142,8 @@ export function MapPage() {
     label: restoredSession?.area.label ?? savedLocation?.label ?? fallbackPostcode,
   })
   const [query, setQuery] = useState(restoredSession?.query ?? savedLocation?.label ?? fallbackPostcode)
-  const [resultFilter, setResultFilter] = useState<MapResultFilter>(
-    () => initialFilter(searchParams.get('category'), restoredSession?.serviceFilter, restoredSession?.selectedKinds),
+  const [selectedKinds, setSelectedKinds] = useState<MapPlaceKind[]>(
+    () => restoredKinds(restoredSession?.selectedKinds, searchParams.get('category')),
   )
   const [result, setResult] = useState<MapPlaceResult | null>(null)
   const [isLoading, setIsLoading] = useState(true)
@@ -186,8 +179,7 @@ export function MapPage() {
     saveMapSessionState({
       area,
       query,
-      selectedKinds: kindsForFilter(resultFilter),
-      serviceFilter: filterKey(resultFilter),
+      selectedKinds,
       selectedPlaceId,
       panelMode,
       mobileView,
@@ -196,7 +188,7 @@ export function MapPage() {
       viewport: mapViewport,
       directions: directionsState,
     })
-  }, [area, directionsState, mapViewport, mobileView, panelMode, panelSize, query, resultFilter, selectedPlaceId])
+  }, [area, directionsState, mapViewport, mobileView, panelMode, panelSize, query, selectedKinds, selectedPlaceId])
 
   const repository = useMemo(
     () => getMapPlaceRepository({ postcode: area.postcode }),
@@ -225,8 +217,8 @@ export function MapPage() {
   }, [area.postcode, repository, retryKey])
 
   const filteredPlaces = useMemo(() => sortPlaces(
-    (result?.places ?? []).filter((place) => placeMatchesFilter(place, resultFilter)),
-  ), [result?.places, resultFilter])
+    (result?.places ?? []).filter((place) => selectedKinds.includes(place.kind)),
+  ), [result?.places, selectedKinds])
   const visiblePlaces = useMemo(
     () => limitPerKind(filteredPlaces, MAP_RESULT_LIMIT),
     [filteredPlaces],
@@ -246,12 +238,13 @@ export function MapPage() {
     () => displayedSelectedPlaceId ? [displayedSelectedPlaceId] : [],
     [displayedSelectedPlaceId],
   )
+  const allSelected = selectedKinds.length === enabledMapPlaceKinds.length
   const legendItems = useMemo(
-    () => kindsForFilter(resultFilter).map((kind) => ({
+    () => (allSelected ? enabledMapPlaceKinds : selectedKinds).map((kind) => ({
       label: mapPlaceKindPresentation[kind].label,
       variant: legendVariantByKind[kind],
     })),
-    [resultFilter],
+    [allSelected, selectedKinds],
   )
 
   useEffect(() => {
@@ -270,20 +263,35 @@ export function MapPage() {
     })
   }, [isLoading, result, selectedPlace, selectedPlaceId])
 
-  const updateCategoryParam = useCallback((filter: MapResultFilter) => {
+  const updateCategoryParam = useCallback((kinds: MapPlaceKind[]) => {
     const next = new URLSearchParams(searchParams)
-    const category = filterKey(filter)
-    if (category === 'all') next.delete('category')
-    else next.set('category', category)
+    if (kinds.length === enabledMapPlaceKinds.length) next.delete('category')
+    else next.set('category', kinds.join(','))
     next.set('area', area.postcode)
     setSearchParams(next, { replace: true })
   }, [area.postcode, searchParams, setSearchParams])
 
-  function chooseFilter(filter: MapResultFilter) {
-    setResultFilter(filter)
+  function chooseAll() {
+    const next = [...enabledMapPlaceKinds]
+    setSelectedKinds(next)
     setSelectedPlaceId(undefined)
     setPanelMode('results')
-    updateCategoryParam(filter)
+    updateCategoryParam(next)
+  }
+
+  function toggleKind(kind: MapPlaceKind) {
+    const next = allSelected
+      ? [kind]
+      : selectedKinds.includes(kind)
+        ? selectedKinds.filter((item) => item !== kind)
+        : [...selectedKinds, kind]
+    const normalized = next.length === 0 || next.length === enabledMapPlaceKinds.length
+      ? [...enabledMapPlaceKinds]
+      : next
+    setSelectedKinds(normalized)
+    setSelectedPlaceId(undefined)
+    setPanelMode('results')
+    updateCategoryParam(normalized)
   }
 
   function applyArea(location: SearchLocationResult) {
@@ -614,12 +622,12 @@ export function MapPage() {
       ) : null}
       {!isLoading && !loadError && filteredPlaces.length === 0 ? (
         <EmptyState
-          title={resultFilter.mode === 'all' ? 'No nearby places found' : 'No places match these filters'}
-          action={resultFilter.mode === 'all'
+          title={allSelected ? 'No nearby places found' : 'No places match these filters'}
+          action={allSelected
             ? <button className="button button--quiet" type="button" onClick={focusAreaSearch}>Search another area</button>
-            : <button className="button button--quiet" type="button" onClick={() => chooseFilter({ mode: 'all' })}>Clear filters</button>}
+            : <button className="button button--quiet" type="button" onClick={chooseAll}>Clear filters</button>}
         >
-          <p>This does not confirm that help is unavailable. {resultFilter.mode === 'all' ? 'Search another suburb or postcode.' : 'Clear the filters or search another area.'}</p>
+          <p>This does not confirm that help is unavailable. {allSelected ? 'Search another suburb or postcode.' : 'Clear the filters or search another area.'}</p>
         </EmptyState>
       ) : null}
       {visiblePlaces.length > 0 ? (
@@ -697,7 +705,7 @@ export function MapPage() {
                 </div>
               ) : null}
             </form>
-            <MapFilters filter={resultFilter} onSelect={chooseFilter} />
+            <MapFilters selectedKinds={selectedKinds} onChooseAll={chooseAll} onToggleKind={toggleKind} />
           </div> : null}
           <div
             className="unified-map-panel__size"
