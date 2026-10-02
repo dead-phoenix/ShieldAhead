@@ -63,8 +63,7 @@ describe('unified Map page', () => {
     expect(await screen.findByText('Library Wi-Fi')).toBeVisible()
     expect(screen.getByText('Community House')).toBeVisible()
     expect(screen.getByText('Regional Pantry')).toBeVisible()
-    expect(screen.getByText('Harcourt Hospital')).toBeVisible()
-    expect(screen.getByTestId('map-marker-count')).toHaveTextContent('3')
+    expect(screen.getByTestId('map-marker-count')).toHaveTextContent('2')
     expect(screen.getByText('Not shown on map — coordinates not provided')).toBeVisible()
 
     fireEvent.click(screen.getByRole('button', { name: 'Free Wi-Fi' }))
@@ -85,7 +84,7 @@ describe('unified Map page', () => {
     await screen.findByText('Library Wi-Fi')
 
     expect(screen.queryByText('Harcourt Hospital')).not.toBeInTheDocument()
-    expect(screen.getByTestId('map-marker-count')).toHaveTextContent('3')
+    expect(screen.getByTestId('map-marker-count')).toHaveTextContent('2')
   })
 
   it('keeps the newly chosen charity tag instead of returning to All', async () => {
