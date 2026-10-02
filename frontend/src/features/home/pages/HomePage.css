@@ -1,0 +1,232 @@
+.home-page {
+  justify-items: center;
+  width: min(100%, 68rem);
+  gap: 0;
+  text-align: center;
+}
+
+.home-hero,
+.home-help,
+.home-ahead,
+.home-offline {
+  display: grid;
+  justify-items: center;
+  gap: 0.85rem;
+  width: 100%;
+  padding: 2.5rem 0;
+}
+
+.home-hero {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  min-height: 32rem;
+  margin-top: 0.5rem;
+  padding: 6.5rem 1.75rem;
+  border-radius: 1.75rem;
+}
+
+.home-hero__photo {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center 38%;
+}
+
+.home-hero::before {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background: radial-gradient(ellipse at center, rgba(251, 248, 241, 0.86) 0%, rgba(251, 248, 241, 0.55) 38%, rgba(11, 24, 48, 0.12) 100%);
+  content: '';
+}
+
+.home-hero > :not(.home-hero__photo) {
+  position: relative;
+  z-index: 2;
+}
+
+.home-help,
+.home-ahead,
+.home-offline {
+  border-top: 1px solid rgba(107, 149, 197, 0.28);
+}
+
+.home-hero {
+  justify-self: stretch;
+  width: auto;
+  min-height: clamp(30rem, 82vh, 46rem);
+  align-content: center;
+  margin: -1.5rem calc(50% - 50vw) 1rem;
+  padding: 5rem 1.5rem 4rem;
+  background:
+    linear-gradient(180deg, rgba(11, 24, 48, 0.62) 0%, rgba(11, 24, 48, 0.35) 55%, rgba(11, 24, 48, 0.6) 100%),
+    url('/images/flinders-street-station.jpg') center 40% / cover no-repeat;
+}
+
+@media (min-width: 56rem) {
+  .home-hero {
+    margin-top: -5rem;
+    padding-top: 8rem;
+  }
+}
+
+.home-page .home-hero h1,
+.home-page .home-hero p {
+  color: #fff;
+  text-shadow: 0 2px 16px rgba(0, 0, 0, 0.35);
+}
+
+.home-page h1,
+.home-page h2 {
+  margin: 0;
+  color: var(--spatial-ink);
+  font-family: 'Fraunces', 'Atkinson Hyperlegible Next', serif;
+  font-weight: 600;
+  letter-spacing: -0.03em;
+}
+
+.home-page h1 {
+  font-size: clamp(3rem, 8vw, 4.4rem);
+  line-height: 0.98;
+}
+
+.home-page h2 {
+  margin-top: 0.35rem;
+  font-size: clamp(1.7rem, 4vw, 2.15rem);
+  line-height: 1.15;
+}
+
+.home-page p {
+  max-width: 34rem;
+  margin: 0;
+  color: var(--spatial-muted);
+  font-size: 1.05rem;
+  line-height: 1.55;
+}
+
+.home-page .landing-action {
+  margin-top: 0.45rem;
+}
+
+.home-map {
+  position: relative;
+  width: min(100%, 56rem);
+  height: 28rem;
+  margin-bottom: 0.85rem;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.85);
+  border-radius: 1.5rem;
+  background: #d7e8f8;
+  box-shadow: var(--spatial-shadow);
+}
+
+.home-map__photo,
+.home-map__canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.home-map__photo {
+  object-fit: cover;
+  object-position: center;
+}
+
+.home-map__canvas {
+  z-index: 1;
+}
+
+.home-map__canvas[hidden] {
+  display: none;
+}
+
+.home-map__pins {
+  position: absolute;
+  z-index: 2;
+  top: 50%;
+  left: 50%;
+  display: flex;
+  gap: 0.65rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+
+.home-map__pins li {
+  display: grid;
+  place-items: center;
+  width: 3.4rem;
+  height: 3.4rem;
+  border: 1px solid rgba(255, 255, 255, 0.92);
+  border-radius: 0.9rem;
+  background: rgba(255, 255, 255, 0.9);
+  box-shadow: 0 10px 24px rgba(42, 87, 143, 0.18);
+  color: var(--spatial-blue-deep);
+}
+
+.home-ahead__hazards {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1.15rem;
+  width: min(100%, 56rem);
+  margin: 0.4rem 0 0.35rem;
+  padding: 0;
+  list-style: none;
+}
+
+.home-ahead__hazards a {
+  display: grid;
+  gap: 0.55rem;
+  color: var(--spatial-ink);
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.home-ahead__hazards img {
+  width: 100%;
+  height: 16rem;
+  object-fit: cover;
+  border-radius: 1.25rem;
+  box-shadow: 0 12px 28px rgba(42, 87, 143, 0.12);
+}
+
+.home-ahead__hazards a:hover img,
+.home-ahead__hazards a:focus-visible img {
+  transform: translateY(-2px);
+}
+
+.home-offline__mark {
+  display: grid;
+  place-items: center;
+  width: 4.25rem;
+  height: 4.25rem;
+  margin-top: 0.35rem;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.72);
+  box-shadow: 0 12px 28px rgba(42, 87, 143, 0.12);
+  color: var(--spatial-blue-deep);
+}
+
+@media (max-width: 39.99rem) {
+  .home-hero,
+  .home-help,
+  .home-ahead,
+  .home-offline {
+    padding: 2rem 0;
+  }
+
+  .home-map {
+    height: 18rem;
+  }
+
+  .home-ahead__hazards img {
+    height: 9rem;
+  }
+}

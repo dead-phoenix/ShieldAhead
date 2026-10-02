@@ -699,7 +699,7 @@ export function MapPage() {
               ) : null}
               {displayedPanelMode !== 'directions' ? <MapLegend items={[
                 { label: 'Free Wi-Fi', variant: 'confirmed' },
-                { label: 'Charity and community support', variant: 'support' },
+                { label: 'Charity', variant: 'support' },
               ]} /> : null}
               {displayedPanelMode === 'directions' && routePreview ? (
                 <button className="button button--quiet unified-map-recentre" type="button" onClick={() => setRouteRecentreKey((current) => current + 1)}>
