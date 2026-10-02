@@ -14,7 +14,7 @@ export function CrisisLandingPage() {
   const [query, setQuery] = useState('')
   const [searchError, setSearchError] = useState('')
   const [showSuggestions, setShowSuggestions] = useState(false)
-  const hideSuggestionsTimer = useRef<number>()
+  const hideSuggestionsTimer = useRef<number | undefined>(undefined)
 
   function goToMatch(kind: NonNullable<ReturnType<typeof matchCrisisKind>>, q: string) {
     setSearchError('')
