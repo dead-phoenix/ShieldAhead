@@ -249,7 +249,70 @@ def test_valid_directions_request_returns_route(client):
     assert response.json["routes"][0]["distance_meters"] == 1500
     assert response.json["routes"][0]["duration_seconds"] == 420
     assert response.json["routes"][0]["geometry"]["type"] == "LineString"
+    assert response.json["routes"][0]["steps"] == []
     assert "disclaimer" in response.json
+
+
+def test_ors_service_flattens_segment_steps_for_live_navigation():
+    from unittest.mock import Mock
+    from services.ors_service import get_route
+
+    ors_response = Mock()
+    ors_response.status_code = 200
+    ors_response.json.return_value = {
+        "features": [{
+            "properties": {
+                "summary": {"distance": 574.2, "duration": 371.2},
+                "segments": [{
+                    "steps": [
+                        {"distance": 53.4, "duration": 38.5, "type": 11, "instruction": "Head south", "name": "-", "way_points": [0, 4]},
+                        {"distance": 10.0, "duration": 7.2, "type": 1, "instruction": "Turn right onto Bourke Street Mall", "name": "Bourke Street Mall", "way_points": [4, 6]},
+                    ],
+                }],
+            },
+            "geometry": {"type": "LineString", "coordinates": [[144.9631, -37.8136], [144.9671, -37.8183]]},
+        }],
+    }
+
+    with patch("services.ors_service.http_requests.post", return_value=ors_response), \
+         patch("services.ors_service.ORS_API_KEY", "test-key"):
+        routes = get_route(-37.8136, 144.9631, -37.8183, 144.9671, profile="foot-walking")
+
+    assert len(routes[0]["steps"]) == 2
+    assert routes[0]["steps"][0]["instruction"] == "Head south"
+    assert routes[0]["steps"][1]["street_name"] == "Bourke Street Mall"
+    assert routes[0]["steps"][1]["maneuver_type"] == 1
+    assert routes[0]["steps"][1]["way_points"] == [4, 6]
+
+
+def test_directions_response_passes_through_turn_by_turn_steps(client):
+    fake_routes = [{
+        "distance_meters": 1500,
+        "duration_seconds": 420,
+        "geometry": {
+            "type": "LineString",
+            "coordinates": [[144.9631, -37.8136], [144.9671, -37.8183]],
+        },
+        "steps": [
+            {
+                "distance_meters": 462.1,
+                "duration_seconds": 332.7,
+                "maneuver_type": 0,
+                "instruction": "Turn left",
+                "street_name": "Collins Street",
+                "way_points": [7, 23],
+            },
+        ],
+    }]
+
+    with patch("routes.directions_routes.get_route", return_value=fake_routes):
+        response = client.post("/api/directions", json=valid_directions_payload())
+
+    assert response.status_code == 200
+    steps = response.json["routes"][0]["steps"]
+    assert steps[0]["instruction"] == "Turn left"
+    assert steps[0]["street_name"] == "Collins Street"
+    assert steps[0]["way_points"] == [7, 23]
 
 
 def test_directions_does_not_expose_internal_error(client):

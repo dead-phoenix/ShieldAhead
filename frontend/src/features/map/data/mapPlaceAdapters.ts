@@ -1,9 +1,18 @@
 import type {
   DatasetMetadata,
+  EmergencyFacility,
+  FacilityType,
   SupportService,
   WifiLocation,
 } from '../../../data/contracts'
-import type { MapDataOrigin, MapPlace } from '../model/mapTypes'
+import type { MapDataOrigin, MapPlace, MapPlaceKind } from '../model/mapTypes'
+
+const facilityTypeToKind: Record<FacilityType, MapPlaceKind> = {
+  Hospital: 'hospital',
+  'Police Station': 'police',
+  'Fire Station': 'fire',
+  'Ambulance Station': 'ambulance',
+}
 
 export function metadataOrigin(metadata: DatasetMetadata): MapDataOrigin {
   return metadata.dataOrigin === 'cache' || Boolean(metadata.cachedAt)
@@ -61,6 +70,28 @@ export function supportServiceToMapPlace(
     availabilityFreshness: service.availabilityFreshness,
     dataUpdatedAt: service.dataUpdatedAt,
     dataOrigin,
+  }
+}
+
+export function emergencyFacilityToMapPlace(facility: EmergencyFacility): MapPlace {
+  return {
+    id: `emergency:${facility.id}`,
+    sourceId: facility.id,
+    source: 'emergency',
+    kind: facilityTypeToKind[facility.facilityType],
+    name: facility.name,
+    address: facility.address,
+    suburb: facility.suburb,
+    postcode: facility.postcode,
+    latitude: facility.latitude,
+    longitude: facility.longitude,
+    distanceKm: facility.distanceKm,
+    phone: facility.phone,
+    dataUpdatedAt: facility.dataUpdatedAt,
+    // Fetched directly (not through the offline-aware repository/cache
+    // layer the wifi/support sources use), so it is always this run's
+    // live result rather than a saved copy.
+    dataOrigin: 'network',
   }
 }
 

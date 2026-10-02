@@ -2,7 +2,14 @@ import time
 import pytest
 from unittest.mock import Mock, patch
 from app import app
-from cache import _address_cache, _cache, _charity_cache, _postcode_cache, _reverse_geocode_cache
+from cache import (
+    _address_cache,
+    _cache,
+    _charity_cache,
+    _emergency_facility_cache,
+    _postcode_cache,
+    _reverse_geocode_cache,
+)
 from extensions import limiter
 from services.acnc_service import (
     attach_charity_coordinates,
@@ -39,6 +46,9 @@ def reset_caches():
     _cache["timestamp"] = None
     _cache["removed_ids"] = []
     _cache["freshness_status"] = None
+    _emergency_facility_cache["data"] = None
+    _emergency_facility_cache["timestamp"] = None
+    _emergency_facility_cache["freshness_status"] = None
     limiter.reset()
     with patch(
         "services.geocoding.reverse_geocode_locality",
@@ -631,6 +641,116 @@ def test_expired_wifi_cache_is_served_without_live_fetch(client):
     assert response.json["records"][0]["name"] == "Stale hotspot"
     assert response.json["metadata"]["freshnessStatus"] == "stale"
     mock_wifi.assert_not_called()
+    mock_schedule.assert_called_once()
+
+
+# ============================================================
+# Emergency facilities (hospital/police/fire/ambulance)
+# ============================================================
+
+def test_api_facilities_requires_postcode(client):
+    response = client.get("/api/facilities")
+    assert response.status_code == 400
+    assert response.is_json
+
+
+def test_api_facilities_returns_records_from_live_fetch(client):
+    vicmap_features = [
+        {
+            "attributes": {
+                "OBJECTID": 1,
+                "name": "BENDIGO HOSPITAL",
+                "name_label": "Kilmore District Hospital",
+                "feature_subtype": "general hospital",
+            },
+            "geometry": {"x": 144.28, "y": -36.76},
+        },
+        {
+            "attributes": {
+                "OBJECTID": 2,
+                "name": "BENDIGO POLICE STATION",
+                "name_label": "Bendigo Police Station",
+                "feature_subtype": "police station",
+            },
+            "geometry": {"x": 144.279, "y": -36.757},
+        },
+    ]
+    with patch("routes.facilities_routes.postcode_to_coords", return_value=(-36.757, 144.279)):
+        with patch(
+            "services.refresh_service.fetch_emergency_facility_features",
+            return_value=vicmap_features,
+        ):
+            response = client.get("/api/facilities?postcode=3550")
+
+    assert response.status_code == 200
+    names = {record["name"] for record in response.json["records"]}
+    types = {record["facilityType"] for record in response.json["records"]}
+    assert "Kilmore District Hospital" in names
+    assert "Bendigo Police Station" in names
+    assert types == {"Hospital", "Police Station"}
+    assert response.json["metadata"]["freshnessStatus"] == "current"
+
+
+def test_api_facilities_filters_by_requested_type(client):
+    vicmap_features = [
+        {
+            "attributes": {
+                "OBJECTID": 1,
+                "name": "KILMORE DISTRICT HOSPITAL",
+                "name_label": "Kilmore District Hospital",
+                "feature_subtype": "general hospital",
+            },
+            "geometry": {"x": 144.958, "y": -37.301},
+        },
+        {
+            "attributes": {
+                "OBJECTID": 2,
+                "name": "BENDIGO FIRE STATION",
+                "name_label": "Bendigo Fire Station",
+                "feature_subtype": "fire station",
+            },
+            "geometry": {"x": 144.279, "y": -36.757},
+        },
+    ]
+    with patch("routes.facilities_routes.postcode_to_coords", return_value=(-36.757, 144.279)):
+        with patch(
+            "services.refresh_service.fetch_emergency_facility_features",
+            return_value=vicmap_features,
+        ):
+            response = client.get("/api/facilities?postcode=3550&type=Fire+Station")
+
+    assert response.status_code == 200
+    records = response.json["records"]
+    assert len(records) == 1
+    assert records[0]["name"] == "Bendigo Fire Station"
+    assert records[0]["facilityType"] == "Fire Station"
+
+
+def test_expired_facility_cache_is_served_without_live_fetch(client):
+    _emergency_facility_cache["data"] = [{
+        "id": "vicmap-facility-9",
+        "name": "Stale Hospital",
+        "facilityType": "Hospital",
+        "address": None,
+        "suburb": None,
+        "postcode": None,
+        "latitude": -36.757,
+        "longitude": 144.279,
+        "phone": None,
+        "tags": [],
+        "dataUpdatedAt": "2026-01-01",
+    }]
+    _emergency_facility_cache["timestamp"] = time.time() - 90_000
+    _emergency_facility_cache["freshness_status"] = "current"
+    with patch("routes.facilities_routes.postcode_to_coords", return_value=(-36.757, 144.279)):
+        with patch("services.refresh_service.fetch_emergency_facility_features") as mock_fetch:
+            with patch("routes.facilities_routes.schedule_emergency_facility_refresh") as mock_schedule:
+                response = client.get("/api/facilities?postcode=3550")
+
+    assert response.status_code == 200
+    assert response.json["records"][0]["name"] == "Stale Hospital"
+    assert response.json["metadata"]["freshnessStatus"] == "stale"
+    mock_fetch.assert_not_called()
     mock_schedule.assert_called_once()
 
 

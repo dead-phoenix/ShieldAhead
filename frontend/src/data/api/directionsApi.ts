@@ -5,10 +5,27 @@ export interface RoutePoint {
   longitude: number
 }
 
+// ORS's numeric maneuver type codes (ORS Directions API: 0 Left, 1 Right,
+// 2 Sharp left, 3 Sharp right, 4 Slight left, 5 Slight right, 6 Straight,
+// 7 Enter roundabout, 8 Exit roundabout, 9 U-turn, 10 Goal/Arrive, 11 Depart,
+// 12 Keep left, 13 Keep right). Kept as the raw number rather than an enum
+// so an unrecognised future code degrades to a generic turn icon instead of
+// failing to parse.
+export interface NavigationStep {
+  distanceMeters: number
+  durationSeconds: number
+  maneuverType: number
+  instruction: string
+  streetName?: string
+  /** Index of this step's starting point in the route's `coordinates` array. */
+  startCoordinateIndex: number
+}
+
 export interface RouteOption {
   distanceMeters: number
   durationSeconds: number
   coordinates: [number, number][]
+  steps: NavigationStep[]
 }
 
 export interface RoutePreview extends RouteOption {
@@ -55,6 +72,30 @@ async function readJson(response: Response): Promise<Record<string, unknown> | n
   }
 }
 
+function normalizeStep(value: unknown, coordinateCount: number): NavigationStep | null {
+  if (typeof value !== 'object' || value === null) return null
+  const record = value as Record<string, unknown>
+  const distanceMeters = Number(record.distance_meters)
+  const durationSeconds = Number(record.duration_seconds)
+  const maneuverType = Number(record.maneuver_type)
+  const instruction = typeof record.instruction === 'string' ? record.instruction : ''
+  const wayPoints = record.way_points
+  const startCoordinateIndex = Array.isArray(wayPoints) ? Number(wayPoints[0]) : NaN
+  if (
+    !Number.isFinite(distanceMeters)
+    || !Number.isFinite(durationSeconds)
+    || !Number.isFinite(maneuverType)
+    || !instruction
+    || !Number.isInteger(startCoordinateIndex)
+    || startCoordinateIndex < 0
+    || startCoordinateIndex >= coordinateCount
+  ) return null
+  const streetName = typeof record.street_name === 'string' && record.street_name.trim() && record.street_name !== '-'
+    ? record.street_name
+    : undefined
+  return { distanceMeters, durationSeconds, maneuverType, instruction, streetName, startCoordinateIndex }
+}
+
 function normalizeRouteOption(value: unknown): RouteOption | null {
   if (typeof value !== 'object' || value === null) return null
   const record = value as Record<string, unknown>
@@ -70,7 +111,12 @@ function normalizeRouteOption(value: unknown): RouteOption | null {
   const distanceMeters = Number(record.distance_meters)
   const durationSeconds = Number(record.duration_seconds)
   if (!Number.isFinite(distanceMeters) || !Number.isFinite(durationSeconds)) return null
-  return { distanceMeters, durationSeconds, coordinates }
+  const steps = Array.isArray(record.steps)
+    ? record.steps
+      .map((step) => normalizeStep(step, coordinates.length))
+      .filter((step): step is NavigationStep => step !== null)
+    : []
+  return { distanceMeters, durationSeconds, coordinates, steps }
 }
 
 export async function getDirections(

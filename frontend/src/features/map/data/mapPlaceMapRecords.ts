@@ -1,4 +1,5 @@
 import type { MapRecord } from '../../../shared/map/mapRecords'
+import { mapPlaceKindPresentation } from '../model/mapPlacePresentation'
 import type { MapPlace } from '../model/mapTypes'
 
 export function mapPlaceHasCoordinates(place: MapPlace): place is MapPlace & {
@@ -17,21 +18,22 @@ export function mapPlaceHasCoordinates(place: MapPlace): place is MapPlace & {
 
 export function mapPlacesToMapRecords(places: MapPlace[]): MapRecord[] {
   return places
-    .filter((place) => place.kind === 'wifi' || place.kind === 'support')
     .filter(mapPlaceHasCoordinates)
     .map((place) => ({
     id: place.id,
-    kind: place.kind === 'wifi' ? 'wifi' : 'support',
+    kind: place.kind,
     name: place.name,
     latitude: place.latitude,
     longitude: place.longitude,
-    markerLabel: place.kind === 'wifi' ? 'Wi-Fi' : 'Support',
+    markerLabel: mapPlaceKindPresentation[place.kind].markerLabel,
     status: place.kind === 'wifi' ? place.verificationStatus : undefined,
     previewStatus: place.kind === 'wifi'
       ? place.verificationStatus === 'confirmed'
         ? 'Confirmed Wi-Fi listing'
         : 'Wi-Fi availability not confirmed'
-      : 'Charity or community support',
+      : place.kind === 'support'
+        ? 'Charity or community support'
+        : mapPlaceKindPresentation[place.kind].singularLabel,
     previewLines: [
       [place.address, place.suburb, place.postcode].filter(Boolean).join(', ') || 'Address not provided',
       place.distanceKm === undefined ? 'Distance not confirmed' : `${place.distanceKm} km away`,

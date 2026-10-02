@@ -23,6 +23,11 @@ const mapResult: MapPlaceResult = {
       postcode: '3453', suburb: 'Harcourt',
       dataUpdatedAt: '2026-09-30T00:00:00.000Z', dataOrigin: 'network', serviceTypes: ['Food relief'],
     },
+    {
+      id: 'emergency:e1', sourceId: 'e1', source: 'emergency', kind: 'hospital', name: 'Harcourt Hospital',
+      latitude: -36.97, longitude: 144.24,
+      dataUpdatedAt: '2026-09-30T00:00:00.000Z', dataOrigin: 'network',
+    },
   ],
   generatedAt: '2026-09-30T00:00:00.000Z',
   limitations: [],
@@ -58,7 +63,8 @@ describe('unified Map page', () => {
     expect(await screen.findByText('Library Wi-Fi')).toBeVisible()
     expect(screen.getByText('Community House')).toBeVisible()
     expect(screen.getByText('Regional Pantry')).toBeVisible()
-    expect(screen.getByTestId('map-marker-count')).toHaveTextContent('2')
+    expect(screen.getByText('Harcourt Hospital')).toBeVisible()
+    expect(screen.getByTestId('map-marker-count')).toHaveTextContent('3')
     expect(screen.getByText('Not shown on map — coordinates not provided')).toBeVisible()
 
     fireEvent.click(screen.getByRole('button', { name: 'Free Wi-Fi' }))
@@ -67,6 +73,19 @@ describe('unified Map page', () => {
     expect(screen.queryByText('Community House')).not.toBeInTheDocument()
     expect(screen.queryByText('Regional Pantry')).not.toBeInTheDocument()
     expect(screen.getByTestId('map-marker-count')).toHaveTextContent('1')
+  })
+
+  // Emergency facility places (hospital/police/fire/ambulance) are fetched
+  // by the repository layer, but the current filter UI only understands
+  // wifi/support/charity-tag — placeMatchesFilter excludes any other kind,
+  // so a fetched facility correctly stays out of both the list and the map
+  // until the filter UI itself is extended to cover them.
+  it('does not yet surface fetched emergency facility places in the filtered results', async () => {
+    render(<MemoryRouter initialEntries={['/map']}><MapPage /></MemoryRouter>)
+    await screen.findByText('Library Wi-Fi')
+
+    expect(screen.queryByText('Harcourt Hospital')).not.toBeInTheDocument()
+    expect(screen.getByTestId('map-marker-count')).toHaveTextContent('3')
   })
 
   it('keeps the newly chosen charity tag instead of returning to All', async () => {
@@ -88,13 +107,6 @@ describe('unified Map page', () => {
     expect(screen.queryByText('Community House')).not.toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Food' })).toHaveAttribute('aria-pressed', 'true')
     expect(screen.getByRole('button', { name: 'All' })).toHaveAttribute('aria-pressed', 'false')
-  })
-
-  it('does not expose unconfirmed emergency filters', async () => {
-    render(<MemoryRouter initialEntries={['/map']}><MapPage /></MemoryRouter>)
-    await screen.findByText('Library Wi-Fi')
-    expect(screen.queryByRole('button', { name: 'Hospitals' })).not.toBeInTheDocument()
-    expect(screen.queryByRole('button', { name: 'Police' })).not.toBeInTheDocument()
   })
 
   it('returns to results when a restored place is no longer in the current result set', async () => {

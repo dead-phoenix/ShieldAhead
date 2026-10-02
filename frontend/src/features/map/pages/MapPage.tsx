@@ -1,11 +1,15 @@
 import {
+  Ambulance,
   ArrowLeft,
   Crosshair,
+  Fire,
   HandHeart,
+  Hospital,
   MagnifyingGlass,
   MapPin,
   NavigationArrow,
   Phone,
+  ShieldCheckered,
   WifiHigh,
 } from '@phosphor-icons/react'
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties, type FormEvent } from 'react'
@@ -26,7 +30,7 @@ import {
 } from '../../../storage/searchLocationStorage'
 import { resolveCoordinates, searchLocations, type SearchLocationResult } from '../data/locationSearchApi'
 import type { RoutePoint, RoutePreview } from '../../../data/api/directionsApi'
-import type { MapViewport, SearchMarkerPoint } from '../../../shared/map/MapView'
+import type { LivePositionPoint, MapViewport, SearchMarkerPoint } from '../../../shared/map/MapView'
 import { mapPlaceHasCoordinates, mapPlacesToMapRecords } from '../data/mapPlaceMapRecords'
 import { getMapPlaceRepository } from '../data/mapPlaceRepository'
 import { MapFilters } from '../components/MapFilters'
@@ -71,6 +75,46 @@ function sortPlaces(places: MapPlace[]): MapPlace[] {
 
 const MAP_RESULT_LIMIT = 30
 
+// Emergency facilities are far sparser than wifi hotspots or charities —
+// in a city, reaching the 30th-nearest fire or police station can mean
+// pulling one in from the other side of the metro area, which then drags
+// the map's auto-fit zoom out so far that the genuinely nearby wifi/
+// charity pins shrink to an unreadable dot in the centre. Nobody needs to
+// see the 30 nearest fire stations anyway, so these kinds get a much
+// smaller cap — keeping the view (and the map's zoom level) focused on
+// what's actually close by.
+const RESULT_LIMIT_BY_KIND: Partial<Record<MapPlaceKind, number>> = {
+  hospital: 8,
+  police: 8,
+  fire: 8,
+  ambulance: 8,
+}
+
+// Capping the combined, distance-sorted list at one flat count starves out
+// sparser kinds whenever a denser kind fills every slot first. Capping per
+// kind instead keeps every selected category represented, then re-sorts
+// the surviving places back into one nearest-first list for display.
+function limitPerKind(places: MapPlace[], defaultLimit: number): MapPlace[] {
+  const takenByKind = new Map<MapPlace['kind'], number>()
+  const limited = places.filter((place) => {
+    const limit = RESULT_LIMIT_BY_KIND[place.kind] ?? defaultLimit
+    const taken = takenByKind.get(place.kind) ?? 0
+    if (taken >= limit) return false
+    takenByKind.set(place.kind, taken + 1)
+    return true
+  })
+  return sortPlaces(limited)
+}
+
+const legendVariantByKind: Record<MapPlaceKind, 'confirmed' | 'support' | 'hospital' | 'police' | 'fire' | 'ambulance'> = {
+  wifi: 'confirmed',
+  support: 'support',
+  hospital: 'hospital',
+  police: 'police',
+  fire: 'fire',
+  ambulance: 'ambulance',
+}
+
 function formatDate(value: string | undefined): string {
   if (!value) return 'Not provided'
   const date = new Date(value)
@@ -87,9 +131,12 @@ function latestSavedAt(result: MapPlaceResult | null): string | undefined {
 }
 
 function PlaceIcon({ kind }: { kind: MapPlaceKind }) {
-  return kind === 'wifi'
-    ? <WifiHigh aria-hidden="true" size={23} weight="duotone" />
-    : <HandHeart aria-hidden="true" size={23} weight="duotone" />
+  if (kind === 'wifi') return <WifiHigh aria-hidden="true" size={23} weight="duotone" />
+  if (kind === 'support') return <HandHeart aria-hidden="true" size={23} weight="duotone" />
+  if (kind === 'hospital') return <Hospital aria-hidden="true" size={23} weight="duotone" />
+  if (kind === 'police') return <ShieldCheckered aria-hidden="true" size={23} weight="duotone" />
+  if (kind === 'fire') return <Fire aria-hidden="true" size={23} weight="duotone" />
+  return <Ambulance aria-hidden="true" size={23} weight="duotone" />
 }
 
 export function MapPage() {
@@ -124,6 +171,7 @@ export function MapPage() {
   const [selectedMapStart, setSelectedMapStart] = useState<RoutePoint>()
   const [isSelectingMapStart, setIsSelectingMapStart] = useState(false)
   const [routeRecentreKey, setRouteRecentreKey] = useState(0)
+  const [livePosition, setLivePosition] = useState<LivePositionPoint>()
   const listScrollTopRef = useRef(restoredSession?.listScrollTop ?? 0)
   const panelContentRef = useRef<HTMLDivElement>(null)
   const searchInputRef = useRef<HTMLInputElement>(null)
@@ -180,7 +228,7 @@ export function MapPage() {
     (result?.places ?? []).filter((place) => placeMatchesFilter(place, resultFilter)),
   ), [result?.places, resultFilter])
   const visiblePlaces = useMemo(
-    () => filteredPlaces.slice(0, MAP_RESULT_LIMIT),
+    () => limitPerKind(filteredPlaces, MAP_RESULT_LIMIT),
     [filteredPlaces],
   )
   const mapRecords = useMemo(() => mapPlacesToMapRecords(visiblePlaces), [visiblePlaces])
@@ -198,6 +246,14 @@ export function MapPage() {
     () => displayedSelectedPlaceId ? [displayedSelectedPlaceId] : [],
     [displayedSelectedPlaceId],
   )
+  const legendItems = useMemo(
+    () => kindsForFilter(resultFilter).map((kind) => ({
+      label: mapPlaceKindPresentation[kind].label,
+      variant: legendVariantByKind[kind],
+    })),
+    [resultFilter],
+  )
+
   useEffect(() => {
     if (isLoading || !result || !selectedPlaceId || selectedPlace) return
 
@@ -469,6 +525,7 @@ export function MapPage() {
         onRequestMapStart={() => setIsSelectingMapStart((current) => !current)}
         onRouteChange={setRoutePreview}
         onStateChange={handleDirectionsStateChange}
+        onLivePositionChange={setLivePosition}
         showHeading={false}
       />
       <p className="unified-map-directions__destination-note">Select another map marker to change the destination. Your current filters and search area will stay in place.</p>
@@ -691,16 +748,14 @@ export function MapPage() {
                 isSelectingStart={isSelectingMapStart}
                 onSelectStart={handleSelectMapStart}
                 searchMarker={searchPoint}
+                livePosition={livePosition}
               />
               {movedMapCenter && displayedPanelMode !== 'directions' ? (
                 <button className="button button--quiet unified-map-search-area" type="button" onClick={() => void searchMovedMapArea()} disabled={isSearching}>
                   Search this area
                 </button>
               ) : null}
-              {displayedPanelMode !== 'directions' ? <MapLegend items={[
-                { label: 'Free Wi-Fi', variant: 'confirmed' },
-                { label: 'Charity and community support', variant: 'support' },
-              ]} /> : null}
+              {displayedPanelMode !== 'directions' ? <MapLegend items={legendItems} /> : null}
               {displayedPanelMode === 'directions' && routePreview ? (
                 <button className="button button--quiet unified-map-recentre" type="button" onClick={() => setRouteRecentreKey((current) => current + 1)}>
                   <Crosshair aria-hidden="true" size={18} /> Re-centre route

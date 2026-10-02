@@ -17,10 +17,38 @@ setWorkerUrl(workerUrl)
 
 const defaultStyleUrl = 'https://tiles.openfreemap.org/styles/liberty'
 const svgNamespace = 'http://www.w3.org/2000/svg'
+// How far the initial auto-fit is allowed to zoom OUT when markers span a
+// wide area (e.g. a couple of far-flung emergency facilities alongside a
+// tight local cluster of wifi/support pins). Roughly a "local area" view —
+// far enough out to still look reasonable, close enough that the nearby
+// cluster isn't shrunk to an unreadable dot.
+const MIN_AUTOFIT_ZOOM = 12
+// A dense city search (lots of wifi/charity points genuinely packed into a
+// few blocks, like central Melbourne) can still produce dozens of visible
+// markers even once zoomed to MIN_AUTOFIT_ZOOM, which reads as clutter
+// rather than "too far out" — the bounds-based zoom alone can't tell those
+// two cases apart. Past this many markers, zoom in further regardless of
+// what the bounds say, trading a few now-offscreen distant markers (still
+// reachable by panning) for a readable initial view.
+const DENSE_MARKER_COUNT_THRESHOLD = 40
+const DENSE_MARKER_MIN_ZOOM = 15
 const markerIconPaths = {
   wifi: 'M144,204a16,16,0,1,1-16-16A16,16,0,0,1,144,204ZM239.61,83.91a176,176,0,0,0-223.22,0,12,12,0,1,0,15.23,18.55,152,152,0,0,1,192.76,0,12,12,0,1,0,15.23-18.55Zm-32.16,35.73a128,128,0,0,0-158.9,0,12,12,0,0,0,14.9,18.81,104,104,0,0,1,129.1,0,12,12,0,0,0,14.9-18.81ZM175.07,155.3a80.05,80.05,0,0,0-94.14,0,12,12,0,0,0,14.14,19.4,56,56,0,0,1,65.86,0,12,12,0,1,0,14.14-19.4Z',
   support: 'M232.76,137.88a28.66,28.66,0,0,0-12-5.39C236.19,114.94,244,97.37,244,80c0-28.67-23.09-52-51.46-52A51.77,51.77,0,0,0,156,42.85,51.77,51.77,0,0,0,119.46,28C91.09,28,68,51.33,68,80c0,10.15,2.72,20.3,8.22,30.7a35.9,35.9,0,0,0-11.73,7.84L43,140H20A20,20,0,0,0,0,160v40a20,20,0,0,0,20,20H120a11.89,11.89,0,0,0,2.91-.36l64-16a11.4,11.4,0,0,0,1.79-.6l38.82-16.54c.23-.09.45-.19.67-.3a28.61,28.61,0,0,0,4.57-48.32ZM119.46,52A27.18,27.18,0,0,1,144.9,68.56a12,12,0,0,0,22.2,0A27.18,27.18,0,0,1,192.54,52C207.42,52,220,64.82,220,80c0,18.06-15,38.84-43.38,60.19L172,141.26c0-.42,0-.84,0-1.26a32,32,0,0,0-32-32H102.71C95.42,97.76,92,88.77,92,80,92,64.82,104.58,52,119.46,52ZM24,164H36v32H24Zm193.68.61-37.51,16L118.52,196H60V157l21.46-21.46A11.93,11.93,0,0,1,89.94,132H140a8,8,0,0,1,0,16H112a12,12,0,0,0,0,24h32a12.19,12.19,0,0,0,2.69-.3l67-15.41.47-.12a4.61,4.61,0,0,1,5.82,4.44A4.58,4.58,0,0,1,217.68,164.61Z',
+  hospital: 'M248,208h-8V128a16,16,0,0,0-16-16H168V48a16,16,0,0,0-16-16H56A16,16,0,0,0,40,48V208H32a8,8,0,0,0,0,16H248a8,8,0,0,0,0-16Zm-24-80v80H168V128ZM56,48h96V208H136V160a8,8,0,0,0-8-8H80a8,8,0,0,0-8,8v48H56Zm64,160H88V168h32ZM72,96a8,8,0,0,1,8-8H96V72a8,8,0,0,1,16,0V88h16a8,8,0,0,1,0,16H112v16a8,8,0,0,1-16,0V104H80A8,8,0,0,1,72,96Z',
+  police: 'M208,40H48A16,16,0,0,0,32,56v56c0,52.72,25.52,84.67,46.93,102.19,23.06,18.86,46,25.27,47,25.53a8,8,0,0,0,4.2,0c1-.26,23.91-6.67,47-25.53C198.48,196.67,224,164.72,224,112V56A16,16,0,0,0,208,40Zm0,16v56c0,2.71-.08,5.37-.23,8H136V56ZM48,56h72v64H48.23c-.15-2.63-.23-5.29-.23-8Zm2.06,80H120v84.55a130.85,130.85,0,0,1-30.93-18.74C67.92,184.51,54.87,162.44,50.08,136ZM167.4,201.42A131.31,131.31,0,0,1,136,220.53V136h69.91C201.16,162.24,188.27,184.18,167.4,201.42Z',
+  fire: 'M183.89,153.34a57.6,57.6,0,0,1-46.56,46.55A8.75,8.75,0,0,1,136,200a8,8,0,0,1-1.32-15.89c16.57-2.79,30.63-16.85,33.44-33.45a8,8,0,0,1,15.78,2.68ZM216,144a88,88,0,0,1-176,0c0-27.92,11-56.47,32.66-84.85a8,8,0,0,1,11.93-.89l24.12,23.41,22-60.41a8,8,0,0,1,12.63-3.41C165.21,36,216,84.55,216,144Zm-16,0c0-46.09-35.79-85.92-58.21-106.33L119.52,98.74a8,8,0,0,1-13.09,3L80.06,76.16C64.09,99.21,56,122,56,144a72,72,0,0,0,144,0Z',
+  ambulance: 'M80,120a8,8,0,0,1,8-8h16V96a8,8,0,0,1,16,0v16h16a8,8,0,0,1,0,16H120v16a8,8,0,0,1-16,0V128H88A8,8,0,0,1,80,120Zm176,0v64a16,16,0,0,1-16,16H223a32,32,0,0,1-62,0H111a32,32,0,0,1-62,0H32a16,16,0,0,1-16-16V72A16,16,0,0,1,32,56H184a8,8,0,0,1,8,8v8h34.58a15.93,15.93,0,0,1,14.86,10.06l14,35A7.92,7.92,0,0,1,256,120ZM192,88v24h44.18l-9.6-24ZM32,184H49a32,32,0,0,1,62,0h50a32.11,32.11,0,0,1,15-19.69V72H32Zm64,8a16,16,0,1,0-16,16A16,16,0,0,0,96,192Zm112,0a16,16,0,1,0-16,16A16,16,0,0,0,208,192Zm32-8V128H192v32a32.06,32.06,0,0,1,31,24Z',
 } as const
+
+const markerGroupLabels: Partial<Record<MapRecord['kind'], string>> = {
+  wifi: 'Wi-Fi locations',
+  support: 'support services',
+  hospital: 'hospitals',
+  police: 'police stations',
+  fire: 'fire stations',
+  ambulance: 'ambulance stations',
+}
 
 function appendMarkerContents(button: HTMLButtonElement, record: MapRecord, count: number) {
   const icon = document.createElementNS(svgNamespace, 'svg')
@@ -47,7 +75,7 @@ function createPreviewContent(record: MapRecord, count: number): HTMLDivElement 
   const content = document.createElement('div')
   content.className = 'marker-popup'
   const title = document.createElement('strong')
-  title.textContent = count > 1 ? `${count} ${record.kind === 'wifi' ? 'Wi-Fi locations' : 'support services'}` : record.name
+  title.textContent = count > 1 ? `${count} ${markerGroupLabels[record.kind] ?? 'locations'}` : record.name
   content.append(title)
   const status = document.createElement('span')
   status.className = 'marker-popup__status'
@@ -69,6 +97,13 @@ export interface SearchMarkerPoint {
   label: string
 }
 
+export interface LivePositionPoint {
+  latitude: number
+  longitude: number
+  /** Degrees clockwise from true north — shows a direction cone when known. */
+  heading?: number
+}
+
 interface MapViewProps {
   ariaLabel: string
   markers: MapRecord[]
@@ -87,6 +122,9 @@ interface MapViewProps {
    * from the wifi/support markers — like Google Maps drops a pin exactly
    * where you searched. The map centres on it when it's set. */
   searchMarker?: SearchMarkerPoint
+  /** The traveller's live GPS position during active navigation, shown as
+   * a distinct blue "puck" marker rather than one of the pin-style markers. */
+  livePosition?: LivePositionPoint
 }
 
 export interface MapViewport extends RoutePoint {
@@ -102,15 +140,17 @@ function groupMarkersByPosition(markers: MapRecord[]): MapRecord[][] {
   return [...groups.values()]
 }
 
-export function MapView({ ariaLabel, markers, selectedIds = [], onSelect, onReturnToList, route, isSelectingStart = false, onSelectStart, onViewportSettled, initialViewport, onViewportChange, routeRecentreKey = 0, focusSelectedMarker = false, searchMarker }: MapViewProps) {
+export function MapView({ ariaLabel, markers, selectedIds = [], onSelect, onReturnToList, route, isSelectingStart = false, onSelectStart, onViewportSettled, initialViewport, onViewportChange, routeRecentreKey = 0, focusSelectedMarker = false, searchMarker, livePosition }: MapViewProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const mapRef = useRef<MapLibreMap | null>(null)
   const markerRefs = useRef<Marker[]>([])
   const searchMarkerRef = useRef<Marker | null>(null)
   const routeOriginMarkerRef = useRef<Marker | null>(null)
+  const livePositionMarkerRef = useRef<Marker | null>(null)
   const markerButtonsRef = useRef(new Map<string, HTMLButtonElement>())
   const previewPopupRef = useRef<Popup | null>(null)
   const onSelectRef = useRef(onSelect)
+  const latestSearchMarkerRef = useRef(searchMarker)
   const [isReady, setIsReady] = useState(false)
   const [hasFailed, setHasFailed] = useState(false)
   const initialViewportRef = useRef(initialViewport)
@@ -119,6 +159,10 @@ export function MapView({ ariaLabel, markers, selectedIds = [], onSelect, onRetu
   useEffect(() => {
     onSelectRef.current = onSelect
   }, [onSelect])
+
+  useEffect(() => {
+    latestSearchMarkerRef.current = searchMarker
+  }, [searchMarker])
 
   useEffect(() => {
     if (!containerRef.current) return
@@ -161,6 +205,8 @@ export function MapView({ ariaLabel, markers, selectedIds = [], onSelect, onRetu
       markerRefs.current = []
       searchMarkerRef.current?.remove()
       searchMarkerRef.current = null
+      livePositionMarkerRef.current?.remove()
+      livePositionMarkerRef.current = null
       if (loadTimer) window.clearTimeout(loadTimer)
       mapRef.current?.remove()
       mapRef.current = null
@@ -181,9 +227,7 @@ export function MapView({ ariaLabel, markers, selectedIds = [], onSelect, onRetu
       button.type = 'button'
       const variant = record.kind === 'wifi' && record.status ? record.status : record.kind
       button.className = `map-marker map-marker--${variant}`
-      const groupedLabel = record.kind === 'wifi'
-        ? `${group.length} Wi-Fi locations share this map position`
-        : `${group.length} services share this approximate map location`
+      const groupedLabel = `${group.length} ${markerGroupLabels[record.kind] ?? 'locations'} share this approximate map position`
       button.setAttribute('aria-label', group.length > 1 ? groupedLabel : `Show ${record.name} details`)
       button.title = group.length > 1 ? groupedLabel : record.name
       appendMarkerContents(button, record, group.length)
@@ -228,7 +272,25 @@ export function MapView({ ariaLabel, markers, selectedIds = [], onSelect, onRetu
     } else if (markers.length > 1) {
       const bounds = new LngLatBounds()
       markers.forEach((record) => bounds.extend([record.longitude, record.latitude]))
-      map.fitBounds(bounds, { padding: 56, maxZoom: 14, duration: 0 })
+      // A few sparse markers far from the rest (e.g. the nearest police/fire
+      // station reaching well beyond a dense cluster of wifi/support pins)
+      // can otherwise drag fitBounds out to a whole-region view. Clamp how
+      // far it's allowed to zoom OUT so the common, nearby cluster stays
+      // readable — every marker is still on the map and reachable by
+      // panning or zooming out manually, just not force-fit into view.
+      const camera = map.cameraForBounds(bounds, { padding: 56, maxZoom: 14 })
+      const search = latestSearchMarkerRef.current
+      if (camera?.center && camera.zoom !== undefined) {
+        // Re-centre on what was actually searched for, not the bounding
+        // box's centroid — a wide geographic spread (the sparse markers
+        // above) can pull that centroid well away from the search point,
+        // which is exactly the place this view needs to stay anchored on.
+        const center = search ? [search.longitude, search.latitude] as [number, number] : camera.center
+        const zoomFloor = markers.length >= DENSE_MARKER_COUNT_THRESHOLD ? DENSE_MARKER_MIN_ZOOM : MIN_AUTOFIT_ZOOM
+        map.easeTo({ center, zoom: Math.max(camera.zoom, zoomFloor), duration: 0 })
+      } else {
+        map.fitBounds(bounds, { padding: 56, maxZoom: 14, duration: 0 })
+      }
     }
 
     return () => {
@@ -274,6 +336,38 @@ export function MapView({ ariaLabel, markers, selectedIds = [], onSelect, onRetu
     // time doesn't re-create and re-centre the pin on every render.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isReady, searchMarker?.latitude, searchMarker?.longitude, searchMarker?.label])
+
+  useEffect(() => {
+    const map = mapRef.current
+    if (!map || !isReady) return
+
+    if (!livePosition) {
+      livePositionMarkerRef.current?.remove()
+      livePositionMarkerRef.current = null
+      return
+    }
+
+    // Updated in place via setLngLat rather than recreated each fix — a
+    // fresh marker per GPS update (every second or two) would flicker.
+    if (!livePositionMarkerRef.current) {
+      const element = document.createElement('div')
+      element.className = 'live-position-marker'
+      const dot = document.createElement('div')
+      dot.className = 'live-position-marker__dot'
+      element.append(dot)
+      livePositionMarkerRef.current = new Marker({ element, anchor: 'center' })
+        .setLngLat([livePosition.longitude, livePosition.latitude])
+        .addTo(map)
+    } else {
+      livePositionMarkerRef.current.setLngLat([livePosition.longitude, livePosition.latitude])
+    }
+
+    const element = livePositionMarkerRef.current.getElement()
+    element.classList.toggle('has-heading', livePosition.heading !== undefined)
+    if (livePosition.heading !== undefined) {
+      element.style.setProperty('--live-heading', `${livePosition.heading}deg`)
+    }
+  }, [isReady, livePosition])
 
   useEffect(() => {
     const map = mapRef.current

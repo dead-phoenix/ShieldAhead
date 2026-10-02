@@ -52,6 +52,23 @@ export interface SupportService {
   dataUpdatedAt: string
 }
 
+export type FacilityType = 'Hospital' | 'Police Station' | 'Fire Station' | 'Ambulance Station'
+
+export interface EmergencyFacility {
+  id: string
+  name: string
+  facilityType: FacilityType
+  address?: string
+  suburb?: string
+  postcode?: string
+  latitude?: number
+  longitude?: number
+  distanceKm?: number
+  phone?: string
+  tags?: string[]
+  dataUpdatedAt: string
+}
+
 export interface OfflinePreferences {
   wifiSaved: boolean
   supportSaved: boolean

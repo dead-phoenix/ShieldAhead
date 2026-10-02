@@ -1,7 +1,8 @@
-import { MagnifyingGlass } from '@phosphor-icons/react'
+import { MagnifyingGlass, Microphone } from '@phosphor-icons/react'
 import { lazy, Suspense, useCallback, useRef, useState, type FormEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { appRoutes } from '../../../app/config/product'
+import { useSpeechInput } from '../../../shared/hooks/useSpeechInput'
 import { crisisContent } from '../crisisContent'
 import { matchCrisisKind, matchCrisisStage, SUGGESTED_CRISIS_QUERIES } from '../matchCrisisQuery'
 
@@ -15,6 +16,10 @@ export function CrisisLandingPage() {
   const [searchError, setSearchError] = useState('')
   const [showSuggestions, setShowSuggestions] = useState(false)
   const hideSuggestionsTimer = useRef<number>()
+  const speech = useSpeechInput((transcript) => {
+    setQuery(transcript)
+    setSearchError('')
+  })
 
   function goToMatch(kind: NonNullable<ReturnType<typeof matchCrisisKind>>, q: string) {
     setSearchError('')
@@ -83,10 +88,23 @@ export function CrisisLandingPage() {
             aria-controls="crisis-query-suggestions"
             aria-expanded={showSuggestions}
           />
+          {speech.isSupported ? (
+            <button
+              aria-label={speech.isListening ? 'Stop voice input' : 'Ask by voice'}
+              aria-pressed={speech.isListening}
+              className={`crisis-query-search__mic${speech.isListening ? ' is-listening' : ''}`}
+              onClick={() => (speech.isListening ? speech.stop() : speech.start())}
+              type="button"
+            >
+              <Microphone aria-hidden="true" size={18} />
+            </button>
+          ) : null}
           <button className="button button--primary" type="submit">
             <MagnifyingGlass aria-hidden="true" size={18} /> Search
           </button>
         </div>
+        {speech.isListening ? <p className="crisis-query-search__status" role="status">Listening…</p> : null}
+        {speech.error ? <p className="crisis-query-search__error" role="alert">{speech.error}</p> : null}
         {showSuggestions ? (
           <div className="crisis-query-search__suggestions" id="crisis-query-suggestions" role="listbox" aria-label="Example questions">
             {SUGGESTED_CRISIS_QUERIES.map((suggestion) => (

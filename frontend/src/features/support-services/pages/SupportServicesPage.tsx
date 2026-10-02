@@ -1,11 +1,15 @@
 import {
+  Ambulance,
   ArrowRight,
   CheckCircle,
   CloudSlash,
+  Fire,
   HandHeart,
+  Hospital,
   LinkSimple,
   MapPin,
   Phone,
+  ShieldCheckered,
   Users,
   Warning,
   XCircle,
@@ -14,17 +18,19 @@ import {
 import { useCallback, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { appRoutes } from '../../../app/config/product'
+import type { FacilityType } from '../../../data/contracts'
 import { getSupportServiceRepository } from '../../../data/supportServiceRepository'
 import { useRepositoryData } from '../../../data/useRepositoryData'
 import { EmptyState } from '../../../shared/components/EmptyState'
 import { LoadingState } from '../../../shared/components/LoadingState'
 import { StatusBanner } from '../../../shared/components/StatusBanner'
+import { useEmergencyFacilities } from '../../../shared/hooks/useEmergencyFacilities'
 import { useOnlineStatus } from '../../../shared/hooks/useOnlineStatus'
 import { formatSavedDate } from '../../../shared/utils/formatDate'
 import { ListMapToggle, type ResultsView } from '../../../shared/map/ListMapToggle'
 import { LazyMapView } from '../../../shared/map/LazyMapView'
 import { MapLegend } from '../../../shared/map/MapLegend'
-import { supportMapRecords } from '../../../shared/map/mapRecords'
+import { emergencyFacilityMapRecords, supportMapRecords } from '../../../shared/map/mapRecords'
 import { getSearchLocation, getSearchPostcode } from '../../../storage/searchLocationStorage'
 import { getOfflinePreferences } from '../../../storage/onboardingDraftStorage'
 import {
@@ -47,6 +53,22 @@ const serviceFilterTerms: Record<ServiceFilter, string[]> = {
   Housing: ['housing', 'homeless'],
 }
 
+const facilityTypes: FacilityType[] = ['Hospital', 'Police Station', 'Fire Station', 'Ambulance Station']
+
+const facilityTypeLegendVariant: Record<FacilityType, 'hospital' | 'police' | 'fire' | 'ambulance'> = {
+  Hospital: 'hospital',
+  'Police Station': 'police',
+  'Fire Station': 'fire',
+  'Ambulance Station': 'ambulance',
+}
+
+function FacilityTypeIcon({ facilityType }: { facilityType: FacilityType }) {
+  if (facilityType === 'Hospital') return <Hospital aria-hidden="true" size={19} weight="duotone" />
+  if (facilityType === 'Police Station') return <ShieldCheckered aria-hidden="true" size={19} weight="duotone" />
+  if (facilityType === 'Fire Station') return <Fire aria-hidden="true" size={19} weight="duotone" />
+  return <Ambulance aria-hidden="true" size={19} weight="duotone" />
+}
+
 function AvailabilityIcon({ tone }: { tone: AvailabilityTone }) {
   if (tone === 'normal') return <CheckCircle aria-hidden="true" size={19} weight="fill" />
   if (tone === 'closed') return <XCircle aria-hidden="true" size={19} weight="fill" />
@@ -61,7 +83,9 @@ export function SupportServicesPage() {
     [postcode],
   )
   const { data, isLoading, error, retry } = useRepositoryData(repository.list)
+  const { data: facilityData, isLoading: facilitiesLoading } = useEmergencyFacilities(postcode)
   const [activeFilters, setActiveFilters] = useState<ServiceFilter[]>([])
+  const [activeFacilityTypes, setActiveFacilityTypes] = useState<FacilityType[]>(facilityTypes)
   const [view, setView] = useState<ResultsView>('list')
   const [selectedMapIds, setSelectedMapIds] = useState<string[]>([])
   const [routePreview, setRoutePreview] = useState<RoutePreview>()
@@ -87,10 +111,18 @@ export function SupportServicesPage() {
     )
   }, [activeFilters, allServices])
   const mapRecords = useMemo(() => supportMapRecords(services), [services])
+  const visibleFacilities = useMemo(
+    () => (facilityData?.records ?? []).filter((facility) => activeFacilityTypes.includes(facility.facilityType)),
+    [facilityData?.records, activeFacilityTypes],
+  )
+  const facilityMapRecords = useMemo(() => emergencyFacilityMapRecords(visibleFacilities), [visibleFacilities])
+  const allMapRecords = useMemo(() => [...mapRecords, ...facilityMapRecords], [mapRecords, facilityMapRecords])
   const effectiveView = isOnline ? view : 'list'
-  const effectiveSelectedMapIds = selectedMapIds.filter((id) => mapRecords.some((record) => record.id === id))
+  const effectiveSelectedMapIds = selectedMapIds.filter((id) => allMapRecords.some((record) => record.id === id))
   const selectedMapServices = services.filter((service) => effectiveSelectedMapIds.includes(service.id))
   const selectedMapService = selectedMapServices.length === 1 ? selectedMapServices[0] : undefined
+  const selectedFacilities = visibleFacilities.filter((facility) => effectiveSelectedMapIds.includes(facility.id))
+  const selectedFacility = selectedFacilities.length === 1 && selectedMapServices.length === 0 ? selectedFacilities[0] : undefined
 
   const handleMapSelect = useCallback((ids: string[]) => {
     setRoutePreview(undefined)
@@ -123,6 +155,14 @@ export function SupportServicesPage() {
     setSelectedMapIds([])
     setRoutePreview(undefined)
   }
+
+  function toggleFacilityType(type: FacilityType) {
+    setActiveFacilityTypes((current) => current.includes(type)
+      ? current.filter((item) => item !== type)
+      : [...current, type])
+    setSelectedMapIds([])
+    setRoutePreview(undefined)
+  }
   return (
     <section className="content-page" aria-labelledby="support-title">
       <div className="connectivity-strip"><CloudSlash aria-hidden="true" size={21} /><span><strong>{isOnline ? (data?.metadata.cachedAt ? 'Saved for offline use' : offline.supportSaved ? 'Preparing offline copy' : 'Online — not saved for offline use') : isSavedCopy ? 'You are offline — showing saved copy' : 'You are offline'}</strong><small>{canReadRecords ? `Showing ${isSavedCopy ? 'saved' : 'current'} information near ${postcode}. ${data?.metadata.cachedAt ? `Saved on this device: ${formatSavedDate(data.metadata.cachedAt)}.` : ''}` : noOfflineCopy ? 'No Support information is saved for this postcode.' : 'Loading Support information…'}</small></span></div>
@@ -136,9 +176,9 @@ export function SupportServicesPage() {
           <span>Change location</span>
         </Link>
       </div>
-      {data && allServices.length > 0 ? (
+      {data && (allServices.length > 0 || visibleFacilities.length > 0) ? (
         <div className="results-toolbar">
-          <p className="results-count">Showing {services.length}{services.length !== allServices.length ? ` of ${allServices.length}` : ''} services.</p>
+          <p className="results-count">Showing {services.length}{services.length !== allServices.length ? ` of ${allServices.length}` : ''} services{visibleFacilities.length > 0 ? ` and ${visibleFacilities.length} emergency facilit${visibleFacilities.length === 1 ? 'y' : 'ies'}` : ''}.</p>
           <ListMapToggle mapDisabled={!isOnline} value={effectiveView} onChange={(nextView) => { setView(nextView); if (nextView === 'list') { setSelectedMapIds([]); setRoutePreview(undefined) } }} />
           {!isOnline ? <small>Map view needs an internet connection.</small> : null}
         </div>
@@ -161,6 +201,29 @@ export function SupportServicesPage() {
               <strong>Active filters:</strong> {activeFilters.join(', ')}. Showing {services.length} of {allServices.length} services.
             </p>
           ) : null}
+        </section>
+      ) : null}
+      {facilityData && facilityData.records.length > 0 ? (
+        <section className="support-filters" aria-labelledby="facility-filter-title">
+          <div className="support-filters__heading">
+            <div>
+              <h2 id="facility-filter-title">Nearby hospitals, police &amp; fire stations</h2>
+              <p>Shown on the map with their own symbols, sourced from Vicmap. Street addresses are not published in this dataset.</p>
+            </div>
+          </div>
+          <div className="filter-row" aria-label="Emergency facility type filters">
+            {facilityTypes.map((type) => (
+              <button
+                aria-pressed={activeFacilityTypes.includes(type)}
+                className={activeFacilityTypes.includes(type) ? 'filter-chip is-active' : 'filter-chip'}
+                key={type}
+                type="button"
+                onClick={() => toggleFacilityType(type)}
+              >
+                <FacilityTypeIcon facilityType={type} /> {type}
+              </button>
+            ))}
+          </div>
         </section>
       ) : null}
       {isLoading ? <LoadingState /> : null}
@@ -194,13 +257,35 @@ export function SupportServicesPage() {
           {!services.length ? <p className="empty-filter" role="status">No services match the selected filters. Try another category or clear all filters.</p> : null}
         </div>
       ) : null}
-      {data && canReadRecords && allServices.length > 0 && effectiveView === 'map' ? (
+      {effectiveView === 'list' && visibleFacilities.length > 0 ? (
+        <div className="service-list facility-list">
+          <h2>Nearby hospitals, police &amp; fire stations</h2>
+          {visibleFacilities.map((facility) => (
+            <article className="service-card" key={facility.id}>
+              <div className="service-card__heading">
+                <span className={`record-row__icon record-row__icon--${facilityTypeLegendVariant[facility.facilityType]}`}>
+                  <FacilityTypeIcon facilityType={facility.facilityType} />
+                </span>
+                <div>
+                  <h2>{facility.name}</h2>
+                  <p>{facility.facilityType} · {facility.distanceKm === undefined ? 'Distance not confirmed' : `${facility.distanceKm} km`}</p>
+                </div>
+              </div>
+              <div className="service-card__actions">
+                <button className="button button--quiet button--compact" type="button" onClick={() => showServiceOnMap(facility.id)} disabled={!isOnline}><MapPin aria-hidden="true" size={16} /> Show on map</button>
+              </div>
+            </article>
+          ))}
+        </div>
+      ) : null}
+      {facilitiesLoading && effectiveView === 'list' ? <p className="map-note" role="status">Loading nearby hospitals, police &amp; fire stations…</p> : null}
+      {data && canReadRecords && (allServices.length > 0 || visibleFacilities.length > 0) && effectiveView === 'map' ? (
         <div className="map-results">
-          {mapRecords.length > 0 ? (
+          {allMapRecords.length > 0 ? (
             <>
               <LazyMapView
                 ariaLabel={`Map of nearby support services around ${searchLabel}`}
-                markers={mapRecords}
+                markers={allMapRecords}
                 selectedIds={effectiveSelectedMapIds}
                 onSelect={handleMapSelect}
                 onReturnToList={() => setView('list')}
@@ -208,7 +293,12 @@ export function SupportServicesPage() {
                 isSelectingStart={isSelectingMapStart}
                 onSelectStart={handleSelectMapStart}
               />
-              <MapLegend items={[{ label: 'Support service', variant: 'support' }]} />
+              <MapLegend items={[
+                { label: 'Support service', variant: 'support' },
+                ...activeFacilityTypes
+                  .filter((type) => visibleFacilities.some((facility) => facility.facilityType === type))
+                  .map((type) => ({ label: type, variant: facilityTypeLegendVariant[type] })),
+              ]} />
               {mapRecords.length < services.length ? (
                 <p className="map-note" role="status">
                   {services.length - mapRecords.length} filtered result{services.length - mapRecords.length === 1 ? '' : 's'} without coordinates remain available in the list.
@@ -283,6 +373,53 @@ export function SupportServicesPage() {
                     {selectedMapServices.map((service) => (
                       <button key={service.id} type="button" onClick={() => setSelectedMapIds([service.id])}>
                         <span><strong>{service.name}</strong><small>{service.address ? formatServiceAddress(service) : `${service.suburb} VIC ${service.postcode}`}</small></span>
+                        <ArrowRight aria-hidden="true" size={18} weight="bold" />
+                      </button>
+                    ))}
+                  </div>
+                </section>
+              ) : selectedFacility ? (
+                <>
+                {selectedFacility.latitude != null && selectedFacility.longitude != null ? (
+                  <DirectionsPanel
+                    key={selectedFacility.id}
+                    destination={{ name: selectedFacility.name, latitude: selectedFacility.latitude, longitude: selectedFacility.longitude }}
+                    destinationIsApproximate
+                    onRouteChange={setRoutePreview}
+                    selectedMapStart={selectedMapStart}
+                    isSelectingMapStart={isSelectingMapStart}
+                    onRequestMapStart={() => setIsSelectingMapStart((current) => !current)}
+                  />
+                ) : null}
+                <article className="map-detail-card" aria-live="polite">
+                  <button className="map-detail-card__close" type="button" aria-label="Close facility details" onClick={() => { setSelectedMapIds([]); setRoutePreview(undefined) }}><X aria-hidden="true" size={21} /></button>
+                  <div className="map-detail-card__heading">
+                    <span className={`record-row__icon record-row__icon--${facilityTypeLegendVariant[selectedFacility.facilityType]}`}>
+                      <FacilityTypeIcon facilityType={selectedFacility.facilityType} />
+                    </span>
+                    <div>
+                      <h2>{selectedFacility.name}</h2>
+                    </div>
+                  </div>
+                  <div className="map-detail-card__facts">
+                    <p><MapPin aria-hidden="true" size={17} /> {selectedFacility.facilityType} · {selectedFacility.distanceKm === undefined ? 'Distance not confirmed' : `${selectedFacility.distanceKm} km`}</p>
+                  </div>
+                  <p className="map-note">Street address, phone and opening hours are not published in this dataset (Vicmap Features of Interest). In an emergency, call 000.</p>
+                </article>
+                </>
+              ) : selectedFacilities.length > 1 ? (
+                <section className="map-service-picker" aria-labelledby="map-facility-picker-title">
+                  <div className="map-service-picker__heading">
+                    <div>
+                      <h2 id="map-facility-picker-title">Choose a facility</h2>
+                      <p>Select a facility to see its details and plan a route.</p>
+                    </div>
+                    <button className="map-detail-card__close" type="button" aria-label="Close facility selection" onClick={() => setSelectedMapIds([])}><X aria-hidden="true" size={21} /></button>
+                  </div>
+                  <div className="map-service-picker__list">
+                    {selectedFacilities.map((facility) => (
+                      <button key={facility.id} type="button" onClick={() => setSelectedMapIds([facility.id])}>
+                        <span><strong>{facility.name}</strong><small>{facility.facilityType}</small></span>
                         <ArrowRight aria-hidden="true" size={18} weight="bold" />
                       </button>
                     ))}
