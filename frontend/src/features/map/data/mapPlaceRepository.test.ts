@@ -1,7 +1,24 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import type { DatasetMetadata } from '../../../data/contracts'
 import type { SupportServiceRepository, WifiRepository } from '../../../data/repositories'
 import { createCombinedMapPlaceRepository } from './mapPlaceRepository'
+
+// Without this, findNearby() fires a real, unmocked fetch() to the live
+// Vicmap-backed /api/facilities endpoint on every test run — slow, flaky,
+// and it returns real emergency-facility records that break assertions
+// written as if only wifi/support were in play.
+vi.mock('../../../data/api/facilitiesApi', () => ({
+  fetchEmergencyFacilities: vi.fn().mockResolvedValue({
+    records: [],
+    metadata: {
+      version: '1.0',
+      generatedAt: '2026-01-01T00:00:00.000Z',
+      sourceName: 'Vicmap Features of Interest',
+      coverageAreas: [],
+      limitations: [],
+    },
+  }),
+}))
 
 const metadata: DatasetMetadata = {
   version: '1',
