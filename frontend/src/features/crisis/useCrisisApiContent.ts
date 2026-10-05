@@ -2,6 +2,29 @@ import { useEffect, useState } from 'react'
 import { fetchChecklistItems, fetchHelplines } from '../../data/api/apiCrisisRepository'
 import type { Helpline } from '../../data/api/apiCrisisRepository'
 import type { CrisisChecklistGroup } from './crisisContent'
+import bundledChecklist from './data/preCrisisChecklist.json'
+
+interface BundledChecklistGroup {
+  crisisType: string
+  categoryId: string
+  category: string
+  items: { itemId: string; task: string; description: string; steps: string[] }[]
+}
+
+function bundledChecklistGroups(kind: string): CrisisChecklistGroup[] {
+  return (bundledChecklist.groups as BundledChecklistGroup[])
+    .filter((group) => group.crisisType === kind)
+    .map((group) => ({
+      id: group.categoryId,
+      title: group.category,
+      items: group.items.map((item) => ({
+        id: item.itemId,
+        label: item.task,
+        description: item.description,
+        steps: item.steps,
+      })),
+    }))
+}
 
 function groupChecklistRecords(records: Awaited<ReturnType<typeof fetchChecklistItems>>): CrisisChecklistGroup[] {
   const groups = new Map<string, CrisisChecklistGroup>()
@@ -19,19 +42,21 @@ function groupChecklistRecords(records: Awaited<ReturnType<typeof fetchChecklist
   return [...groups.values()]
 }
 
-/** Loads the pre-crisis checklist for a hazard from GET /api/checklist. */
+/** Shows the bundled pre-crisis checklist straight away, then replaces it
+ * with GET /api/checklist when the API responds. */
 export function useCrisisChecklist(kind: string): CrisisChecklistGroup[] {
-  const [groups, setGroups] = useState<CrisisChecklistGroup[]>([])
+  const [groups, setGroups] = useState<CrisisChecklistGroup[]>(() => bundledChecklistGroups(kind))
 
   useEffect(() => {
     let isCurrent = true
+    setGroups(bundledChecklistGroups(kind))
     fetchChecklistItems(kind, { baseUrl: import.meta.env.VITE_API_BASE_URL ?? '' })
       .then((records) => {
         if (!isCurrent || records.length === 0) return
         setGroups(groupChecklistRecords(records))
       })
       .catch(() => {
-        // Keep an empty checklist if the API call fails.
+        // Keep the bundled checklist if the API call fails.
       })
     return () => {
       isCurrent = false
