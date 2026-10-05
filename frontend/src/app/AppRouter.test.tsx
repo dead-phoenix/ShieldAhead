@@ -63,7 +63,7 @@ describe('first-run routing', () => {
       expect(navigation).toHaveTextContent('Home')
       expect(navigation).toHaveTextContent('Support')
       expect(navigation).toHaveTextContent('Crisis')
-      expect(navigation).toHaveTextContent('Emergency pack')
+      expect(navigation).toHaveTextContent('Crisis pack')
       expect(navigation).not.toHaveTextContent('Profile')
     })
     expect(screen.getByRole('link', { name: 'Profile' })).toHaveAttribute('href', '/settings')

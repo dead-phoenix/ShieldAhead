@@ -2,12 +2,10 @@
   display: grid;
   gap: 1.25rem;
   width: min(100%, 46rem);
+  min-width: 0;
 }
 
-.emergency-pack-intro p,
-.emergency-pack-crises > p,
-.emergency-pack-toolbar p,
-.pack-footnote {
+.emergency-pack-intro p {
   color: var(--color-text-muted);
   font-size: var(--text-sm);
   line-height: 1.45;
@@ -15,27 +13,25 @@
 
 .emergency-pack-choices {
   display: grid;
-  gap: 0.75rem;
+  gap: 1rem;
 }
 
-.emergency-pack-choices .check-card {
-  margin-top: 0;
-}
-
-.emergency-pack-crises {
+.emergency-pack-toggles {
   display: grid;
-  gap: 0.75rem;
-  margin: 0;
-  padding: 1rem;
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
-  background: var(--color-surface);
+  gap: 0.5rem;
 }
 
-.emergency-pack-crises legend {
-  padding-inline: 0.25rem;
+.emergency-pack-toggles h2 {
+  margin: 0;
   color: var(--color-ink);
+  font-size: var(--text-sm);
   font-weight: 700;
+}
+
+.emergency-pack-toggles__row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
 }
 
 .emergency-pack-toolbar {
@@ -45,133 +41,13 @@
   align-items: center;
 }
 
-.emergency-pack-toolbar p {
-  flex-basis: 100%;
-  margin: 0;
-}
-
 .emergency-pack-toolbar .button {
   display: inline-flex;
   gap: 0.4rem;
   align-items: center;
 }
 
-.emergency-pack-sheet {
-  display: grid;
-  gap: 1.25rem;
-  padding: 1.25rem;
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
-  background: var(--color-surface);
-}
-
-.emergency-pack-sheet__brand {
-  color: var(--color-accent);
-  font-size: var(--text-xs);
-  font-weight: 700;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-}
-
-.emergency-pack-sheet header p:last-child,
-.emergency-pack-sheet section > p {
-  color: var(--color-text-secondary);
-}
-
-.emergency-pack-sheet h3,
-.emergency-pack-sheet h4,
-.emergency-pack-sheet h5 {
-  margin: 0;
-}
-
-.emergency-pack-sheet section {
-  display: grid;
-  gap: 0.65rem;
-}
-
-.pack-places,
-.pack-helplines,
-.pack-tasks,
-.pack-guidelines ul {
-  display: grid;
-  gap: 0.55rem;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.pack-places li,
-.pack-helplines li,
-.pack-tasks li {
-  display: grid;
-  gap: 0.15rem;
-}
-
-.pack-places span,
-.pack-helplines small,
-.pack-tasks span,
-.pack-guidelines li {
-  color: var(--color-text-secondary);
-  font-size: var(--text-sm);
-  line-height: 1.4;
-}
-
-.pack-helplines span {
-  font-weight: 700;
-}
-
-.pack-tasks li {
-  grid-template-columns: 1rem minmax(0, 1fr);
-  column-gap: 0.65rem;
-}
-
-.pack-tasks li::before {
-  width: 0.9rem;
-  height: 0.9rem;
-  margin-top: 0.15rem;
-  border: 1.5px solid var(--color-ink);
-  content: '';
-}
-
-.pack-tasks li strong,
-.pack-tasks li span {
-  grid-column: 2;
-}
-
-.pack-guidelines {
-  display: grid;
-  gap: 1rem;
-}
-
-.pack-guidelines ul {
-  padding-inline-start: 1.1rem;
-  list-style: disc;
-}
-
-.pack-contacts {
-  width: 100%;
-  border-collapse: collapse;
-}
-
-.pack-contacts th {
-  padding: 0.35rem 0.5rem 0.35rem 0;
-  color: var(--color-text-muted);
-  font-size: var(--text-xs);
-  font-weight: 700;
-  text-align: left;
-}
-
-.pack-contacts td {
-  height: 2.4rem;
-  border-bottom: 1px solid var(--color-ink);
-}
-
-@media (min-width: 40rem) {
-  .pack-guidelines {
-    grid-template-columns: 1fr 1fr;
-  }
-}
-
+/* TODO(group 4): remove these print rules once the PDF download replaces window.print(). */
 @media print {
   .app-header,
   .mobile-nav,
@@ -189,28 +65,36 @@
   }
 
   .emergency-pack-page {
+    display: block;
     width: auto;
   }
 
-  .emergency-pack-sheet {
+  .crisis-pack-preview {
+    display: block;
     padding: 0;
-    border: 0;
-    border-radius: 0;
     background: #fff;
   }
 
-  .emergency-pack-sheet,
-  .emergency-pack-sheet * {
-    color: #111 !important;
+  .pack-page {
+    width: 210mm;
+    max-width: none;
+    margin: 0;
+    border: 0;
+    break-after: page;
   }
 
-  .pack-tasks li,
-  .pack-guidelines,
-  .pack-contacts tr {
-    break-inside: avoid;
+  .pack-page:last-child {
+    break-after: auto;
+  }
+
+  .pack-page__sheet {
+    height: 296mm;
+    aspect-ratio: auto;
+    overflow: hidden;
   }
 }
 
 @page {
-  margin: 14mm;
+  size: A4 portrait;
+  margin: 0;
 }

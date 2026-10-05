@@ -1,90 +1,46 @@
-import { FirstAidKit, Printer } from '@phosphor-icons/react'
-import { useEffect, useState } from 'react'
+import { Check, DownloadSimple } from '@phosphor-icons/react'
+import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { appRoutes } from '../../../app/config/product'
-import { fetchChecklistItems, fetchHelplines, type ChecklistItemRecord, type Helpline } from '../../../data/api/apiCrisisRepository'
+import { fetchChecklistItems, fetchHelplines } from '../../../data/api/apiCrisisRepository'
 import { LoadingState } from '../../../shared/components/LoadingState'
 import { useOnlineStatus } from '../../../shared/hooks/useOnlineStatus'
 import { getSearchLocation } from '../../../storage/searchLocationStorage'
 import type { CrisisKind } from '../../crisis/crisisContent'
 import { getMapPlaceRepository } from '../../map/data/mapPlaceRepository'
-import type { MapPlace } from '../../map/model/mapTypes'
-import {
-  HANDWRITTEN_CONTACT_ROWS,
-  NEARBY_PLACE_LIMIT,
-  crisisGuidelines,
-  crisisPackOptions,
-} from '../emergencyPackContent'
+import { CRISIS_PACK_DOCUMENT_TITLE, buildCrisisPack } from '../buildCrisisPack'
+import { CrisisPackPreview } from '../components/CrisisPackPreview'
+import { nearestPlaces, toChecklistGroups, toPackHelplines } from '../crisisPackSnapshot'
+import { crisisPackOptions } from '../emergencyPackContent'
 import {
   emptyEmergencyPackSnapshot,
   readEmergencyPack,
   saveEmergencyPack,
   type EmergencyPackPreferences,
   type EmergencyPackSnapshot,
-  type PackChecklistGroup,
-  type PackHelpline,
-  type PackPlace,
 } from '../emergencyPackStorage'
 import './EmergencyPackPage.css'
 
-function placeDetail(place: MapPlace): string {
-  const locality = [place.suburb, place.postcode].filter(Boolean).join(' ')
-  const address = place.address ? [place.address, locality].filter(Boolean).join(', ') : locality
-  const distance = place.distanceKm === undefined ? '' : `${place.distanceKm.toFixed(1)} km`
-  return [address || 'Address not provided', distance].filter(Boolean).join(' · ')
-}
+type ContentToggleKey = 'includeHelplines' | 'includeWifi' | 'includeCharities'
 
-function toPackPlace(place: MapPlace): PackPlace {
-  return {
-    id: place.id,
-    name: place.name,
-    detail: placeDetail(place),
-    phone: place.phone,
-  }
-}
+const contentToggles: { key: ContentToggleKey; label: string }[] = [
+  { key: 'includeHelplines', label: 'Helplines' },
+  { key: 'includeWifi', label: 'Wi-Fi spots' },
+  { key: 'includeCharities', label: 'Charities' },
+]
 
-function nearestPlaces(places: MapPlace[], kind: MapPlace['kind']): PackPlace[] {
-  return [...places]
-    .filter((place) => place.kind === kind)
-    .sort((left, right) => (left.distanceKm ?? Number.POSITIVE_INFINITY) - (right.distanceKm ?? Number.POSITIVE_INFINITY))
-    .slice(0, NEARBY_PLACE_LIMIT)
-    .map(toPackPlace)
-}
-
-function toPackHelplines(records: Helpline[]): PackHelpline[] {
-  const seen = new Set<string>()
-  return records.filter((record) => {
-    const key = `${record.name}|${record.phone}`
-    if (seen.has(key)) return false
-    seen.add(key)
-    return true
-  }).map((record) => ({
-    id: record.id,
-    name: record.name,
-    phone: record.phone,
-    detail: [record.description, record.availability, record.coverageArea].filter(Boolean).join(' · ') || undefined,
-  }))
-}
-
-function toChecklistGroups(records: ChecklistItemRecord[]): PackChecklistGroup[] {
-  const groups = new Map<string, PackChecklistGroup>()
-  for (const record of [...records].sort((left, right) => left.displayOrder - right.displayOrder)) {
-    if (!groups.has(record.categoryId)) {
-      groups.set(record.categoryId, { id: record.categoryId, title: record.category, items: [] })
-    }
-    groups.get(record.categoryId)?.items.push({
-      id: record.itemId,
-      task: record.task,
-      description: record.description,
-    })
-  }
-  return [...groups.values()]
-}
-
-function preparedDate(value: string | undefined): string {
-  const date = value ? new Date(value) : new Date()
-  if (Number.isNaN(date.getTime())) return 'Date not available'
-  return new Intl.DateTimeFormat('en-AU', { dateStyle: 'long' }).format(date)
+function PackToggle({ label, pressed, onToggle }: { label: string; pressed: boolean; onToggle: () => void }) {
+  return (
+    <button
+      className={pressed ? 'filter-chip is-active' : 'filter-chip'}
+      type="button"
+      aria-pressed={pressed}
+      onClick={onToggle}
+    >
+      {pressed ? <Check aria-hidden="true" size={16} weight="bold" /> : null}
+      {label}
+    </button>
+  )
 }
 
 export function EmergencyPackPage() {
@@ -98,12 +54,22 @@ export function EmergencyPackPage() {
   const [notice, setNotice] = useState('')
 
   useEffect(() => {
+    const previousTitle = document.title
+    document.title = CRISIS_PACK_DOCUMENT_TITLE
+    return () => {
+      document.title = previousTitle
+    }
+  }, [])
+
+  useEffect(() => {
     let isCurrent = true
     const baseUrl = import.meta.env.VITE_API_BASE_URL ?? ''
     const saved = readEmergencyPack().snapshot
+    const areaChanged = Boolean(areaPostcode && saved.postcode && saved.postcode !== areaPostcode)
     const next: EmergencyPackSnapshot = {
       ...emptyEmergencyPackSnapshot(),
       ...saved,
+      ...(areaChanged ? { wifi: [], support: [], placesSavedAt: {} } : {}),
       areaLabel: areaLabel || saved.areaLabel,
       postcode: areaPostcode || saved.postcode,
     }
@@ -122,11 +88,19 @@ export function EmergencyPackPage() {
 
       setIsLoading(true)
       setNotice('')
-      if (preferences.includeNearby && areaPostcode) {
+      if (areaPostcode) {
         try {
           const result = await getMapPlaceRepository({ postcode: areaPostcode }).findNearby({ postcode: areaPostcode })
-          next.wifi = nearestPlaces(result.places, 'wifi')
-          next.support = nearestPlaces(result.places, 'support')
+          const loadedSources = new Set(result.datasets.map((dataset) => dataset.source))
+          const loadedAt = new Date().toISOString()
+          if (loadedSources.has('wifi')) {
+            next.wifi = nearestPlaces(result.places, 'wifi')
+            next.placesSavedAt = { ...next.placesSavedAt, wifi: loadedAt }
+          }
+          if (loadedSources.has('support')) {
+            next.support = nearestPlaces(result.places, 'support')
+            next.placesSavedAt = { ...next.placesSavedAt, support: loadedAt }
+          }
           next.areaLabel = areaLabel || areaPostcode
           next.postcode = areaPostcode
         } catch {
@@ -134,20 +108,18 @@ export function EmergencyPackPage() {
         }
       }
 
-      if (preferences.includeHelplines) {
-        try {
-          next.helplines = toPackHelplines(await fetchHelplines({ baseUrl }))
-        } catch {
-          problems.push('Helpline numbers could not be updated. A saved copy is shown when one is available.')
-        }
+      try {
+        next.helplines = toPackHelplines(await fetchHelplines({ baseUrl }))
+      } catch {
+        problems.push('Helpline numbers could not be updated. A saved copy is shown when one is available.')
       }
 
-      await Promise.all(preferences.crises.map(async (kind) => {
+      await Promise.all(crisisPackOptions.map(async ({ kind }) => {
         try {
           const records = await fetchChecklistItems(kind, { baseUrl })
           if (records.length > 0) next.checklists = { ...next.checklists, [kind]: toChecklistGroups(records) }
         } catch {
-          problems.push('A crisis checklist could not be updated. A saved copy is shown when one is available.')
+          problems.push('A crisis checklist could not be updated. The checklist saved with the app is shown instead.')
         }
       }))
 
@@ -164,7 +136,12 @@ export function EmergencyPackPage() {
     return () => {
       isCurrent = false
     }
-  }, [areaLabel, areaPostcode, isOnline, preferences])
+  }, [areaLabel, areaPostcode, isOnline])
+
+  const pack = useMemo(
+    () => buildCrisisPack({ preferences, snapshot, downloadedAt: new Date() }),
+    [preferences, snapshot],
+  )
 
   function updatePreferences(next: EmergencyPackPreferences) {
     const current = readEmergencyPack()
@@ -172,200 +149,79 @@ export function EmergencyPackPage() {
     setPreferences(next)
   }
 
-  function toggleCrisis(kind: CrisisKind, enabled: boolean) {
+  function toggleContent(key: ContentToggleKey) {
+    updatePreferences({ ...preferences, [key]: !preferences[key] })
+  }
+
+  function toggleCrisis(kind: CrisisKind) {
+    const enabled = !preferences.crises.includes(kind)
     const crises = crisisPackOptions
       .map((option) => option.kind)
       .filter((item) => item === kind ? enabled : preferences.crises.includes(item))
     updatePreferences({ ...preferences, crises })
   }
 
-  const selectedCrises = crisisPackOptions.filter((option) => preferences.crises.includes(option.kind))
-  const showSheet = preferences.includeNearby || preferences.includeHelplines || selectedCrises.length > 0
+  // TODO(group 4): replace window.print() with client-side PDF generation, then remove the print CSS in EmergencyPackPage.css.
+  function downloadPack() {
+    window.print()
+  }
+
+  const includesPlaces = preferences.includeWifi || preferences.includeCharities
 
   return (
     <section className="emergency-pack-page" aria-labelledby="emergency-pack-title">
       <header className="page-heading emergency-pack-intro">
         <div>
-          <h1 id="emergency-pack-title">Emergency pack</h1>
-          <p>Choose what to keep for when the connection drops. Download or print the pack, then write your own emergency contacts by hand.</p>
+          <h1 id="emergency-pack-title">Crisis pack</h1>
+          <p>Choose what goes in your pack, check the preview, then download it to print or keep on this device. Write your own emergency contacts by hand.</p>
         </div>
       </header>
 
-      <form className="emergency-pack-choices" onSubmit={(event) => event.preventDefault()}>
-        <label className="check-card">
-          <input
-            type="checkbox"
-            checked={preferences.includeNearby}
-            onChange={(event) => updatePreferences({ ...preferences, includeNearby: event.target.checked })}
-          />
-          <span>
-            <strong>Support near you</strong>
-            <small>About 5 public Wi-Fi spots and 5 support places near your saved area.</small>
-          </span>
-        </label>
-        <label className="check-card">
-          <input
-            type="checkbox"
-            checked={preferences.includeHelplines}
-            onChange={(event) => updatePreferences({ ...preferences, includeHelplines: event.target.checked })}
-          />
-          <span>
-            <strong>Helpline numbers</strong>
-            <small>All published helpline numbers, so they are still readable on paper.</small>
-          </span>
-        </label>
-        <fieldset className="emergency-pack-crises">
-          <legend>Crisis checklists and guidelines</legend>
-          <p>Choose one hazard or all three. Each choice adds that household checklist, plus general guidance on what to do and what not to do.</p>
-          {crisisPackOptions.map((option) => (
-            <label className="check-card" key={option.kind}>
-              <input
-                type="checkbox"
-                checked={preferences.crises.includes(option.kind)}
-                onChange={(event) => toggleCrisis(option.kind, event.target.checked)}
+      <div className="emergency-pack-choices">
+        <div className="emergency-pack-toggles" role="group" aria-labelledby="emergency-pack-help-label">
+          <h2 id="emergency-pack-help-label">Get help</h2>
+          <div className="emergency-pack-toggles__row">
+            {contentToggles.map((toggle) => (
+              <PackToggle
+                key={toggle.key}
+                label={toggle.label}
+                pressed={preferences[toggle.key]}
+                onToggle={() => toggleContent(toggle.key)}
               />
-              <span>
-                <strong>{option.label}</strong>
-                <small>{option.checklistTitle}</small>
-              </span>
-            </label>
-          ))}
-        </fieldset>
-      </form>
+            ))}
+          </div>
+        </div>
+        <div className="emergency-pack-toggles" role="group" aria-labelledby="emergency-pack-checklists-label">
+          <h2 id="emergency-pack-checklists-label">Checklists</h2>
+          <div className="emergency-pack-toggles__row">
+            {crisisPackOptions.map((option) => (
+              <PackToggle
+                key={option.kind}
+                label={option.label}
+                pressed={preferences.crises.includes(option.kind)}
+                onToggle={() => toggleCrisis(option.kind)}
+              />
+            ))}
+          </div>
+        </div>
+      </div>
 
       <div className="emergency-pack-toolbar">
-        <button className="button button--primary" type="button" onClick={() => window.print()}>
-          <FirstAidKit aria-hidden="true" size={18} /> Download PDF
+        <button className="button button--primary" type="button" onClick={downloadPack}>
+          <DownloadSimple aria-hidden="true" size={18} /> Download crisis pack as PDF
         </button>
-        <button className="button button--quiet" type="button" onClick={() => window.print()}>
-          <Printer aria-hidden="true" size={18} /> Print
-        </button>
-        <p>In the print window, choose Save as PDF to download a copy, or choose a printer.</p>
       </div>
+
+      {includesPlaces && !areaPostcode ? (
+        <p className="inline-status">
+          Choose an area before nearby places can be added.{' '}
+          <Link to={`${appRoutes.location}?next=${encodeURIComponent(appRoutes.emergencyPack)}`}>Choose an area</Link>
+        </p>
+      ) : null}
       {notice ? <p className="inline-status" role="status">{notice}</p> : null}
+      {isLoading ? <LoadingState label="Updating saved information" /> : null}
 
-      <article className="emergency-pack-sheet" aria-label="Emergency pack preview">
-        <header>
-          <p className="emergency-pack-sheet__brand">ShieldAhead</p>
-          <h2>Emergency pack</h2>
-          <p>
-            {snapshot.areaLabel ? `Prepared for ${snapshot.areaLabel}` : 'No saved area yet'}
-            {' · '}
-            {preparedDate(snapshot.savedAt)}
-          </p>
-        </header>
-
-        {isLoading ? <LoadingState /> : null}
-
-        {preferences.includeNearby ? (
-          <section>
-            <h3>Support near you</h3>
-            {areaPostcode ? null : (
-              <p>Choose an area before nearby places can be added. <Link to={`${appRoutes.location}?next=${encodeURIComponent(appRoutes.emergencyPack)}`}>Choose an area</Link></p>
-            )}
-            {areaPostcode && snapshot.wifi.length === 0 && snapshot.support.length === 0 && !isLoading ? <p>No nearby places are saved for this area yet.</p> : null}
-            {snapshot.wifi.length > 0 ? (
-              <>
-                <h4>Public Wi-Fi</h4>
-                <ul className="pack-places">
-                  {snapshot.wifi.map((place) => (
-                    <li key={place.id}><strong>{place.name}</strong><span>{place.detail}</span></li>
-                  ))}
-                </ul>
-              </>
-            ) : null}
-            {snapshot.support.length > 0 ? (
-              <>
-                <h4>Support places</h4>
-                <ul className="pack-places">
-                  {snapshot.support.map((place) => (
-                    <li key={place.id}>
-                      <strong>{place.name}</strong>
-                      <span>{place.detail}{place.phone ? ` · ${place.phone}` : ''}</span>
-                    </li>
-                  ))}
-                </ul>
-              </>
-            ) : null}
-          </section>
-        ) : null}
-
-        {preferences.includeHelplines ? (
-          <section>
-            <h3>Helpline numbers</h3>
-            {snapshot.helplines.length === 0 && !isLoading ? <p>Helpline numbers are not saved on this device yet.</p> : null}
-            <ul className="pack-helplines">
-              {snapshot.helplines.map((helpline) => (
-                <li key={helpline.id}>
-                  <strong>{helpline.name}</strong>
-                  <span>{helpline.phone}</span>
-                  {helpline.detail ? <small>{helpline.detail}</small> : null}
-                </li>
-              ))}
-            </ul>
-          </section>
-        ) : null}
-
-        {selectedCrises.map((option) => {
-          const guidelines = crisisGuidelines[option.kind]
-          const groups = snapshot.checklists[option.kind] ?? []
-          return (
-            <section key={option.kind}>
-              <h3>{option.label}</h3>
-              <h4>{option.checklistTitle}</h4>
-              {groups.length === 0 && !isLoading ? <p>This checklist is not saved on this device yet.</p> : null}
-              {groups.map((group) => (
-                <div key={group.id}>
-                  <h5>{group.title}</h5>
-                  <ul className="pack-tasks">
-                    {group.items.map((item) => (
-                      <li key={item.id}>
-                        <strong>{item.task}</strong>
-                        {item.description ? <span>{item.description}</span> : null}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              ))}
-              <div className="pack-guidelines">
-                <div>
-                  <h4>What to do</h4>
-                  <ul>{guidelines.dos.map((item) => <li key={item}>{item}</li>)}</ul>
-                </div>
-                <div>
-                  <h4>What not to do</h4>
-                  <ul>{guidelines.donts.map((item) => <li key={item}>{item}</li>)}</ul>
-                </div>
-              </div>
-            </section>
-          )
-        })}
-
-        <section className="pack-contacts-section">
-          <h3>Emergency contacts</h3>
-          <p>Leave these lines blank. Write names and phone numbers by hand after you print the pack.</p>
-          <table className="pack-contacts">
-            <thead>
-              <tr>
-                <th>Name</th>
-                <th>Relationship</th>
-                <th>Phone number</th>
-              </tr>
-            </thead>
-            <tbody>
-              {Array.from({ length: HANDWRITTEN_CONTACT_ROWS }, (_, index) => (
-                <tr key={index}>
-                  <td />
-                  <td />
-                  <td />
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </section>
-
-        {showSheet ? <p className="pack-footnote">Check current official warnings before you travel. Places and phone numbers can change.</p> : null}
-      </article>
+      <CrisisPackPreview pack={pack} />
     </section>
   )
 }

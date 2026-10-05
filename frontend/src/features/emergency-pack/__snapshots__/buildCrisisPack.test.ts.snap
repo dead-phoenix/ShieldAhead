@@ -1,0 +1,387 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`buildCrisisPack > orders all three checklists bushfire, flood, power outage and numbers every page 1`] = `
+{
+  "pages": [
+    {
+      "crisis": "bushfire",
+      "id": "checklist-bushfire",
+      "kind": "checklist",
+      "label": "Bushfire checklist",
+      "pageNumber": 1,
+      "sources": [],
+      "sourcesTitle": "Sources",
+      "subtitle": "Tick each one when it is done",
+      "tasks": [
+        {
+          "id": "household-plan.plan-reviewed",
+          "title": "Write your plan",
+        },
+        {
+          "id": "household-plan.leave-destination",
+          "title": "Choose where you will go",
+        },
+        {
+          "id": "household-plan.kit-ready",
+          "title": "Pack an emergency kit",
+        },
+        {
+          "id": "household-plan.documents-ready",
+          "title": "Gather documents",
+        },
+        {
+          "id": "children-pets.dependants-plan",
+          "title": "Name a helper per dependant",
+        },
+        {
+          "id": "children-pets.pet-plan",
+          "title": "Get pets ready",
+        },
+        {
+          "id": "health-access.health-needs",
+          "title": "Plan medication and access",
+        },
+        {
+          "id": "health-access.contacts-ready",
+          "title": "Write key numbers on paper",
+        },
+      ],
+      "title": "Bushfire checklist",
+      "totalPages": 4,
+    },
+    {
+      "crisis": "flood",
+      "id": "checklist-flood",
+      "kind": "checklist",
+      "label": "Flood checklist",
+      "pageNumber": 2,
+      "sources": [
+        {
+          "label": "Example flood source",
+          "url": "https://example.org/flood",
+        },
+      ],
+      "sourcesTitle": "Sources",
+      "subtitle": "Tick each one when it is done",
+      "tasks": [
+        {
+          "id": "household-plan.local-information",
+          "title": "Check local flood risk",
+        },
+        {
+          "id": "household-plan.contact-plan",
+          "title": "Write contact plan",
+        },
+        {
+          "id": "household-plan.kit-ready",
+          "title": "Pack an emergency kit",
+        },
+        {
+          "id": "household-plan.items-lifted",
+          "title": "Plan items to move higher",
+        },
+        {
+          "id": "children-pets.dependants-plan",
+          "title": "Name a helper per dependant",
+        },
+        {
+          "id": "children-pets.pet-plan",
+          "title": "Get pets ready",
+        },
+        {
+          "id": "health-access.medicine-plan",
+          "title": "Plan medication and access",
+        },
+        {
+          "id": "health-access.contacts-ready",
+          "title": "Write emergency numbers",
+        },
+      ],
+      "title": "Flood checklist",
+      "totalPages": 4,
+    },
+    {
+      "crisis": "power-outage",
+      "id": "checklist-power-outage",
+      "kind": "checklist",
+      "label": "Power outage checklist",
+      "pageNumber": 3,
+      "sources": [],
+      "sourcesTitle": "Sources",
+      "subtitle": "Tick each one when it is done",
+      "tasks": [
+        {
+          "id": "household-plan.outage-plan",
+          "title": "Set aside 72 hours of supplies",
+        },
+        {
+          "id": "household-plan.lighting-plan",
+          "title": "Backup lighting",
+        },
+        {
+          "id": "household-plan.power-bank",
+          "title": "Charge phone and power bank",
+        },
+        {
+          "id": "household-plan.distributor-ready",
+          "title": "Write distributor details",
+        },
+        {
+          "id": "children-pets.dependants-plan",
+          "title": "Supplies for children",
+        },
+        {
+          "id": "children-pets.pet-plan",
+          "title": "Supplies for pets",
+        },
+        {
+          "id": "health-access.powered-equipment",
+          "title": "Backup for medical equipment",
+        },
+        {
+          "id": "health-access.medicine-plan",
+          "title": "Ask about refrigerated medicine",
+        },
+      ],
+      "title": "Power outage checklist",
+      "totalPages": 4,
+    },
+    {
+      "columns": [
+        "Name",
+        "Phone",
+        "Notes",
+      ],
+      "id": "contacts",
+      "kind": "contacts",
+      "label": "My emergency contacts",
+      "meetingPlaceLabel": "Meeting place",
+      "outsideContactLabel": "Contact outside the area",
+      "pageNumber": 4,
+      "rowCount": 6,
+      "title": "My emergency contacts",
+      "totalPages": 4,
+    },
+  ],
+  "summary": "Preview: 4 pages. Bushfire checklist, Flood checklist, Power outage checklist, My emergency contacts.",
+}
+`;
+
+exports[`buildCrisisPack > pins Triple Zero and VICSES first and drops data helplines with the same phone 1`] = `
+{
+  "pages": [
+    {
+      "freshnessNote": undefined,
+      "helplines": [
+        {
+          "id": "triple-zero",
+          "name": "Triple Zero",
+          "note": "For life-threatening danger",
+          "phone": "000",
+        },
+        {
+          "id": "vicses",
+          "name": "VICSES",
+          "note": undefined,
+          "phone": "132 500",
+        },
+        {
+          "id": "bushfire-vicemergency-hotline",
+          "name": "VicEmergency Hotline",
+          "phone": "1800 226 226",
+        },
+      ],
+      "helplinesTitle": "Helplines",
+      "id": "get-help",
+      "kind": "get-help",
+      "label": "Get help",
+      "nameAndDateLabel": "Name and date",
+      "pageNumber": 1,
+      "placeColumns": [],
+      "title": "Your crisis pack",
+      "totalPages": 2,
+    },
+    {
+      "columns": [
+        "Name",
+        "Phone",
+        "Notes",
+      ],
+      "id": "contacts",
+      "kind": "contacts",
+      "label": "My emergency contacts",
+      "meetingPlaceLabel": "Meeting place",
+      "outsideContactLabel": "Contact outside the area",
+      "pageNumber": 2,
+      "rowCount": 6,
+      "title": "My emergency contacts",
+      "totalPages": 2,
+    },
+  ],
+  "summary": "Preview: 2 pages. Get help, My emergency contacts.",
+}
+`;
+
+exports[`buildCrisisPack > renders a flood checklist with short titles and only filled-in sources 1`] = `
+{
+  "pages": [
+    {
+      "crisis": "flood",
+      "id": "checklist-flood",
+      "kind": "checklist",
+      "label": "Flood checklist",
+      "pageNumber": 1,
+      "sources": [
+        {
+          "label": "Example flood source",
+          "url": "https://example.org/flood",
+        },
+      ],
+      "sourcesTitle": "Sources",
+      "subtitle": "Tick each one when it is done",
+      "tasks": [
+        {
+          "id": "household-plan.local-information",
+          "title": "Check local flood risk",
+        },
+        {
+          "id": "household-plan.contact-plan",
+          "title": "Write contact plan",
+        },
+        {
+          "id": "household-plan.kit-ready",
+          "title": "Pack an emergency kit",
+        },
+        {
+          "id": "household-plan.items-lifted",
+          "title": "Plan items to move higher",
+        },
+        {
+          "id": "children-pets.dependants-plan",
+          "title": "Name a helper per dependant",
+        },
+        {
+          "id": "children-pets.pet-plan",
+          "title": "Get pets ready",
+        },
+        {
+          "id": "health-access.medicine-plan",
+          "title": "Plan medication and access",
+        },
+        {
+          "id": "health-access.contacts-ready",
+          "title": "Write emergency numbers",
+        },
+      ],
+      "title": "Flood checklist",
+      "totalPages": 2,
+    },
+    {
+      "columns": [
+        "Name",
+        "Phone",
+        "Notes",
+      ],
+      "id": "contacts",
+      "kind": "contacts",
+      "label": "My emergency contacts",
+      "meetingPlaceLabel": "Meeting place",
+      "outsideContactLabel": "Contact outside the area",
+      "pageNumber": 2,
+      "rowCount": 6,
+      "title": "My emergency contacts",
+      "totalPages": 2,
+    },
+  ],
+  "summary": "Preview: 2 pages. Flood checklist, My emergency contacts.",
+}
+`;
+
+exports[`buildCrisisPack > renders only the contacts page when every toggle is off 1`] = `
+{
+  "pages": [
+    {
+      "columns": [
+        "Name",
+        "Phone",
+        "Notes",
+      ],
+      "id": "contacts",
+      "kind": "contacts",
+      "label": "My emergency contacts",
+      "meetingPlaceLabel": "Meeting place",
+      "outsideContactLabel": "Contact outside the area",
+      "pageNumber": 1,
+      "rowCount": 6,
+      "title": "My emergency contacts",
+      "totalPages": 1,
+    },
+  ],
+  "summary": "Preview: 1 page. My emergency contacts.",
+}
+`;
+
+exports[`buildCrisisPack > renders only the places that exist when fewer than 5 are available 1`] = `
+{
+  "pages": [
+    {
+      "freshnessNote": "Details were correct when this pack was downloaded on 5 October 2026. Check before relying on them.",
+      "helplines": undefined,
+      "helplinesTitle": "Helplines",
+      "id": "get-help",
+      "kind": "get-help",
+      "label": "Get help",
+      "nameAndDateLabel": "Name and date",
+      "pageNumber": 1,
+      "placeColumns": [
+        {
+          "id": "wifi",
+          "places": [
+            {
+              "detail": "w1 Main Street, Harcourt 3453",
+              "id": "w1",
+              "name": "Place w1",
+            },
+            {
+              "detail": "w2 Main Street, Harcourt 3453",
+              "id": "w2",
+              "name": "Place w2",
+            },
+          ],
+          "title": "Wi-Fi spots",
+        },
+        {
+          "id": "charities",
+          "places": [
+            {
+              "detail": "s1 Main Street, Harcourt 3453",
+              "id": "s1",
+              "name": "Place s1",
+            },
+          ],
+          "title": "Charities near you",
+        },
+      ],
+      "title": "Your crisis pack",
+      "totalPages": 2,
+    },
+    {
+      "columns": [
+        "Name",
+        "Phone",
+        "Notes",
+      ],
+      "id": "contacts",
+      "kind": "contacts",
+      "label": "My emergency contacts",
+      "meetingPlaceLabel": "Meeting place",
+      "outsideContactLabel": "Contact outside the area",
+      "pageNumber": 2,
+      "rowCount": 6,
+      "title": "My emergency contacts",
+      "totalPages": 2,
+    },
+  ],
+  "summary": "Preview: 2 pages. Get help, My emergency contacts.",
+}
+`;

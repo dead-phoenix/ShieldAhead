@@ -11,7 +11,7 @@ interface BundledChecklistGroup {
   items: { itemId: string; task: string; description: string; steps: string[] }[]
 }
 
-function bundledChecklistGroups(kind: string): CrisisChecklistGroup[] {
+export function bundledChecklistGroups(kind: string): CrisisChecklistGroup[] {
   return (bundledChecklist.groups as BundledChecklistGroup[])
     .filter((group) => group.crisisType === kind)
     .map((group) => ({
