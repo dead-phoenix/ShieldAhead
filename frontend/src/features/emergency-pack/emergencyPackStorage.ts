@@ -5,8 +5,14 @@ import { crisisPackOptions } from './emergencyPackContent'
 export interface PackPlace {
   id: string
   name: string
-  detail: string
+  address?: string
+  suburb?: string
+  postcode?: string
   phone?: string
+}
+
+interface LegacyPackPlace extends PackPlace {
+  detail?: string
 }
 
 export interface PackHelpline {
@@ -109,10 +115,31 @@ function optionalTimestamp(value: unknown): string | undefined {
   return typeof value === 'string' ? value : undefined
 }
 
+function normalizePlace(place: LegacyPackPlace): PackPlace {
+  if (place.address || place.suburb || typeof place.detail !== 'string') {
+    const { id, name, address, suburb, postcode, phone } = place
+    return { id, name, address, suburb, postcode, phone }
+  }
+  const legacyAddress = place.detail.split(' · ')[0].trim()
+  return {
+    id: place.id,
+    name: place.name,
+    address: legacyAddress && legacyAddress !== 'Address not provided' ? legacyAddress : undefined,
+    phone: place.phone,
+  }
+}
+
+function normalizePlaces(value: unknown): PackPlace[] {
+  if (!Array.isArray(value)) return []
+  return value
+    .filter((place): place is LegacyPackPlace => typeof place?.id === 'string' && typeof place?.name === 'string')
+    .map(normalizePlace)
+}
+
 function normalizeSnapshot(value: Partial<EmergencyPackSnapshot> | undefined): EmergencyPackSnapshot {
   const savedAt = optionalTimestamp(value?.savedAt)
-  const wifi = Array.isArray(value?.wifi) ? value.wifi : []
-  const support = Array.isArray(value?.support) ? value.support : []
+  const wifi = normalizePlaces(value?.wifi)
+  const support = normalizePlaces(value?.support)
   return {
     areaLabel: typeof value?.areaLabel === 'string' ? value.areaLabel : '',
     postcode: typeof value?.postcode === 'string' ? value.postcode : '',

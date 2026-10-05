@@ -2,30 +2,27 @@ import type { ChecklistItemRecord, Helpline } from '../../data/api/apiCrisisRepo
 import type { CrisisKind } from '../crisis/crisisContent'
 import { bundledChecklistGroups } from '../crisis/useCrisisApiContent'
 import type { MapPlace } from '../map/model/mapTypes'
+import { distinctPlaces } from './crisisPackPlaceText'
 import { NEARBY_PLACE_LIMIT } from './emergencyPackContent'
 import type { PackChecklistGroup, PackHelpline, PackPlace } from './emergencyPackStorage'
-
-function placeDetail(place: MapPlace): string {
-  const locality = [place.suburb, place.postcode].filter(Boolean).join(' ')
-  const address = place.address ? [place.address, locality].filter(Boolean).join(', ') : locality
-  return address || 'Address not provided'
-}
 
 function toPackPlace(place: MapPlace): PackPlace {
   return {
     id: place.id,
     name: place.name,
-    detail: placeDetail(place),
+    address: place.address,
+    suburb: place.suburb,
+    postcode: place.postcode,
     phone: place.phone,
   }
 }
 
 export function nearestPlaces(places: MapPlace[], kind: MapPlace['kind']): PackPlace[] {
-  return [...places]
+  const sorted = [...places]
     .filter((place) => place.kind === kind)
     .sort((left, right) => (left.distanceKm ?? Number.POSITIVE_INFINITY) - (right.distanceKm ?? Number.POSITIVE_INFINITY))
-    .slice(0, NEARBY_PLACE_LIMIT)
     .map(toPackPlace)
+  return distinctPlaces(sorted).slice(0, NEARBY_PLACE_LIMIT)
 }
 
 export function toPackHelplines(records: Helpline[]): PackHelpline[] {

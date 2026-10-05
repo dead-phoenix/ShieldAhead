@@ -1,5 +1,6 @@
 import { pinnedHelplines, type CrisisKind } from '../crisis/crisisContent'
 import { crisisPackChecklistTitles } from './crisisPackChecklistTitles'
+import { clampPlaceText, distinctPlaces, packDisplayName, packPlaceAddress } from './crisisPackPlaceText'
 import { bundledPackChecklist } from './crisisPackSnapshot'
 import { crisisPackSources, type CrisisPackSource } from './crisisPackSources'
 import { HANDWRITTEN_CONTACT_ROWS, NEARBY_PLACE_LIMIT, crisisPackOptions } from './emergencyPackContent'
@@ -15,10 +16,17 @@ export interface CrisisPackHelpline {
   note?: string
 }
 
+export interface CrisisPackPlace {
+  id: string
+  name: string
+  /** Omitted when the place has no confirmed address or suburb. */
+  detail?: string
+}
+
 export interface CrisisPackPlaceColumn {
   id: 'wifi' | 'charities'
   title: string
-  places: PackPlace[]
+  places: CrisisPackPlace[]
   /** Shown instead of the list when there are no places to print. */
   message?: string
 }
@@ -102,6 +110,15 @@ function packHelplines(snapshot: EmergencyPackSnapshot): CrisisPackHelpline[] {
   ]
 }
 
+function toCrisisPackPlace(place: PackPlace): CrisisPackPlace {
+  const detail = packPlaceAddress(place)
+  return {
+    id: place.id,
+    name: clampPlaceText(packDisplayName(place.name)),
+    ...(detail ? { detail: clampPlaceText(detail) } : {}),
+  }
+}
+
 function placeColumn(
   id: CrisisPackPlaceColumn['id'],
   title: string,
@@ -109,7 +126,7 @@ function placeColumn(
   savedAt: string | undefined,
 ): CrisisPackPlaceColumn {
   if (!savedAt) return { id, title, places: [], message: 'Not available offline' }
-  const limited = places.slice(0, NEARBY_PLACE_LIMIT)
+  const limited = distinctPlaces(places).slice(0, NEARBY_PLACE_LIMIT).map(toCrisisPackPlace)
   return limited.length > 0
     ? { id, title, places: limited }
     : { id, title, places: [], message: 'None listed near this area' }

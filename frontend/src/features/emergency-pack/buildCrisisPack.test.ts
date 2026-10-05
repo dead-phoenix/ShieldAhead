@@ -23,7 +23,7 @@ const allOff: EmergencyPackPreferences = {
 }
 
 function place(id: string) {
-  return { id, name: `Place ${id}`, detail: `${id} Main Street, Harcourt 3453` }
+  return { id, name: `Place ${id}`, address: `${id} Main Street`, suburb: 'Harcourt', postcode: '3453' }
 }
 
 function snapshot(overrides: Partial<EmergencyPackSnapshot> = {}): EmergencyPackSnapshot {
@@ -111,6 +111,24 @@ describe('buildCrisisPack', () => {
       downloadedAt,
     })
     expect((pack.pages[0] as CrisisPackGetHelpPage).placeColumns[0].places).toHaveLength(5)
+  })
+
+  it('cleans names and addresses, dedupes, and prints name only when there is no address', () => {
+    const pack = buildCrisisPack({
+      preferences: { ...allOff, includeWifi: true },
+      snapshot: snapshot({
+        wifi: [
+          { id: 'a', name: 'LIBRARY AT THE DOCK', address: 'Se 1220 401 Docklands Dr, Docklands, VIC, 3008', suburb: 'Docklands', postcode: '3008' },
+          { id: 'b', name: 'LIBRARY AT THE DOCK', address: '401 Docklands Dr', suburb: 'Docklands', postcode: '3008' },
+          { id: 'c', name: 'Pop-up hotspot', suburb: 'Area not confirmed', postcode: '' },
+        ],
+      }),
+      downloadedAt,
+    })
+    expect((pack.pages[0] as CrisisPackGetHelpPage).placeColumns[0].places).toEqual([
+      { id: 'a', name: 'Library at the Dock', detail: '401 Docklands Dr, Docklands VIC 3008' },
+      { id: 'c', name: 'Pop-up hotspot' },
+    ])
   })
 
   it('marks a place column as not available offline when it was never loaded', () => {

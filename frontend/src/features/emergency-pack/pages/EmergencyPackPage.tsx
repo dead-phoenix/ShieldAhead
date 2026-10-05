@@ -8,6 +8,7 @@ import { useOnlineStatus } from '../../../shared/hooks/useOnlineStatus'
 import { getSearchLocation } from '../../../storage/searchLocationStorage'
 import type { CrisisKind } from '../../crisis/crisisContent'
 import { getMapPlaceRepository } from '../../map/data/mapPlaceRepository'
+import { packDisplayName, packPlaceAddress } from '../crisisPackPlaceText'
 import { nearestPlaces, toChecklistGroups, toPackHelplines } from '../crisisPackSnapshot'
 import { HANDWRITTEN_CONTACT_ROWS, crisisPackOptions } from '../emergencyPackContent'
 import {
@@ -227,7 +228,7 @@ export function EmergencyPackPage() {
                 <h4>Public Wi-Fi</h4>
                 <ul className="pack-places">
                   {snapshot.wifi.map((place) => (
-                    <li key={place.id}><strong>{place.name}</strong><span>{place.detail}</span></li>
+                    <li key={place.id}><strong>{packDisplayName(place.name)}</strong><span>{packPlaceAddress(place)}</span></li>
                   ))}
                 </ul>
               </>
@@ -238,8 +239,8 @@ export function EmergencyPackPage() {
                 <ul className="pack-places">
                   {snapshot.support.map((place) => (
                     <li key={place.id}>
-                      <strong>{place.name}</strong>
-                      <span>{place.detail}{place.phone ? ` · ${place.phone}` : ''}</span>
+                      <strong>{packDisplayName(place.name)}</strong>
+                      <span>{packPlaceAddress(place)}{place.phone ? ` · ${place.phone}` : ''}</span>
                     </li>
                   ))}
                 </ul>
