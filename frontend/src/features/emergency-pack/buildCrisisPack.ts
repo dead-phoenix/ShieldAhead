@@ -48,6 +48,7 @@ export interface CrisisPackGetHelpPage extends CrisisPackPageBase {
   kind: 'get-help'
   title: string
   nameAndDateLabel: string
+  helplinesTitle: string
   helplines?: CrisisPackHelpline[]
   placeColumns: CrisisPackPlaceColumn[]
   freshnessNote?: string
@@ -59,6 +60,7 @@ export interface CrisisPackChecklistPage extends CrisisPackPageBase {
   title: string
   subtitle: string
   tasks: CrisisPackTask[]
+  sourcesTitle: string
   sources: CrisisPackSource[]
 }
 
@@ -150,6 +152,7 @@ function getHelpPage(input: BuildCrisisPackInput): UnnumberedPage | null {
     label: 'Get help',
     title: 'Your crisis pack',
     nameAndDateLabel: 'Name and date',
+    helplinesTitle: 'Helplines',
     helplines: preferences.includeHelplines ? packHelplines(snapshot) : undefined,
     placeColumns,
     freshnessNote: placeColumns.length > 0
@@ -173,6 +176,7 @@ function checklistPage(kind: CrisisKind, label: string, snapshot: EmergencyPackS
       const key = `${group.id}.${item.id}`
       return { id: key, title: titles[key] ?? item.task }
     })),
+    sourcesTitle: 'Sources',
     sources: crisisPackSources[kind].filter((source) => source.label.trim() && source.url.trim()),
   }
 }

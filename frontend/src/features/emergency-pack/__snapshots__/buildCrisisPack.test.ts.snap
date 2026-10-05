@@ -10,6 +10,7 @@ exports[`buildCrisisPack > orders all three checklists bushfire, flood, power ou
       "label": "Bushfire checklist",
       "pageNumber": 1,
       "sources": [],
+      "sourcesTitle": "Sources",
       "subtitle": "Tick each one when it is done",
       "tasks": [
         {
@@ -60,6 +61,7 @@ exports[`buildCrisisPack > orders all three checklists bushfire, flood, power ou
           "url": "https://example.org/flood",
         },
       ],
+      "sourcesTitle": "Sources",
       "subtitle": "Tick each one when it is done",
       "tasks": [
         {
@@ -105,6 +107,7 @@ exports[`buildCrisisPack > orders all three checklists bushfire, flood, power ou
       "label": "Power outage checklist",
       "pageNumber": 3,
       "sources": [],
+      "sourcesTitle": "Sources",
       "subtitle": "Tick each one when it is done",
       "tasks": [
         {
@@ -188,6 +191,7 @@ exports[`buildCrisisPack > pins Triple Zero and VICSES first and drops data help
           "phone": "1800 226 226",
         },
       ],
+      "helplinesTitle": "Helplines",
       "id": "get-help",
       "kind": "get-help",
       "label": "Get help",
@@ -233,6 +237,7 @@ exports[`buildCrisisPack > renders a flood checklist with short titles and only 
           "url": "https://example.org/flood",
         },
       ],
+      "sourcesTitle": "Sources",
       "subtitle": "Tick each one when it is done",
       "tasks": [
         {
@@ -322,6 +327,7 @@ exports[`buildCrisisPack > renders only the places that exist when fewer than 5 
     {
       "freshnessNote": "Details were correct when this pack was downloaded on 5 October 2026. Check before relying on them.",
       "helplines": undefined,
+      "helplinesTitle": "Helplines",
       "id": "get-help",
       "kind": "get-help",
       "label": "Get help",
