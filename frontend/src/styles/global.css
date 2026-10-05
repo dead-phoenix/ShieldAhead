@@ -234,6 +234,8 @@ svg {
 .app-main {
   min-width: 0;
   padding: 1.5rem 1rem calc(6.5rem + env(safe-area-inset-bottom));
+  /* At least the sticky header's height, so route focus scrolls to the page top instead of under the header. */
+  scroll-margin-top: 6rem;
 }
 
 .app-shell--flow .app-main {
