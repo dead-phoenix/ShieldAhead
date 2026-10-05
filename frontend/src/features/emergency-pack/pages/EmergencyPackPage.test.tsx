@@ -102,7 +102,7 @@ describe('Crisis pack page', () => {
     fireEvent.click(flood)
     expect(flood).toHaveAttribute('aria-pressed', 'false')
     expect(pageRegions()).toHaveLength(4)
-    expect(within(preview()).queryByRole('heading', { name: 'Flood checklist' })).not.toBeInTheDocument()
+    expect(within(preview()).queryByRole('heading', { name: 'Flood Household Checklist' })).not.toBeInTheDocument()
     const announcement = within(preview()).getByText(/^Preview: \d+ pages?\./)
     expect(announcement).toHaveAttribute('aria-live', 'polite')
     expect(announcement).toHaveTextContent(
@@ -112,7 +112,7 @@ describe('Crisis pack page', () => {
     fireEvent.click(flood)
     expect(flood).toHaveAttribute('aria-pressed', 'true')
     expect(pageRegions()).toHaveLength(5)
-    expect(within(preview()).getByRole('heading', { name: 'Flood checklist' })).toBeVisible()
+    expect(within(preview()).getByRole('heading', { name: 'Flood Household Checklist' })).toBeVisible()
     expect(within(preview()).getByRole('region', { name: 'Page 3 of 5: Flood checklist' })).toBeInTheDocument()
   })
 
