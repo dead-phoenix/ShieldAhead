@@ -1,5 +1,5 @@
-import { FirstAidKit, Printer } from '@phosphor-icons/react'
-import { useEffect, useState } from 'react'
+import { Check, DownloadSimple } from '@phosphor-icons/react'
+import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { appRoutes } from '../../../app/config/product'
 import { fetchChecklistItems, fetchHelplines } from '../../../data/api/apiCrisisRepository'
@@ -8,9 +8,10 @@ import { useOnlineStatus } from '../../../shared/hooks/useOnlineStatus'
 import { getSearchLocation } from '../../../storage/searchLocationStorage'
 import type { CrisisKind } from '../../crisis/crisisContent'
 import { getMapPlaceRepository } from '../../map/data/mapPlaceRepository'
-import { packDisplayName, packPlaceAddress } from '../crisisPackPlaceText'
+import { buildCrisisPack } from '../buildCrisisPack'
+import { CrisisPackPreview } from '../components/CrisisPackPreview'
 import { nearestPlaces, toChecklistGroups, toPackHelplines } from '../crisisPackSnapshot'
-import { HANDWRITTEN_CONTACT_ROWS, crisisPackOptions } from '../emergencyPackContent'
+import { crisisPackOptions } from '../emergencyPackContent'
 import {
   emptyEmergencyPackSnapshot,
   readEmergencyPack,
@@ -20,10 +21,26 @@ import {
 } from '../emergencyPackStorage'
 import './EmergencyPackPage.css'
 
-function preparedDate(value: string | undefined): string {
-  const date = value ? new Date(value) : new Date()
-  if (Number.isNaN(date.getTime())) return 'Date not available'
-  return new Intl.DateTimeFormat('en-AU', { dateStyle: 'long' }).format(date)
+type ContentToggleKey = 'includeHelplines' | 'includeWifi' | 'includeCharities'
+
+const contentToggles: { key: ContentToggleKey; label: string }[] = [
+  { key: 'includeHelplines', label: 'Helplines' },
+  { key: 'includeWifi', label: 'Wi-Fi spots' },
+  { key: 'includeCharities', label: 'Charities' },
+]
+
+function PackToggle({ label, pressed, onToggle }: { label: string; pressed: boolean; onToggle: () => void }) {
+  return (
+    <button
+      className={pressed ? 'filter-chip is-active' : 'filter-chip'}
+      type="button"
+      aria-pressed={pressed}
+      onClick={onToggle}
+    >
+      {pressed ? <Check aria-hidden="true" size={16} weight="bold" /> : null}
+      {label}
+    </button>
+  )
 }
 
 export function EmergencyPackPage() {
@@ -40,9 +57,11 @@ export function EmergencyPackPage() {
     let isCurrent = true
     const baseUrl = import.meta.env.VITE_API_BASE_URL ?? ''
     const saved = readEmergencyPack().snapshot
+    const areaChanged = Boolean(areaPostcode && saved.postcode && saved.postcode !== areaPostcode)
     const next: EmergencyPackSnapshot = {
       ...emptyEmergencyPackSnapshot(),
       ...saved,
+      ...(areaChanged ? { wifi: [], support: [], placesSavedAt: {} } : {}),
       areaLabel: areaLabel || saved.areaLabel,
       postcode: areaPostcode || saved.postcode,
     }
@@ -61,7 +80,7 @@ export function EmergencyPackPage() {
 
       setIsLoading(true)
       setNotice('')
-      if ((preferences.includeWifi || preferences.includeCharities) && areaPostcode) {
+      if (areaPostcode) {
         try {
           const result = await getMapPlaceRepository({ postcode: areaPostcode }).findNearby({ postcode: areaPostcode })
           const loadedSources = new Set(result.datasets.map((dataset) => dataset.source))
@@ -81,20 +100,18 @@ export function EmergencyPackPage() {
         }
       }
 
-      if (preferences.includeHelplines) {
-        try {
-          next.helplines = toPackHelplines(await fetchHelplines({ baseUrl }))
-        } catch {
-          problems.push('Helpline numbers could not be updated. A saved copy is shown when one is available.')
-        }
+      try {
+        next.helplines = toPackHelplines(await fetchHelplines({ baseUrl }))
+      } catch {
+        problems.push('Helpline numbers could not be updated. A saved copy is shown when one is available.')
       }
 
-      await Promise.all(preferences.crises.map(async (kind) => {
+      await Promise.all(crisisPackOptions.map(async ({ kind }) => {
         try {
           const records = await fetchChecklistItems(kind, { baseUrl })
           if (records.length > 0) next.checklists = { ...next.checklists, [kind]: toChecklistGroups(records) }
         } catch {
-          problems.push('A crisis checklist could not be updated. A saved copy is shown when one is available.')
+          problems.push('A crisis checklist could not be updated. The checklist saved with the app is shown instead.')
         }
       }))
 
@@ -111,7 +128,12 @@ export function EmergencyPackPage() {
     return () => {
       isCurrent = false
     }
-  }, [areaLabel, areaPostcode, isOnline, preferences])
+  }, [areaLabel, areaPostcode, isOnline])
+
+  const pack = useMemo(
+    () => buildCrisisPack({ preferences, snapshot, downloadedAt: new Date() }),
+    [preferences, snapshot],
+  )
 
   function updatePreferences(next: EmergencyPackPreferences) {
     const current = readEmergencyPack()
@@ -119,201 +141,79 @@ export function EmergencyPackPage() {
     setPreferences(next)
   }
 
-  function toggleCrisis(kind: CrisisKind, enabled: boolean) {
+  function toggleContent(key: ContentToggleKey) {
+    updatePreferences({ ...preferences, [key]: !preferences[key] })
+  }
+
+  function toggleCrisis(kind: CrisisKind) {
+    const enabled = !preferences.crises.includes(kind)
     const crises = crisisPackOptions
       .map((option) => option.kind)
       .filter((item) => item === kind ? enabled : preferences.crises.includes(item))
     updatePreferences({ ...preferences, crises })
   }
 
-  const selectedCrises = crisisPackOptions.filter((option) => preferences.crises.includes(option.kind))
-  const includeNearby = preferences.includeWifi || preferences.includeCharities
-  const showSheet = includeNearby || preferences.includeHelplines || selectedCrises.length > 0
+  // TODO(group 4): replace window.print() with client-side PDF generation, then remove the print CSS in EmergencyPackPage.css.
+  function downloadPack() {
+    window.print()
+  }
+
+  const includesPlaces = preferences.includeWifi || preferences.includeCharities
 
   return (
     <section className="emergency-pack-page" aria-labelledby="emergency-pack-title">
       <header className="page-heading emergency-pack-intro">
         <div>
-          <h1 id="emergency-pack-title">Emergency pack</h1>
-          <p>Choose what to keep for when the connection drops. Download or print the pack, then write your own emergency contacts by hand.</p>
+          <h1 id="emergency-pack-title">Crisis pack</h1>
+          <p>Choose what goes in your pack, check the preview, then download it to print or keep on this device. Write your own emergency contacts by hand.</p>
         </div>
       </header>
 
-      <form className="emergency-pack-choices" onSubmit={(event) => event.preventDefault()}>
-        <label className="check-card">
-          <input
-            type="checkbox"
-            checked={preferences.includeWifi}
-            onChange={(event) => updatePreferences({ ...preferences, includeWifi: event.target.checked })}
-          />
-          <span>
-            <strong>Wi-Fi spots</strong>
-            <small>The 5 nearest public Wi-Fi spots to your saved area.</small>
-          </span>
-        </label>
-        <label className="check-card">
-          <input
-            type="checkbox"
-            checked={preferences.includeCharities}
-            onChange={(event) => updatePreferences({ ...preferences, includeCharities: event.target.checked })}
-          />
-          <span>
-            <strong>Charities</strong>
-            <small>The 5 nearest support places to your saved area.</small>
-          </span>
-        </label>
-        <label className="check-card">
-          <input
-            type="checkbox"
-            checked={preferences.includeHelplines}
-            onChange={(event) => updatePreferences({ ...preferences, includeHelplines: event.target.checked })}
-          />
-          <span>
-            <strong>Helpline numbers</strong>
-            <small>All published helpline numbers, so they are still readable on paper.</small>
-          </span>
-        </label>
-        <fieldset className="emergency-pack-crises">
-          <legend>Crisis checklists</legend>
-          <p>Choose one hazard, all three, or none. Each choice adds that household checklist.</p>
-          {crisisPackOptions.map((option) => (
-            <label className="check-card" key={option.kind}>
-              <input
-                type="checkbox"
-                checked={preferences.crises.includes(option.kind)}
-                onChange={(event) => toggleCrisis(option.kind, event.target.checked)}
+      <div className="emergency-pack-choices">
+        <div className="emergency-pack-toggles" role="group" aria-labelledby="emergency-pack-help-label">
+          <h2 id="emergency-pack-help-label">Get help</h2>
+          <div className="emergency-pack-toggles__row">
+            {contentToggles.map((toggle) => (
+              <PackToggle
+                key={toggle.key}
+                label={toggle.label}
+                pressed={preferences[toggle.key]}
+                onToggle={() => toggleContent(toggle.key)}
               />
-              <span>
-                <strong>{option.label}</strong>
-                <small>{option.label} checklist</small>
-              </span>
-            </label>
-          ))}
-        </fieldset>
-      </form>
+            ))}
+          </div>
+        </div>
+        <div className="emergency-pack-toggles" role="group" aria-labelledby="emergency-pack-checklists-label">
+          <h2 id="emergency-pack-checklists-label">Checklists</h2>
+          <div className="emergency-pack-toggles__row">
+            {crisisPackOptions.map((option) => (
+              <PackToggle
+                key={option.kind}
+                label={option.label}
+                pressed={preferences.crises.includes(option.kind)}
+                onToggle={() => toggleCrisis(option.kind)}
+              />
+            ))}
+          </div>
+        </div>
+      </div>
 
       <div className="emergency-pack-toolbar">
-        <button className="button button--primary" type="button" onClick={() => window.print()}>
-          <FirstAidKit aria-hidden="true" size={18} /> Download PDF
+        <button className="button button--primary" type="button" onClick={downloadPack}>
+          <DownloadSimple aria-hidden="true" size={18} /> Download crisis pack as PDF
         </button>
-        <button className="button button--quiet" type="button" onClick={() => window.print()}>
-          <Printer aria-hidden="true" size={18} /> Print
-        </button>
-        <p>In the print window, choose Save as PDF to download a copy, or choose a printer.</p>
       </div>
+
+      {includesPlaces && !areaPostcode ? (
+        <p className="inline-status">
+          Choose an area before nearby places can be added.{' '}
+          <Link to={`${appRoutes.location}?next=${encodeURIComponent(appRoutes.emergencyPack)}`}>Choose an area</Link>
+        </p>
+      ) : null}
       {notice ? <p className="inline-status" role="status">{notice}</p> : null}
+      {isLoading ? <LoadingState label="Updating saved information" /> : null}
 
-      <article className="emergency-pack-sheet" aria-label="Emergency pack preview">
-        <header>
-          <p className="emergency-pack-sheet__brand">ShieldAhead</p>
-          <h2>Emergency pack</h2>
-          <p>
-            {snapshot.areaLabel ? `Prepared for ${snapshot.areaLabel}` : 'No saved area yet'}
-            {' · '}
-            {preparedDate(snapshot.savedAt)}
-          </p>
-        </header>
-
-        {isLoading ? <LoadingState /> : null}
-
-        {includeNearby ? (
-          <section>
-            <h3>Support near you</h3>
-            {areaPostcode ? null : (
-              <p>Choose an area before nearby places can be added. <Link to={`${appRoutes.location}?next=${encodeURIComponent(appRoutes.emergencyPack)}`}>Choose an area</Link></p>
-            )}
-            {areaPostcode && snapshot.wifi.length === 0 && snapshot.support.length === 0 && !isLoading ? <p>No nearby places are saved for this area yet.</p> : null}
-            {preferences.includeWifi && snapshot.wifi.length > 0 ? (
-              <>
-                <h4>Public Wi-Fi</h4>
-                <ul className="pack-places">
-                  {snapshot.wifi.map((place) => (
-                    <li key={place.id}><strong>{packDisplayName(place.name)}</strong><span>{packPlaceAddress(place)}</span></li>
-                  ))}
-                </ul>
-              </>
-            ) : null}
-            {preferences.includeCharities && snapshot.support.length > 0 ? (
-              <>
-                <h4>Support places</h4>
-                <ul className="pack-places">
-                  {snapshot.support.map((place) => (
-                    <li key={place.id}>
-                      <strong>{packDisplayName(place.name)}</strong>
-                      <span>{packPlaceAddress(place)}{place.phone ? ` · ${place.phone}` : ''}</span>
-                    </li>
-                  ))}
-                </ul>
-              </>
-            ) : null}
-          </section>
-        ) : null}
-
-        {preferences.includeHelplines ? (
-          <section>
-            <h3>Helpline numbers</h3>
-            {snapshot.helplines.length === 0 && !isLoading ? <p>Helpline numbers are not saved on this device yet.</p> : null}
-            <ul className="pack-helplines">
-              {snapshot.helplines.map((helpline) => (
-                <li key={helpline.id}>
-                  <strong>{helpline.name}</strong>
-                  <span>{helpline.phone}</span>
-                  {helpline.detail ? <small>{helpline.detail}</small> : null}
-                </li>
-              ))}
-            </ul>
-          </section>
-        ) : null}
-
-        {selectedCrises.map((option) => {
-          const groups = snapshot.checklists[option.kind] ?? []
-          return (
-            <section key={option.kind}>
-              <h3>{option.label}</h3>
-              <h4>{option.label} checklist</h4>
-              {groups.length === 0 && !isLoading ? <p>This checklist is not saved on this device yet.</p> : null}
-              {groups.map((group) => (
-                <div key={group.id}>
-                  <h5>{group.title}</h5>
-                  <ul className="pack-tasks">
-                    {group.items.map((item) => (
-                      <li key={item.id}>
-                        <strong>{item.task}</strong>
-                        {item.description ? <span>{item.description}</span> : null}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              ))}
-            </section>
-          )
-        })}
-
-        <section className="pack-contacts-section">
-          <h3>Emergency contacts</h3>
-          <p>Leave these lines blank. Write names and phone numbers by hand after you print the pack.</p>
-          <table className="pack-contacts">
-            <thead>
-              <tr>
-                <th>Name</th>
-                <th>Relationship</th>
-                <th>Phone number</th>
-              </tr>
-            </thead>
-            <tbody>
-              {Array.from({ length: HANDWRITTEN_CONTACT_ROWS }, (_, index) => (
-                <tr key={index}>
-                  <td />
-                  <td />
-                  <td />
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </section>
-
-        {showSheet ? <p className="pack-footnote">Check current official warnings before you travel. Places and phone numbers can change.</p> : null}
-      </article>
+      <CrisisPackPreview pack={pack} />
     </section>
   )
 }

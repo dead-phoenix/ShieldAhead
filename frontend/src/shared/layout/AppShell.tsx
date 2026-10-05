@@ -16,7 +16,7 @@ const primaryNavigation = [
   { to: appRoutes.home, label: 'Home', end: true, icon: House },
   { to: appRoutes.map, label: 'Support', icon: MapTrifold },
   { to: appRoutes.crisis, label: 'Crisis', icon: Lifebuoy },
-  { to: appRoutes.emergencyPack, label: 'Emergency pack', icon: FirstAidKit },
+  { to: appRoutes.emergencyPack, label: 'Crisis pack', icon: FirstAidKit },
 ]
 
 export function AppShell() {
