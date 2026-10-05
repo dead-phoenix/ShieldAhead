@@ -34,7 +34,7 @@ export function useLivePosition(): UseLivePositionResult {
   const [position, setPosition] = useState<LivePosition>()
   const [error, setError] = useState('')
   const [isWatching, setIsWatching] = useState(false)
-  const watchIdRef = useRef<number>()
+  const watchIdRef = useRef<number | undefined>(undefined)
 
   const isSupported = typeof navigator !== 'undefined' && 'geolocation' in navigator
 

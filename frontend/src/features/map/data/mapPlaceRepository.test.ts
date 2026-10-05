@@ -47,6 +47,7 @@ describe('combined map place repository', () => {
     const result = await createCombinedMapPlaceRepository({
       wifiRepository,
       supportRepository,
+      postcode: '3550',
     }).findNearby({ postcode: '3550' })
 
     expect(result.places.map(({ id }) => id)).toEqual([
@@ -72,6 +73,7 @@ describe('combined map place repository', () => {
     const result = await createCombinedMapPlaceRepository({
       wifiRepository,
       supportRepository,
+      postcode: '3550',
     }).findNearby({ postcode: '3550' })
 
     expect(result.places).toEqual([])
@@ -95,6 +97,7 @@ describe('combined map place repository', () => {
     await expect(createCombinedMapPlaceRepository({
       wifiRepository,
       supportRepository,
+      postcode: '3550',
     }).findNearby({ postcode: '3550' })).rejects.toThrow(
       'Wi-Fi is unavailable. Support is unavailable.',
     )
