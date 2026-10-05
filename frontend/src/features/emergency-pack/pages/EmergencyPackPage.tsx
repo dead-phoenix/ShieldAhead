@@ -2,84 +2,22 @@ import { FirstAidKit, Printer } from '@phosphor-icons/react'
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { appRoutes } from '../../../app/config/product'
-import { fetchChecklistItems, fetchHelplines, type ChecklistItemRecord, type Helpline } from '../../../data/api/apiCrisisRepository'
+import { fetchChecklistItems, fetchHelplines } from '../../../data/api/apiCrisisRepository'
 import { LoadingState } from '../../../shared/components/LoadingState'
 import { useOnlineStatus } from '../../../shared/hooks/useOnlineStatus'
 import { getSearchLocation } from '../../../storage/searchLocationStorage'
 import type { CrisisKind } from '../../crisis/crisisContent'
 import { getMapPlaceRepository } from '../../map/data/mapPlaceRepository'
-import type { MapPlace } from '../../map/model/mapTypes'
-import {
-  HANDWRITTEN_CONTACT_ROWS,
-  NEARBY_PLACE_LIMIT,
-  crisisGuidelines,
-  crisisPackOptions,
-} from '../emergencyPackContent'
+import { nearestPlaces, toChecklistGroups, toPackHelplines } from '../crisisPackSnapshot'
+import { HANDWRITTEN_CONTACT_ROWS, crisisPackOptions } from '../emergencyPackContent'
 import {
   emptyEmergencyPackSnapshot,
   readEmergencyPack,
   saveEmergencyPack,
   type EmergencyPackPreferences,
   type EmergencyPackSnapshot,
-  type PackChecklistGroup,
-  type PackHelpline,
-  type PackPlace,
 } from '../emergencyPackStorage'
 import './EmergencyPackPage.css'
-
-function placeDetail(place: MapPlace): string {
-  const locality = [place.suburb, place.postcode].filter(Boolean).join(' ')
-  const address = place.address ? [place.address, locality].filter(Boolean).join(', ') : locality
-  const distance = place.distanceKm === undefined ? '' : `${place.distanceKm.toFixed(1)} km`
-  return [address || 'Address not provided', distance].filter(Boolean).join(' · ')
-}
-
-function toPackPlace(place: MapPlace): PackPlace {
-  return {
-    id: place.id,
-    name: place.name,
-    detail: placeDetail(place),
-    phone: place.phone,
-  }
-}
-
-function nearestPlaces(places: MapPlace[], kind: MapPlace['kind']): PackPlace[] {
-  return [...places]
-    .filter((place) => place.kind === kind)
-    .sort((left, right) => (left.distanceKm ?? Number.POSITIVE_INFINITY) - (right.distanceKm ?? Number.POSITIVE_INFINITY))
-    .slice(0, NEARBY_PLACE_LIMIT)
-    .map(toPackPlace)
-}
-
-function toPackHelplines(records: Helpline[]): PackHelpline[] {
-  const seen = new Set<string>()
-  return records.filter((record) => {
-    const key = `${record.name}|${record.phone}`
-    if (seen.has(key)) return false
-    seen.add(key)
-    return true
-  }).map((record) => ({
-    id: record.id,
-    name: record.name,
-    phone: record.phone,
-    detail: [record.description, record.availability, record.coverageArea].filter(Boolean).join(' · ') || undefined,
-  }))
-}
-
-function toChecklistGroups(records: ChecklistItemRecord[]): PackChecklistGroup[] {
-  const groups = new Map<string, PackChecklistGroup>()
-  for (const record of [...records].sort((left, right) => left.displayOrder - right.displayOrder)) {
-    if (!groups.has(record.categoryId)) {
-      groups.set(record.categoryId, { id: record.categoryId, title: record.category, items: [] })
-    }
-    groups.get(record.categoryId)?.items.push({
-      id: record.itemId,
-      task: record.task,
-      description: record.description,
-    })
-  }
-  return [...groups.values()]
-}
 
 function preparedDate(value: string | undefined): string {
   const date = value ? new Date(value) : new Date()
@@ -122,11 +60,19 @@ export function EmergencyPackPage() {
 
       setIsLoading(true)
       setNotice('')
-      if (preferences.includeNearby && areaPostcode) {
+      if ((preferences.includeWifi || preferences.includeCharities) && areaPostcode) {
         try {
           const result = await getMapPlaceRepository({ postcode: areaPostcode }).findNearby({ postcode: areaPostcode })
-          next.wifi = nearestPlaces(result.places, 'wifi')
-          next.support = nearestPlaces(result.places, 'support')
+          const loadedSources = new Set(result.datasets.map((dataset) => dataset.source))
+          const loadedAt = new Date().toISOString()
+          if (loadedSources.has('wifi')) {
+            next.wifi = nearestPlaces(result.places, 'wifi')
+            next.placesSavedAt = { ...next.placesSavedAt, wifi: loadedAt }
+          }
+          if (loadedSources.has('support')) {
+            next.support = nearestPlaces(result.places, 'support')
+            next.placesSavedAt = { ...next.placesSavedAt, support: loadedAt }
+          }
           next.areaLabel = areaLabel || areaPostcode
           next.postcode = areaPostcode
         } catch {
@@ -180,7 +126,8 @@ export function EmergencyPackPage() {
   }
 
   const selectedCrises = crisisPackOptions.filter((option) => preferences.crises.includes(option.kind))
-  const showSheet = preferences.includeNearby || preferences.includeHelplines || selectedCrises.length > 0
+  const includeNearby = preferences.includeWifi || preferences.includeCharities
+  const showSheet = includeNearby || preferences.includeHelplines || selectedCrises.length > 0
 
   return (
     <section className="emergency-pack-page" aria-labelledby="emergency-pack-title">
@@ -195,12 +142,23 @@ export function EmergencyPackPage() {
         <label className="check-card">
           <input
             type="checkbox"
-            checked={preferences.includeNearby}
-            onChange={(event) => updatePreferences({ ...preferences, includeNearby: event.target.checked })}
+            checked={preferences.includeWifi}
+            onChange={(event) => updatePreferences({ ...preferences, includeWifi: event.target.checked })}
           />
           <span>
-            <strong>Support near you</strong>
-            <small>About 5 public Wi-Fi spots and 5 support places near your saved area.</small>
+            <strong>Wi-Fi spots</strong>
+            <small>The 5 nearest public Wi-Fi spots to your saved area.</small>
+          </span>
+        </label>
+        <label className="check-card">
+          <input
+            type="checkbox"
+            checked={preferences.includeCharities}
+            onChange={(event) => updatePreferences({ ...preferences, includeCharities: event.target.checked })}
+          />
+          <span>
+            <strong>Charities</strong>
+            <small>The 5 nearest support places to your saved area.</small>
           </span>
         </label>
         <label className="check-card">
@@ -215,8 +173,8 @@ export function EmergencyPackPage() {
           </span>
         </label>
         <fieldset className="emergency-pack-crises">
-          <legend>Crisis checklists and guidelines</legend>
-          <p>Choose one hazard or all three. Each choice adds that household checklist, plus general guidance on what to do and what not to do.</p>
+          <legend>Crisis checklists</legend>
+          <p>Choose one hazard, all three, or none. Each choice adds that household checklist.</p>
           {crisisPackOptions.map((option) => (
             <label className="check-card" key={option.kind}>
               <input
@@ -226,7 +184,7 @@ export function EmergencyPackPage() {
               />
               <span>
                 <strong>{option.label}</strong>
-                <small>{option.checklistTitle}</small>
+                <small>{option.label} checklist</small>
               </span>
             </label>
           ))}
@@ -257,14 +215,14 @@ export function EmergencyPackPage() {
 
         {isLoading ? <LoadingState /> : null}
 
-        {preferences.includeNearby ? (
+        {includeNearby ? (
           <section>
             <h3>Support near you</h3>
             {areaPostcode ? null : (
               <p>Choose an area before nearby places can be added. <Link to={`${appRoutes.location}?next=${encodeURIComponent(appRoutes.emergencyPack)}`}>Choose an area</Link></p>
             )}
             {areaPostcode && snapshot.wifi.length === 0 && snapshot.support.length === 0 && !isLoading ? <p>No nearby places are saved for this area yet.</p> : null}
-            {snapshot.wifi.length > 0 ? (
+            {preferences.includeWifi && snapshot.wifi.length > 0 ? (
               <>
                 <h4>Public Wi-Fi</h4>
                 <ul className="pack-places">
@@ -274,7 +232,7 @@ export function EmergencyPackPage() {
                 </ul>
               </>
             ) : null}
-            {snapshot.support.length > 0 ? (
+            {preferences.includeCharities && snapshot.support.length > 0 ? (
               <>
                 <h4>Support places</h4>
                 <ul className="pack-places">
@@ -307,12 +265,11 @@ export function EmergencyPackPage() {
         ) : null}
 
         {selectedCrises.map((option) => {
-          const guidelines = crisisGuidelines[option.kind]
           const groups = snapshot.checklists[option.kind] ?? []
           return (
             <section key={option.kind}>
               <h3>{option.label}</h3>
-              <h4>{option.checklistTitle}</h4>
+              <h4>{option.label} checklist</h4>
               {groups.length === 0 && !isLoading ? <p>This checklist is not saved on this device yet.</p> : null}
               {groups.map((group) => (
                 <div key={group.id}>
@@ -327,16 +284,6 @@ export function EmergencyPackPage() {
                   </ul>
                 </div>
               ))}
-              <div className="pack-guidelines">
-                <div>
-                  <h4>What to do</h4>
-                  <ul>{guidelines.dos.map((item) => <li key={item}>{item}</li>)}</ul>
-                </div>
-                <div>
-                  <h4>What not to do</h4>
-                  <ul>{guidelines.donts.map((item) => <li key={item}>{item}</li>)}</ul>
-                </div>
-              </div>
             </section>
           )
         })}

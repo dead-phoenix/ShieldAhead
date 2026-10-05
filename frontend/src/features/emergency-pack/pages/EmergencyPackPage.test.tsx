@@ -34,7 +34,7 @@ vi.mock('../../map/data/mapPlaceRepository', () => ({
           dataOrigin: 'network',
         },
       ],
-      datasets: [],
+      datasets: [{ source: 'wifi', metadata: {} }, { source: 'support', metadata: {} }],
       sourceErrors: [],
       generatedAt: '2026-09-30T00:00:00.000Z',
       limitations: [],
@@ -83,7 +83,7 @@ describe('Emergency pack page', () => {
     expect(screen.getByText('Community House')).toBeVisible()
     expect(screen.getByText('132 500')).toBeVisible()
     expect(screen.getByText('Review the household bushfire plan')).toBeVisible()
-    expect(screen.getByText('Do not wait until you can see flames or smell smoke.')).toBeVisible()
+    expect(screen.queryByText('What to do')).not.toBeInTheDocument()
 
     const contacts = screen.getByRole('table')
     const rows = within(contacts).getAllByRole('row').slice(1)
@@ -93,7 +93,6 @@ describe('Emergency pack page', () => {
 
     fireEvent.click(screen.getByRole('checkbox', { name: /Bushfire/ }))
     expect(screen.queryByText('Review the household bushfire plan')).not.toBeInTheDocument()
-    expect(screen.queryByText('Do not wait until you can see flames or smell smoke.')).not.toBeInTheDocument()
 
     fireEvent.click(screen.getByRole('button', { name: 'Download PDF' }))
     fireEvent.click(screen.getByRole('button', { name: 'Print' }))

@@ -29,8 +29,9 @@ export interface PackChecklistGroup {
 }
 
 export interface EmergencyPackPreferences {
-  includeNearby: boolean
   includeHelplines: boolean
+  includeWifi: boolean
+  includeCharities: boolean
   crises: CrisisKind[]
 }
 
@@ -38,10 +39,16 @@ export interface EmergencyPackSnapshot {
   areaLabel: string
   postcode: string
   savedAt?: string
+  /** Set only when that list was loaded successfully, so an empty list can be told apart from missing data. */
+  placesSavedAt: { wifi?: string; support?: string }
   wifi: PackPlace[]
   support: PackPlace[]
   helplines: PackHelpline[]
   checklists: Partial<Record<CrisisKind, PackChecklistGroup[]>>
+}
+
+interface LegacyEmergencyPackPreferences extends EmergencyPackPreferences {
+  includeNearby: boolean
 }
 
 interface StoredEmergencyPack {
@@ -52,8 +59,9 @@ interface StoredEmergencyPack {
 const crisisKinds = new Set(crisisPackOptions.map((option) => option.kind))
 
 export const defaultEmergencyPackPreferences: EmergencyPackPreferences = {
-  includeNearby: true,
   includeHelplines: true,
+  includeWifi: true,
+  includeCharities: true,
   crises: crisisPackOptions.map((option) => option.kind),
 }
 
@@ -61,6 +69,7 @@ export function emptyEmergencyPackSnapshot(): EmergencyPackSnapshot {
   return {
     areaLabel: '',
     postcode: '',
+    placesSavedAt: {},
     wifi: [],
     support: [],
     helplines: [],
@@ -86,22 +95,34 @@ function readStored(): StoredEmergencyPack | null {
   }
 }
 
-function normalizePreferences(value: Partial<EmergencyPackPreferences> | undefined): EmergencyPackPreferences {
+function normalizePreferences(value: Partial<LegacyEmergencyPackPreferences> | undefined): EmergencyPackPreferences {
   const crises = Array.isArray(value?.crises) ? value.crises.filter(isCrisisKind) : defaultEmergencyPackPreferences.crises
   return {
-    includeNearby: value?.includeNearby ?? defaultEmergencyPackPreferences.includeNearby,
     includeHelplines: value?.includeHelplines ?? defaultEmergencyPackPreferences.includeHelplines,
+    includeWifi: value?.includeWifi ?? value?.includeNearby ?? defaultEmergencyPackPreferences.includeWifi,
+    includeCharities: value?.includeCharities ?? value?.includeNearby ?? defaultEmergencyPackPreferences.includeCharities,
     crises: crisisPackOptions.map((option) => option.kind).filter((kind) => crises.includes(kind)),
   }
 }
 
+function optionalTimestamp(value: unknown): string | undefined {
+  return typeof value === 'string' ? value : undefined
+}
+
 function normalizeSnapshot(value: Partial<EmergencyPackSnapshot> | undefined): EmergencyPackSnapshot {
+  const savedAt = optionalTimestamp(value?.savedAt)
+  const wifi = Array.isArray(value?.wifi) ? value.wifi : []
+  const support = Array.isArray(value?.support) ? value.support : []
   return {
     areaLabel: typeof value?.areaLabel === 'string' ? value.areaLabel : '',
     postcode: typeof value?.postcode === 'string' ? value.postcode : '',
-    savedAt: typeof value?.savedAt === 'string' ? value.savedAt : undefined,
-    wifi: Array.isArray(value?.wifi) ? value.wifi : [],
-    support: Array.isArray(value?.support) ? value.support : [],
+    savedAt,
+    placesSavedAt: {
+      wifi: optionalTimestamp(value?.placesSavedAt?.wifi) ?? (wifi.length > 0 ? savedAt : undefined),
+      support: optionalTimestamp(value?.placesSavedAt?.support) ?? (support.length > 0 ? savedAt : undefined),
+    },
+    wifi,
+    support,
     helplines: Array.isArray(value?.helplines) ? value.helplines : [],
     checklists: value?.checklists && typeof value.checklists === 'object' ? value.checklists : {},
   }

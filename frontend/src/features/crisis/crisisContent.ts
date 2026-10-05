@@ -44,6 +44,18 @@ const energySafety = 'https://www.energy.vic.gov.au/about-energy/safety/power-ou
 const disasterSupport = 'https://www.servicesaustralia.gov.au/victoria-natural-disaster-support?context=60042'
 const verified = '15 September 2026'
 
+export interface PinnedHelpline {
+  id: string
+  name: string
+  phone: string
+  note?: string
+}
+
+export const pinnedHelplines: PinnedHelpline[] = [
+  { id: 'triple-zero', name: 'Triple Zero', phone: '000', note: 'For life-threatening danger' },
+  { id: 'vicses', name: 'VICSES', phone: '132 500' },
+]
+
 export const crisisContent: CrisisContent[] = [
   {
     kind: 'bushfire', title: 'Prepare for bushfire',
