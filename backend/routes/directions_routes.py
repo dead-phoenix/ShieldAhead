@@ -2,6 +2,7 @@ from flask import Blueprint, jsonify, request
 
 from extensions import limiter
 from services.ors_service import ALLOWED_PROFILES, ORSServiceError, get_route
+from services.route_facility_service import VIA_KINDS, find_via_route
 
 directions_bp = Blueprint("directions", __name__)
 
@@ -74,8 +75,25 @@ def post_directions():
             "error": 'profile must be "driving-car", "foot-walking", or "cycling-regular"'
         }), 400
 
+    via_kind = body.get("viaKind")
+    if via_kind is not None and via_kind not in VIA_KINDS:
+        return jsonify({"error": 'viaKind must be "hospital" or "support"'}), 400
+
     try:
         routes = get_route(start_lat, start_lng, end_lat, end_lng, profile=profile)
+
+        if via_kind and routes:
+            try:
+                via_route = find_via_route(via_kind, start_lat, start_lng, end_lat, end_lng, profile, routes[0])
+            except Exception as e:
+                _flask_app().logger.error(f"via-route lookup failed in /api/directions: {e}")
+                via_route = None
+            if via_route:
+                if len(routes) >= 3:
+                    routes[2] = via_route
+                else:
+                    routes.append(via_route)
+
         return jsonify({
             "routes": [
                 {
@@ -83,6 +101,7 @@ def post_directions():
                     "duration_seconds": route["duration_seconds"],
                     "geometry": route["geometry"],
                     "steps": route.get("steps") or [],
+                    **({"via_place": route["via_place"]} if route.get("via_place") else {}),
                 }
                 for route in routes
             ],

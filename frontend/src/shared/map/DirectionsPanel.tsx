@@ -6,6 +6,7 @@ import {
   type RouteOption,
   type RoutePoint,
   type RoutePreview,
+  type RouteViaKind,
 } from '../../data/api/directionsApi'
 import { LocationResolveError, readBrowserPosition } from '../../features/location/resolveSearchLocation'
 import { searchLocations, type SearchLocationResult } from '../../features/map/data/locationSearchApi'
@@ -17,6 +18,10 @@ interface DirectionsPanelProps {
   destination: RoutePoint & { name: string }
   onRouteChange: (route?: RoutePreview) => void
   destinationIsApproximate?: boolean
+  /** When the map's filter is narrowed to exactly hospitals or charities,
+   * the backend will try to swap in a route past a nearby one, as long as
+   * it only adds a small detour. */
+  viaKind?: RouteViaKind
   selectedMapStart?: RoutePoint
   isSelectingMapStart?: boolean
   onRequestMapStart: () => void
@@ -51,7 +56,7 @@ const FALLBACK_DISCLAIMER = (
   + 'Always follow official CFA/VicSES guidance during an active emergency.'
 )
 
-export function DirectionsPanel({ destination, onRouteChange, destinationIsApproximate = false, selectedMapStart, isSelectingMapStart = false, onRequestMapStart, isOnline = true, initialState, onStateChange, onRecentreRoute, showHeading = true, onLivePositionChange }: DirectionsPanelProps) {
+export function DirectionsPanel({ destination, onRouteChange, destinationIsApproximate = false, selectedMapStart, isSelectingMapStart = false, onRequestMapStart, isOnline = true, initialState, onStateChange, onRecentreRoute, showHeading = true, onLivePositionChange, viaKind }: DirectionsPanelProps) {
   const [profile, setProfile] = useState<DirectionsProfile>(initialState?.profile ?? 'foot-walking')
   const [origin, setOrigin] = useState<RoutePoint | undefined>(initialState?.origin)
   const [routeOptions, setRouteOptions] = useState<RouteOption[]>(
@@ -186,7 +191,7 @@ export function DirectionsPanel({ destination, onRouteChange, destinationIsAppro
     setIsLoading(true)
     setError('')
     try {
-      const alternatives = await getDirections(nextOrigin, destination, nextProfile)
+      const alternatives = await getDirections(nextOrigin, destination, nextProfile, viaKind)
       setRouteOptions(alternatives.routes)
       setSelectedRouteIndex(0)
       setDisclaimer(alternatives.disclaimer)
@@ -370,7 +375,9 @@ export function DirectionsPanel({ destination, onRouteChange, destinationIsAppro
                   className={index === selectedRouteIndex ? 'is-active' : ''}
                   onClick={() => selectRouteOption(index)}
                 >
-                  <span>Route {index + 1}{index === 0 ? ' · Recommended' : ''}</span>
+                  <span>
+                    {option.viaPlace ? `Via ${option.viaPlace.name}` : `Route ${index + 1}${index === 0 ? ' · Recommended' : ''}`}
+                  </span>
                   <strong>{formatDuration(option.durationSeconds)}</strong>
                   <small>{formatDistance(option.distanceMeters)}</small>
                 </button>

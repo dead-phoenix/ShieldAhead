@@ -29,7 +29,7 @@ import {
   type SearchLocation,
 } from '../../../storage/searchLocationStorage'
 import { resolveCoordinates, searchLocations, type SearchLocationResult } from '../data/locationSearchApi'
-import type { RoutePoint, RoutePreview } from '../../../data/api/directionsApi'
+import type { RoutePoint, RoutePreview, RouteViaKind } from '../../../data/api/directionsApi'
 import type { LivePositionPoint, MapViewport, SearchMarkerPoint } from '../../../shared/map/MapView'
 import { mapPlaceHasCoordinates, mapPlacesToMapRecords } from '../data/mapPlaceMapRecords'
 import { getMapPlaceRepository } from '../data/mapPlaceRepository'
@@ -225,6 +225,11 @@ export function MapPage() {
   )
   const mapRecords = useMemo(() => mapPlacesToMapRecords(visiblePlaces), [visiblePlaces])
   const selectedPlace = visiblePlaces.find(({ id }) => id === selectedPlaceId)
+  // Only kicks in when the map filter is narrowed to exactly one of these —
+  // ambiguous with multiple kinds active (or none), so left off in that case.
+  const directionsViaKind: RouteViaKind | undefined = selectedKinds.length === 1 && (selectedKinds[0] === 'hospital' || selectedKinds[0] === 'support')
+    ? selectedKinds[0]
+    : undefined
   const hasInvalidSelection = Boolean(!isLoading && result && selectedPlaceId && !selectedPlace)
   const displayedPanelMode: MapPanelMode = hasInvalidSelection ? 'results' : panelMode
   const displayedSelectedPlaceId = hasInvalidSelection ? undefined : selectedPlaceId
@@ -535,6 +540,7 @@ export function MapPage() {
         onStateChange={handleDirectionsStateChange}
         onLivePositionChange={setLivePosition}
         showHeading={false}
+        viaKind={directionsViaKind}
       />
       <p className="unified-map-directions__destination-note">Select another map marker to change the destination. Your current filters and search area will stay in place.</p>
     </section>

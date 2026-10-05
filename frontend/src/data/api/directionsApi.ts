@@ -1,8 +1,18 @@
 export type DirectionsProfile = 'foot-walking' | 'driving-car' | 'cycling-regular'
 
+/** Facility kinds the backend will try to route via, if one is close
+ * enough to the direct route — matches the two kinds the map's own filters
+ * expose as a single active search ('hospital', or 'support' for charities). */
+export type RouteViaKind = 'hospital' | 'support'
+
 export interface RoutePoint {
   latitude: number
   longitude: number
+}
+
+export interface RouteViaPlace {
+  name: string
+  kind: RouteViaKind
 }
 
 // ORS's numeric maneuver type codes (ORS Directions API: 0 Left, 1 Right,
@@ -26,6 +36,9 @@ export interface RouteOption {
   durationSeconds: number
   coordinates: [number, number][]
   steps: NavigationStep[]
+  /** Present when this route was chosen to pass by a nearby hospital/charity
+   * instead of being a plain alternative path. */
+  viaPlace?: RouteViaPlace
 }
 
 export interface RoutePreview extends RouteOption {
@@ -96,6 +109,15 @@ function normalizeStep(value: unknown, coordinateCount: number): NavigationStep 
   return { distanceMeters, durationSeconds, maneuverType, instruction, streetName, startCoordinateIndex }
 }
 
+function normalizeViaPlace(value: unknown): RouteViaPlace | undefined {
+  if (typeof value !== 'object' || value === null) return undefined
+  const record = value as Record<string, unknown>
+  const name = typeof record.name === 'string' ? record.name : ''
+  const kind = record.kind
+  if (!name || (kind !== 'hospital' && kind !== 'support')) return undefined
+  return { name, kind }
+}
+
 function normalizeRouteOption(value: unknown): RouteOption | null {
   if (typeof value !== 'object' || value === null) return null
   const record = value as Record<string, unknown>
@@ -116,13 +138,15 @@ function normalizeRouteOption(value: unknown): RouteOption | null {
       .map((step) => normalizeStep(step, coordinates.length))
       .filter((step): step is NavigationStep => step !== null)
     : []
-  return { distanceMeters, durationSeconds, coordinates, steps }
+  const viaPlace = normalizeViaPlace(record.via_place)
+  return { distanceMeters, durationSeconds, coordinates, steps, ...(viaPlace ? { viaPlace } : {}) }
 }
 
 export async function getDirections(
   start: RoutePoint,
   end: RoutePoint,
   profile: DirectionsProfile,
+  viaKind?: RouteViaKind,
 ): Promise<RouteAlternatives> {
   const controller = new AbortController()
   const timeout = window.setTimeout(() => controller.abort(), 20_000)
@@ -135,6 +159,7 @@ export async function getDirections(
         start: { lat: start.latitude, lng: start.longitude },
         end: { lat: end.latitude, lng: end.longitude },
         profile,
+        ...(viaKind ? { viaKind } : {}),
       }),
       signal: controller.signal,
     })

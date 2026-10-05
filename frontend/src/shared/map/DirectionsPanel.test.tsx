@@ -88,10 +88,10 @@ describe('Directions panel', () => {
 
     expect(await screen.findByText('15 min')).toBeVisible()
     expect(screen.getByText('1.5 km')).toBeVisible()
-    expect(getDirectionsMock).toHaveBeenCalledWith(start, destination, 'foot-walking')
+    expect(getDirectionsMock).toHaveBeenCalledWith(start, destination, 'foot-walking', undefined)
 
     fireEvent.click(screen.getByRole('button', { name: 'Driving' }))
-    await waitFor(() => expect(getDirectionsMock).toHaveBeenLastCalledWith(start, destination, 'driving-car'))
+    await waitFor(() => expect(getDirectionsMock).toHaveBeenLastCalledWith(start, destination, 'driving-car', undefined))
   })
 
   it('offers an in-place retry after a routing error', async () => {
@@ -107,6 +107,31 @@ describe('Directions panel', () => {
     expect(await screen.findByText('Routing is temporarily unavailable')).toBeVisible()
     fireEvent.click(screen.getByRole('button', { name: 'Try again' }))
     expect(await screen.findByText('15 min')).toBeVisible()
+  })
+
+  it('passes viaKind through to getDirections and labels a via-route distinctly', async () => {
+    getDirectionsMock.mockResolvedValue({
+      routes: [
+        { distanceMeters: 1500, durationSeconds: 900, coordinates: [[144.27, -36.76], [144.28, -36.75]], steps: [] },
+        {
+          distanceMeters: 1800, durationSeconds: 1000,
+          coordinates: [[144.27, -36.76], [144.28, -36.75]], steps: [],
+          viaPlace: { name: 'Kilmore District Hospital', kind: 'hospital' },
+        },
+      ],
+      disclaimer: 'Standard route only. Check official advice.',
+    })
+    const start = { latitude: -36.76, longitude: 144.27 }
+    const { rerender } = render(
+      <DirectionsPanel destination={destination} onRouteChange={vi.fn()} onRequestMapStart={vi.fn()} viaKind="hospital" />,
+    )
+    rerender(
+      <DirectionsPanel destination={destination} selectedMapStart={start} onRouteChange={vi.fn()} onRequestMapStart={vi.fn()} viaKind="hospital" />,
+    )
+
+    expect(await screen.findByText('Via Kilmore District Hospital')).toBeVisible()
+    expect(getDirectionsMock).toHaveBeenCalledWith(start, destination, 'foot-walking', 'hospital')
+    expect(screen.queryByText(/Route 2/)).not.toBeInTheDocument()
   })
 
   describe('Start navigation', () => {
@@ -162,7 +187,7 @@ describe('Directions panel', () => {
       geolocation.emit(offRoutePoint.latitude, offRoutePoint.longitude)
       geolocation.emit(offRoutePoint.latitude, offRoutePoint.longitude)
 
-      await waitFor(() => expect(getDirectionsMock).toHaveBeenCalledWith(offRoutePoint, destination, 'foot-walking'))
+      await waitFor(() => expect(getDirectionsMock).toHaveBeenCalledWith(offRoutePoint, destination, 'foot-walking', undefined))
     })
   })
 })

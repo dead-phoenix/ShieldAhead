@@ -253,6 +253,62 @@ def test_valid_directions_request_returns_route(client):
     assert "disclaimer" in response.json
 
 
+def test_directions_rejects_invalid_via_kind(client):
+    payload = {**valid_directions_payload(), "viaKind": "fire"}
+    response = client.post("/api/directions", json=payload)
+    assert response.status_code == 400
+
+
+def test_directions_replaces_third_alternative_with_qualifying_via_route(client):
+    fake_routes = [
+        {"distance_meters": 1500, "duration_seconds": 420, "geometry": {"type": "LineString", "coordinates": []}},
+        {"distance_meters": 1600, "duration_seconds": 440, "geometry": {"type": "LineString", "coordinates": []}},
+        {"distance_meters": 1700, "duration_seconds": 460, "geometry": {"type": "LineString", "coordinates": []}},
+    ]
+    via_route = {
+        "distance_meters": 2000,
+        "duration_seconds": 500,
+        "geometry": {"type": "LineString", "coordinates": []},
+        "via_place": {"name": "Kilmore District Hospital", "kind": "hospital"},
+    }
+    payload = {**valid_directions_payload(), "viaKind": "hospital"}
+
+    with patch("routes.directions_routes.get_route", return_value=fake_routes), \
+         patch("routes.directions_routes.find_via_route", return_value=via_route):
+        response = client.post("/api/directions", json=payload)
+
+    assert response.status_code == 200
+    routes = response.json["routes"]
+    assert len(routes) == 3
+    assert routes[2]["via_place"] == {"name": "Kilmore District Hospital", "kind": "hospital"}
+    assert "via_place" not in routes[0]
+
+
+def test_directions_keeps_normal_routes_when_no_via_candidate_qualifies(client):
+    fake_routes = [{"distance_meters": 1500, "duration_seconds": 420, "geometry": {"type": "LineString", "coordinates": []}}]
+    payload = {**valid_directions_payload(), "viaKind": "support"}
+
+    with patch("routes.directions_routes.get_route", return_value=fake_routes), \
+         patch("routes.directions_routes.find_via_route", return_value=None):
+        response = client.post("/api/directions", json=payload)
+
+    assert response.status_code == 200
+    assert len(response.json["routes"]) == 1
+    assert "via_place" not in response.json["routes"][0]
+
+
+def test_directions_succeeds_even_if_via_route_lookup_raises(client):
+    fake_routes = [{"distance_meters": 1500, "duration_seconds": 420, "geometry": {"type": "LineString", "coordinates": []}}]
+    payload = {**valid_directions_payload(), "viaKind": "hospital"}
+
+    with patch("routes.directions_routes.get_route", return_value=fake_routes), \
+         patch("routes.directions_routes.find_via_route", side_effect=RuntimeError("boom")):
+        response = client.post("/api/directions", json=payload)
+
+    assert response.status_code == 200
+    assert len(response.json["routes"]) == 1
+
+
 def test_ors_service_flattens_segment_steps_for_live_navigation():
     from unittest.mock import Mock
     from services.ors_service import get_route
@@ -283,6 +339,32 @@ def test_ors_service_flattens_segment_steps_for_live_navigation():
     assert routes[0]["steps"][1]["street_name"] == "Bourke Street Mall"
     assert routes[0]["steps"][1]["maneuver_type"] == 1
     assert routes[0]["steps"][1]["way_points"] == [4, 6]
+
+
+def test_ors_service_sends_via_waypoint_and_skips_alternatives():
+    from unittest.mock import Mock
+    from services.ors_service import get_route
+
+    ors_response = Mock()
+    ors_response.status_code = 200
+    ors_response.json.return_value = {
+        "features": [{
+            "properties": {"summary": {"distance": 2000, "duration": 500}},
+            "geometry": {"type": "LineString", "coordinates": []},
+        }],
+    }
+
+    with patch("services.ors_service.http_requests.post", return_value=ors_response) as mock_post, \
+         patch("services.ors_service.ORS_API_KEY", "test-key"):
+        get_route(-37.8136, 144.9631, -37.8183, 144.9671, profile="driving-car", via=(-37.8150, 144.9650))
+
+    sent_body = mock_post.call_args.kwargs["json"]
+    assert sent_body["coordinates"] == [
+        [144.9631, -37.8136],
+        [144.9650, -37.8150],
+        [144.9671, -37.8183],
+    ]
+    assert "alternative_routes" not in sent_body
 
 
 def test_directions_response_passes_through_turn_by_turn_steps(client):

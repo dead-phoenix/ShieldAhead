@@ -61,6 +61,43 @@ describe('getDirections', () => {
     expect(fetcher).toHaveBeenCalledWith(expect.any(URL), expect.objectContaining({ method: 'POST' }))
   })
 
+  it('sends viaKind in the request body and normalises via_place on the response', async () => {
+    const fetcher = vi.fn().mockResolvedValue(jsonResponse({
+      routes: [
+        {
+          distance_meters: 1250,
+          duration_seconds: 900,
+          geometry: { type: 'LineString', coordinates: [[144.96, -37.81], [144.97, -37.82]] },
+          via_place: { name: 'Kilmore District Hospital', kind: 'hospital' },
+        },
+      ],
+      disclaimer: '',
+    }, 200))
+    vi.stubGlobal('fetch', fetcher)
+
+    const alternatives = await getDirections(start, end, 'driving-car', 'hospital')
+
+    expect(alternatives.routes[0].viaPlace).toEqual({ name: 'Kilmore District Hospital', kind: 'hospital' })
+    const [, requestInit] = fetcher.mock.calls[0] as [URL, RequestInit]
+    expect(JSON.parse(requestInit.body as string)).toMatchObject({ viaKind: 'hospital' })
+  })
+
+  it('ignores an invalid or missing via_place on the response', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(jsonResponse({
+      routes: [{
+        distance_meters: 1250,
+        duration_seconds: 900,
+        geometry: { type: 'LineString', coordinates: [[144.96, -37.81], [144.97, -37.82]] },
+        via_place: { name: '', kind: 'hospital' },
+      }],
+      disclaimer: '',
+    }, 200)))
+
+    const alternatives = await getDirections(start, end, 'driving-car')
+
+    expect(alternatives.routes[0].viaPlace).toBeUndefined()
+  })
+
   it('maps 400, 429 and 502 to fixed copy without leaking API error text', async () => {
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue(jsonResponse({ error: 'raw backend 400' }, 400)))
     await expect(getDirections(start, end, 'driving-car')).rejects.toThrow(DIRECTIONS_ERROR.invalidInput)
