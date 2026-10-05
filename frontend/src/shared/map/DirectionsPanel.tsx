@@ -1,4 +1,4 @@
-import { ArrowClockwise, Car, Crosshair, CursorClick, MapPin, NavigationArrow, PersonSimpleBike, PersonSimpleWalk, Warning } from '@phosphor-icons/react'
+import { ArrowClockwise, Car, CloudArrowDown, CloudCheck, Crosshair, CursorClick, MapPin, NavigationArrow, PersonSimpleBike, PersonSimpleWalk, Warning } from '@phosphor-icons/react'
 import { useEffect, useRef, useState } from 'react'
 import {
   getDirections,
@@ -10,12 +10,18 @@ import {
 } from '../../data/api/directionsApi'
 import { LocationResolveError, readBrowserPosition } from '../../features/location/resolveSearchLocation'
 import { searchLocations, type SearchLocationResult } from '../../features/map/data/locationSearchApi'
+import { readOfflineRoute, saveOfflineRoute } from '../../features/map/data/offlineRouteStorage'
 import type { LivePositionPoint } from './MapView'
 import { LiveNavigationOverlay } from './LiveNavigationOverlay'
 import { useLiveNavigation } from '../navigation/useLiveNavigation'
 
 interface DirectionsPanelProps {
   destination: RoutePoint & { name: string }
+  /** Identifies the destination for offline route saving — falls back to a
+   * lat/lng key if not given, but a stable id (e.g. the place's own id)
+   * avoids treating two destinations that round to the same coordinates
+   * as one. */
+  destinationId?: string
   onRouteChange: (route?: RoutePreview) => void
   destinationIsApproximate?: boolean
   /** When the map's filter is narrowed to exactly hospitals or charities,
@@ -56,7 +62,8 @@ const FALLBACK_DISCLAIMER = (
   + 'Always follow official CFA/VicSES guidance during an active emergency.'
 )
 
-export function DirectionsPanel({ destination, onRouteChange, destinationIsApproximate = false, selectedMapStart, isSelectingMapStart = false, onRequestMapStart, isOnline = true, initialState, onStateChange, onRecentreRoute, showHeading = true, onLivePositionChange, viaKind }: DirectionsPanelProps) {
+export function DirectionsPanel({ destination, destinationId, onRouteChange, destinationIsApproximate = false, selectedMapStart, isSelectingMapStart = false, onRequestMapStart, isOnline = true, initialState, onStateChange, onRecentreRoute, showHeading = true, onLivePositionChange, viaKind }: DirectionsPanelProps) {
+  const destinationKey = destinationId ?? `${destination.latitude},${destination.longitude}`
   const [profile, setProfile] = useState<DirectionsProfile>(initialState?.profile ?? 'foot-walking')
   const [origin, setOrigin] = useState<RoutePoint | undefined>(initialState?.origin)
   const [routeOptions, setRouteOptions] = useState<RouteOption[]>(
@@ -67,6 +74,12 @@ export function DirectionsPanel({ destination, onRouteChange, destinationIsAppro
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
   const [originLabel, setOriginLabel] = useState(initialState?.originLabel ?? '')
+  // Set when the current route came from local storage rather than a live
+  // calculation — e.g. the app reopened with no signal after being closed.
+  const [offlineRouteSavedAt, setOfflineRouteSavedAt] = useState<string>()
+  // Confirms the person's own "Save for offline use" tap actually stored
+  // this route — saving isn't automatic, so they can trust it happened.
+  const [justSavedOffline, setJustSavedOffline] = useState(false)
   const [originSuggestions, setOriginSuggestions] = useState<SearchLocationResult[]>([])
   const [isSearchingOrigin, setIsSearchingOrigin] = useState(false)
   const appliedOriginLabelRef = useRef(initialState?.originLabel ?? '')
@@ -101,6 +114,13 @@ export function DirectionsPanel({ destination, onRouteChange, destinationIsAppro
   }, [isNavigating, liveNav.position])
 
   async function handleOffRoute(position: RoutePoint) {
+    if (!isOnline) {
+      // Rerouting needs a live ORS call — rather than let that fail with a
+      // generic network error, say plainly why and keep the existing route
+      // and saved progress intact.
+      setError(`You're off the saved route, and rerouting needs an internet connection. Keep heading toward ${destination.name}.`)
+      return
+    }
     setIsRerouting(true)
     try {
       // Pass on only lat/lng — position is a LivePosition (it also carries
@@ -195,7 +215,10 @@ export function DirectionsPanel({ destination, onRouteChange, destinationIsAppro
       setRouteOptions(alternatives.routes)
       setSelectedRouteIndex(0)
       setDisclaimer(alternatives.disclaimer)
-      onRouteChange(alternatives.routes[0] ? { ...alternatives.routes[0], disclaimer: alternatives.disclaimer } : undefined)
+      setOfflineRouteSavedAt(undefined)
+      setJustSavedOffline(false)
+      const chosen = alternatives.routes[0]
+      onRouteChange(chosen ? { ...chosen, disclaimer: alternatives.disclaimer } : undefined)
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : 'A route could not be calculated.')
       setRouteOptions([])
@@ -210,7 +233,23 @@ export function DirectionsPanel({ destination, onRouteChange, destinationIsAppro
   function selectRouteOption(index: number) {
     if (index === selectedRouteIndex || !routeOptions[index]) return
     setSelectedRouteIndex(index)
+    setJustSavedOffline(false)
     onRouteChange({ ...routeOptions[index], disclaimer })
+  }
+
+  function saveCurrentRouteOffline() {
+    if (!route || !origin) return
+    saveOfflineRoute({
+      destinationId: destinationKey,
+      destinationName: destination.name,
+      destinationLatitude: destination.latitude,
+      destinationLongitude: destination.longitude,
+      profile,
+      origin,
+      originLabel: appliedOriginLabelRef.current || originLabel,
+      route,
+    })
+    setJustSavedOffline(true)
   }
 
   async function useCurrentLocation() {
@@ -262,6 +301,28 @@ export function DirectionsPanel({ destination, onRouteChange, destinationIsAppro
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
+  useEffect(() => {
+    // Nothing to recover into, or there's already a route showing (e.g.
+    // restored from the same browser session) — only reach for the
+    // offline-saved copy when there's truly nothing else to show.
+    if (routeOptions.length > 0 || isOnline) return
+    const saved = readOfflineRoute(destinationKey)
+    if (!saved) return
+    setOrigin(saved.origin)
+    appliedOriginLabelRef.current = saved.originLabel
+    setOriginLabel(saved.originLabel)
+    setProfile(saved.profile)
+    setRouteOptions([saved.route])
+    setSelectedRouteIndex(0)
+    setDisclaimer(saved.route.disclaimer)
+    setOfflineRouteSavedAt(saved.savedAt)
+    onRouteChange(saved.route)
+    // Mount-time offline recovery; destinationKey/isOnline are read as they
+    // are at mount, which is what matters for "the app just opened with no
+    // signal".
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
   function retryRoute() {
     if (origin) void calculate(profile, origin)
   }
@@ -278,7 +339,7 @@ export function DirectionsPanel({ destination, onRouteChange, destinationIsAppro
           steps={route?.steps ?? []}
           progress={liveNav.progress}
           remainingDurationSeconds={remainingDurationSeconds}
-          error={liveNav.error}
+          error={error || liveNav.error}
           isRerouting={isRerouting}
           voiceEnabled={voiceEnabled}
           onToggleVoice={() => setVoiceEnabled((current) => !current)}
@@ -360,6 +421,11 @@ export function DirectionsPanel({ destination, onRouteChange, destinationIsAppro
       {isLoading ? <p className="directions-status" role="status">Calculating route…</p> : null}
       {route && !isLoading ? (
         <>
+          {offlineRouteSavedAt ? (
+            <p className="directions-warning" role="status">
+              Showing a route saved for offline use (saved {new Date(offlineRouteSavedAt).toLocaleString()}). Conditions on the ground may have changed.
+            </p>
+          ) : null}
           <p className="directions-summary" role="status">
             <strong>{formatDuration(route.durationSeconds)}</strong>
             <span>{formatDistance(route.distanceMeters)}</span>
@@ -390,6 +456,13 @@ export function DirectionsPanel({ destination, onRouteChange, destinationIsAppro
           </p>
           <button className="button button--primary" type="button" onClick={startNavigation} disabled={!isOnline}>
             <NavigationArrow aria-hidden="true" size={19} weight="fill" /> Start navigation
+          </button>
+          <button className="button button--quiet" type="button" onClick={saveCurrentRouteOffline}>
+            {justSavedOffline ? (
+              <><CloudCheck aria-hidden="true" size={18} weight="fill" /> Saved for offline use</>
+            ) : (
+              <><CloudArrowDown aria-hidden="true" size={18} /> Save for offline use</>
+            )}
           </button>
           {onRecentreRoute ? (
             <button className="button button--quiet" type="button" onClick={onRecentreRoute}>

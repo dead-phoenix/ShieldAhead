@@ -1,6 +1,7 @@
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { getDirections } from '../../data/api/directionsApi'
+import { readOfflineRoute, saveOfflineRoute } from '../../features/map/data/offlineRouteStorage'
 import { DirectionsPanel } from './DirectionsPanel'
 
 vi.mock('../../data/api/directionsApi', async (importOriginal) => {
@@ -64,6 +65,128 @@ describe('Directions panel', () => {
         steps: [],
       }],
       disclaimer: 'Standard route only. Check official advice.',
+    })
+    window.localStorage.clear()
+  })
+
+  describe('offline route recovery', () => {
+    it('only saves a route for offline use when the person taps the save button', async () => {
+      const start = { latitude: -36.76, longitude: 144.27 }
+      const { rerender } = render(
+        <DirectionsPanel destination={destination} destinationId="dest-1" onRouteChange={vi.fn()} onRequestMapStart={vi.fn()} />,
+      )
+      rerender(
+        <DirectionsPanel destination={destination} destinationId="dest-1" selectedMapStart={start} onRouteChange={vi.fn()} onRequestMapStart={vi.fn()} />,
+      )
+
+      await screen.findByText('15 min')
+      expect(readOfflineRoute('dest-1')).toBeUndefined()
+
+      fireEvent.click(screen.getByRole('button', { name: /Save for offline use/ }))
+
+      const saved = readOfflineRoute('dest-1')
+      expect(saved?.destinationName).toBe('Community House')
+      expect(saved?.route.distanceMeters).toBe(1500)
+      expect(screen.getByRole('button', { name: /Saved for offline use/ })).toBeVisible()
+    })
+
+    it('shows a previously saved route with no network call when offline and nothing else is restored', async () => {
+      saveOfflineRoute({
+        destinationId: 'dest-1',
+        destinationName: 'Community House',
+        destinationLatitude: destination.latitude,
+        destinationLongitude: destination.longitude,
+        profile: 'foot-walking',
+        origin: { latitude: -36.76, longitude: 144.27 },
+        originLabel: 'Your current location',
+        route: {
+          distanceMeters: 1500,
+          durationSeconds: 900,
+          coordinates: [[144.27, -36.76], [144.28, -36.75]],
+          steps: [],
+          disclaimer: 'Standard route only.',
+        },
+      })
+
+      render(
+        <DirectionsPanel destination={destination} destinationId="dest-1" isOnline={false} onRouteChange={vi.fn()} onRequestMapStart={vi.fn()} />,
+      )
+
+      expect(await screen.findByText('15 min')).toBeVisible()
+      expect(screen.getByText(/saved for offline use/)).toBeVisible()
+      expect(getDirectionsMock).not.toHaveBeenCalled()
+    })
+
+    it('does not show a saved route for a different destination', () => {
+      saveOfflineRoute({
+        destinationId: 'some-other-place',
+        destinationName: 'Somewhere Else',
+        destinationLatitude: 1,
+        destinationLongitude: 1,
+        profile: 'foot-walking',
+        origin: { latitude: 1, longitude: 1 },
+        originLabel: 'Somewhere',
+        route: { distanceMeters: 1500, durationSeconds: 900, coordinates: [[1, 1], [2, 2]], steps: [], disclaimer: '' },
+      })
+
+      render(
+        <DirectionsPanel destination={destination} destinationId="dest-1" isOnline={false} onRouteChange={vi.fn()} onRequestMapStart={vi.fn()} />,
+      )
+
+      expect(screen.queryByText('15 min')).not.toBeInTheDocument()
+    })
+
+    it('tells the user rerouting needs a connection instead of silently failing, when off-route offline', async () => {
+      getDirectionsMock.mockResolvedValue({
+        routes: [{
+          distanceMeters: 1500,
+          durationSeconds: 900,
+          coordinates: [[144.27, -36.76], [144.275, -36.755], [144.28, -36.75]],
+          steps: [
+            { distanceMeters: 750, durationSeconds: 450, maneuverType: 11, instruction: 'Head north', startCoordinateIndex: 0 },
+            { distanceMeters: 750, durationSeconds: 450, maneuverType: 1, instruction: 'Turn right', startCoordinateIndex: 1 },
+          ],
+        }],
+        disclaimer: 'Standard route only.',
+      })
+      const watchCallbacks: ((position: { coords: { latitude: number; longitude: number; heading: number | null; accuracy: number } }) => void)[] = []
+      Object.defineProperty(globalThis.navigator, 'geolocation', {
+        configurable: true,
+        value: {
+          watchPosition: vi.fn((success: typeof watchCallbacks[0]) => { watchCallbacks.push(success); return 1 }),
+          clearWatch: vi.fn(),
+          getCurrentPosition: vi.fn(),
+        },
+      })
+      const start = { latitude: -36.76, longitude: 144.27 }
+      const { rerender } = render(
+        <DirectionsPanel destination={destination} destinationId="dest-1" onRouteChange={vi.fn()} onRequestMapStart={vi.fn()} />,
+      )
+      rerender(
+        <DirectionsPanel destination={destination} destinationId="dest-1" selectedMapStart={start} isOnline onRouteChange={vi.fn()} onRequestMapStart={vi.fn()} />,
+      )
+      expect(await screen.findByText('15 min')).toBeVisible()
+      fireEvent.click(screen.getByRole('button', { name: 'Start navigation' }))
+      await screen.findByText('Finding your location…')
+
+      // Go offline mid-navigation, then drift off-route for 3 consecutive fixes.
+      rerender(
+        <DirectionsPanel destination={destination} destinationId="dest-1" selectedMapStart={start} isOnline={false} onRouteChange={vi.fn()} onRequestMapStart={vi.fn()} />,
+      )
+      getDirectionsMock.mockClear()
+      const offRoutePoint = { latitude: -36.90, longitude: 144.27 }
+      act(() => {
+        watchCallbacks.forEach((callback) => callback({ coords: { latitude: offRoutePoint.latitude, longitude: offRoutePoint.longitude, heading: null, accuracy: 5 } }))
+      })
+      act(() => {
+        watchCallbacks.forEach((callback) => callback({ coords: { latitude: offRoutePoint.latitude, longitude: offRoutePoint.longitude, heading: null, accuracy: 5 } }))
+      })
+      act(() => {
+        watchCallbacks.forEach((callback) => callback({ coords: { latitude: offRoutePoint.latitude, longitude: offRoutePoint.longitude, heading: null, accuracy: 5 } }))
+      })
+
+      expect(await screen.findByText(/rerouting needs an internet connection/)).toBeVisible()
+      expect(getDirectionsMock).not.toHaveBeenCalled()
     })
   })
 

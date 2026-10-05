@@ -530,6 +530,7 @@ export function MapPage() {
       <DirectionsPanel
         key={selectedPlace.id}
         destination={{ name: selectedPlace.name, latitude: selectedPlace.latitude, longitude: selectedPlace.longitude }}
+        destinationId={selectedPlace.id}
         destinationIsApproximate={!selectedPlace.address}
         initialState={directionsState}
         isOnline={isOnline}
