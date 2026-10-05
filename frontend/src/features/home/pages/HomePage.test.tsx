@@ -1,12 +1,18 @@
-import { render, screen } from '@testing-library/react'
-import { MemoryRouter } from 'react-router-dom'
+import { fireEvent, render, screen } from '@testing-library/react'
+import { MemoryRouter, useLocation } from 'react-router-dom'
 import { describe, expect, it } from 'vitest'
 import { HomePage } from './HomePage'
+
+function LocationProbe() {
+  const location = useLocation()
+  return <div data-testid="location">{location.pathname + location.search}</div>
+}
 
 function renderHome() {
   return render(
     <MemoryRouter>
       <HomePage />
+      <LocationProbe />
     </MemoryRouter>,
   )
 }
@@ -29,5 +35,23 @@ describe('home landing page', () => {
     expect(screen.getByRole('link', { name: 'View checklists' })).toHaveAttribute('href', '/crisis')
     expect(screen.getByRole('heading', { name: 'Works offline' })).toBeVisible()
     expect(screen.getByText(/saved information stays available when connectivity/i)).toBeVisible()
+  })
+
+  it('takes someone to the wifi map from the home search box', () => {
+    renderHome()
+
+    fireEvent.change(screen.getByRole('combobox'), { target: { value: 'take me to wifi' } })
+    fireEvent.submit(screen.getByRole('combobox').closest('form')!)
+
+    expect(screen.getByTestId('location')).toHaveTextContent('/map?category=wifi')
+  })
+
+  it('sends a hazard question from the home search to its guidance page', () => {
+    renderHome()
+
+    fireEvent.change(screen.getByRole('combobox'), { target: { value: 'How should I prepare for bushfire' } })
+    fireEvent.submit(screen.getByRole('combobox').closest('form')!)
+
+    expect(screen.getByTestId('location')).toHaveTextContent('/crisis/bushfire/guidance')
   })
 })

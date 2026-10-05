@@ -2,6 +2,7 @@ import { lazy, Suspense, useEffect, useState } from 'react'
 import { ArrowRight, Check, FireTruck, Heart, MapPin, WifiHigh } from '@phosphor-icons/react'
 import { Link } from 'react-router-dom'
 import { appRoutes } from '../../../app/config/product'
+import { CrisisQuerySearch } from '../../crisis/components/CrisisQuerySearch'
 import './HomePage.css'
 
 const HomeStaticMap = lazy(async () => {
@@ -80,6 +81,7 @@ export function HomePage() {
           Before it happens.
         </h1>
         <p>Practical crisis preparedness for people across Victoria.</p>
+        <CrisisQuerySearch variant="home" />
         <Link className="button landing-action landing-action--primary" to={appRoutes.crisis}>
           <span>Prepare for a crisis</span>
         </Link>

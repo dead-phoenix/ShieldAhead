@@ -1,7 +1,16 @@
-import { fireEvent, render, screen } from '@testing-library/react'
-import { MemoryRouter } from 'react-router-dom'
+import { act, fireEvent, render, screen } from '@testing-library/react'
+import { MemoryRouter, useLocation } from 'react-router-dom'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { CrisisLandingPage } from './CrisisLandingPage'
+
+function LocationProbe() {
+  const location = useLocation()
+  return <div data-testid="location">{location.pathname + location.search}</div>
+}
+
+function renderPageWithLocation() {
+  return render(<MemoryRouter><CrisisLandingPage /><LocationProbe /></MemoryRouter>)
+}
 
 const voiceMocks = vi.hoisted(() => ({
   useVoiceInput: vi.fn(),
@@ -84,6 +93,36 @@ describe('CrisisLandingPage voice input', () => {
     renderPage()
 
     expect(screen.getByRole('alert')).toHaveTextContent('We could not access your microphone.')
+  })
+
+  it('navigates to the wifi map when a typed destination is submitted', () => {
+    stubVoice()
+    renderPageWithLocation()
+
+    fireEvent.change(screen.getByRole('combobox'), { target: { value: 'take me to wifi' } })
+    fireEvent.submit(screen.getByRole('combobox').closest('form')!)
+
+    expect(screen.getByTestId('location')).toHaveTextContent('/map?category=wifi')
+  })
+
+  it('navigates when a spoken destination comes back from voice input', () => {
+    stubVoice()
+    renderPageWithLocation()
+
+    const onVoiceResult = voiceMocks.useVoiceInput.mock.calls[0][0] as (transcript: string) => void
+    act(() => onVoiceResult('nearest hospital'))
+
+    expect(screen.getByTestId('location')).toHaveTextContent('/map?category=hospital')
+  })
+
+  it('still routes hazard questions to the hazard guidance', () => {
+    stubVoice()
+    renderPageWithLocation()
+
+    fireEvent.change(screen.getByRole('combobox'), { target: { value: 'How should I prepare for bushfire' } })
+    fireEvent.submit(screen.getByRole('combobox').closest('form')!)
+
+    expect(screen.getByTestId('location')).toHaveTextContent('/crisis/bushfire/guidance')
   })
 
   it('disables the mic button when offline, since transcription needs a connection', () => {
