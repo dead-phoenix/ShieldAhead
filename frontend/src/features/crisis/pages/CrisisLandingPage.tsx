@@ -2,7 +2,7 @@ import { MagnifyingGlass, Microphone } from '@phosphor-icons/react'
 import { lazy, Suspense, useCallback, useRef, useState, type FormEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { appRoutes } from '../../../app/config/product'
-import { useSpeechInput } from '../../../shared/hooks/useSpeechInput'
+import { useVoiceInput } from '../../../shared/hooks/useVoiceInput'
 import { crisisContent } from '../crisisContent'
 import { matchCrisisKind, matchCrisisStage, SUGGESTED_CRISIS_QUERIES } from '../matchCrisisQuery'
 
@@ -16,7 +16,7 @@ export function CrisisLandingPage() {
   const [searchError, setSearchError] = useState('')
   const [showSuggestions, setShowSuggestions] = useState(false)
   const hideSuggestionsTimer = useRef<number | undefined>(undefined)
-  const speech = useSpeechInput((transcript) => {
+  const voice = useVoiceInput((transcript) => {
     setQuery(transcript)
     setSearchError('')
   })
@@ -88,12 +88,13 @@ export function CrisisLandingPage() {
             aria-controls="crisis-query-suggestions"
             aria-expanded={showSuggestions}
           />
-          {speech.isSupported ? (
+          {voice.isSupported ? (
             <button
-              aria-label={speech.isListening ? 'Stop voice input' : 'Ask by voice'}
-              aria-pressed={speech.isListening}
-              className={`crisis-query-search__mic${speech.isListening ? ' is-listening' : ''}`}
-              onClick={() => (speech.isListening ? speech.stop() : speech.start())}
+              aria-label={voice.isRecording ? 'Stop and transcribe' : 'Ask by voice'}
+              aria-pressed={voice.isRecording}
+              className={`crisis-query-search__mic${voice.isRecording ? ' is-listening' : ''}`}
+              onClick={() => (voice.isRecording ? voice.stop() : voice.start())}
+              disabled={voice.isTranscribing}
               type="button"
             >
               <Microphone aria-hidden="true" size={18} />
@@ -103,8 +104,12 @@ export function CrisisLandingPage() {
             <MagnifyingGlass aria-hidden="true" size={18} /> Search
           </button>
         </div>
-        {speech.isListening ? <p className="crisis-query-search__status" role="status">Listening…</p> : null}
-        {speech.error ? <p className="crisis-query-search__error" role="alert">{speech.error}</p> : null}
+        {voice.isRecording ? (
+          <p className="crisis-query-search__status" role="status">Listening… tap the microphone again when you're done</p>
+        ) : voice.isTranscribing ? (
+          <p className="crisis-query-search__status" role="status">Transcribing…</p>
+        ) : null}
+        {voice.error ? <p className="crisis-query-search__error" role="alert">{voice.error}</p> : null}
         {showSuggestions ? (
           <div className="crisis-query-search__suggestions" id="crisis-query-suggestions" role="listbox" aria-label="Example questions">
             {SUGGESTED_CRISIS_QUERIES.map((suggestion) => (

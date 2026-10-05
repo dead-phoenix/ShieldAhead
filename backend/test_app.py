@@ -1,3 +1,4 @@
+import io
 import time
 import pytest
 from unittest.mock import Mock, patch
@@ -752,6 +753,38 @@ def test_expired_facility_cache_is_served_without_live_fetch(client):
     assert response.json["metadata"]["freshnessStatus"] == "stale"
     mock_fetch.assert_not_called()
     mock_schedule.assert_called_once()
+
+
+# ============================================================
+# Voice transcription (server-side Whisper)
+# ============================================================
+
+def test_api_voice_transcribe_requires_audio_file(client):
+    response = client.post("/api/voice/transcribe")
+    assert response.status_code == 400
+    assert response.is_json
+
+
+def test_api_voice_transcribe_rejects_empty_audio_file(client):
+    data = {"audio": (io.BytesIO(b""), "clip.webm")}
+    response = client.post("/api/voice/transcribe", data=data, content_type="multipart/form-data")
+    assert response.status_code == 400
+
+
+def test_api_voice_transcribe_returns_recognized_text(client):
+    data = {"audio": (io.BytesIO(b"fake audio bytes"), "clip.webm")}
+    with patch("routes.voice_routes.transcribe_audio", return_value="How do I prepare for bushfire"):
+        response = client.post("/api/voice/transcribe", data=data, content_type="multipart/form-data")
+    assert response.status_code == 200
+    assert response.json["text"] == "How do I prepare for bushfire"
+
+
+def test_api_voice_transcribe_returns_500_on_model_failure(client):
+    data = {"audio": (io.BytesIO(b"fake audio bytes"), "clip.webm")}
+    with patch("routes.voice_routes.transcribe_audio", side_effect=RuntimeError("model crashed")):
+        response = client.post("/api/voice/transcribe", data=data, content_type="multipart/form-data")
+    assert response.status_code == 500
+    assert response.is_json
 
 
 def test_spa_serves_index_for_client_routes(tmp_path, monkeypatch, client):

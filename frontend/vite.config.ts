@@ -72,7 +72,7 @@ function shieldAheadServiceWorker(): Plugin {
         '/apple-touch-icon.png',
         ...Object.keys(bundle).map((fileName) => `/${fileName}`),
       ]
-      const source = `const CACHE_NAME = 'shieldahead-shell-v4'
+      const source = `const CACHE_NAME = 'shieldahead-shell-v6'
 const PRECACHE_FILES = ${JSON.stringify(precacheFiles)}
 
 self.addEventListener('install', (event) => {
