@@ -359,7 +359,7 @@ exports[`buildCrisisPack > renders only the places that exist when fewer than 5 
               "name": "Place s1",
             },
           ],
-          "title": "Charities",
+          "title": "Charities near you",
         },
       ],
       "title": "Your crisis pack",

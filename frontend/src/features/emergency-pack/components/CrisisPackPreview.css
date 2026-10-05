@@ -74,6 +74,11 @@
   line-height: 1.15;
 }
 
+.pack-page__area {
+  color: var(--pack-muted);
+  font-size: calc(var(--pt) * 9);
+}
+
 .pack-page__subtitle {
   color: var(--pack-muted);
   font-size: calc(var(--pt) * 11);

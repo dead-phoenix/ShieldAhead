@@ -16,8 +16,9 @@ const KEEP_UPPER = new Set([
   'RMIT', 'RSL', 'SES', 'TAFE', 'UK', 'USA', 'VIC', 'VICSES', 'YMCA', 'YWCA',
 ])
 const STATES = new Set(['VIC', 'NSW', 'QLD', 'SA', 'WA', 'TAS', 'NT', 'ACT'])
-const UNIT_PREFIX = /^(?:se|ste|suite|unit|u|shop|shp|level|lvl|l|flat|apt|apartment)\b\.?\s*[\w/-]*\d[\w/-]*\s+(?=\d)/i
-const UNIT_ONLY = /^(?:se|ste|suite|unit|u|shop|shp|level|lvl|l|flat|apt|apartment)\b\.?\s*[\w/-]*\d[\w/-]*$/i
+const UNIT_WORD = '(?:se|ste|suite|unit|u|shop|shp|level|lvl|l|flat|apt|apartment)\\b\\.?\\s*[\\w/-]*\\d[\\w/-]*'
+const UNIT_PREFIX = new RegExp(`^${UNIT_WORD}\\s+(?=\\d|${UNIT_WORD}\\s)`, 'i')
+const UNIT_ONLY = new RegExp(`^${UNIT_WORD}$`, 'i')
 
 function isAllUpperCase(text: string): boolean {
   return /[A-Z]/.test(text) && !/[a-z]/.test(text)
@@ -76,8 +77,10 @@ export function packPlaceAddress(place: PlaceTextInput): string | undefined {
   let postcode = place.postcode?.trim() || undefined
 
   parts.forEach((part, index) => {
-    if (UNIT_ONLY.test(part) && /^\d/.test(parts[index + 1] ?? '')) return
-    const tokens = (street.length === 0 ? part.replace(UNIT_PREFIX, '') : part).split(/\s+/)
+    if (UNIT_ONLY.test(part) && /^\d/.test(parts.slice(index + 1).find((later) => !UNIT_ONLY.test(later)) ?? '')) return
+    let streetPart = part
+    while (street.length === 0 && UNIT_PREFIX.test(streetPart)) streetPart = streetPart.replace(UNIT_PREFIX, '')
+    const tokens = streetPart.split(/\s+/)
     let hadLocalityTokens = false
     while (tokens.length > 0) {
       const last = tokens[tokens.length - 1]

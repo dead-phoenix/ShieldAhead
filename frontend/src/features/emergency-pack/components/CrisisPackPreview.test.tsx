@@ -26,6 +26,8 @@ function renderPreview(preferences: EmergencyPackPreferences = everything) {
     preferences,
     snapshot: {
       ...emptyEmergencyPackSnapshot(),
+      areaLabel: 'Docklands 3008',
+      postcode: '3008',
       placesSavedAt: { wifi: '2026-10-05T00:00:00.000Z' },
       wifi: [
         { id: 'w1', name: 'LIBRARY AT THE DOCK', address: '107 Victoria Harbour Prom', suburb: 'Docklands', postcode: '3008' },
@@ -65,7 +67,8 @@ describe('Crisis pack preview', () => {
       'Pop-up hotspot',
     ])
 
-    const charities = within(page).getByRole('heading', { name: 'Charities' }).closest('section') as HTMLElement
+    expect(within(page).getByText('Near Docklands 3008')).toBeInTheDocument()
+    const charities = within(page).getByRole('heading', { name: 'Charities near you' }).closest('section') as HTMLElement
     expect(within(charities).getByText('Not available offline')).toBeInTheDocument()
     expect(within(page).getByText(/Details were correct when this pack was downloaded on 5 October 2026/)).toBeInTheDocument()
   })

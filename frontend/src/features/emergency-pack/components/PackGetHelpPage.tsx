@@ -5,6 +5,7 @@ export function PackGetHelpPage({ page }: { page: CrisisPackGetHelpPage }) {
     <>
       <header className="pack-page__header">
         <h2 className="pack-page__title">{page.title}</h2>
+        {page.areaLine ? <p className="pack-page__area">{page.areaLine}</p> : null}
         <p className="pack-write-line"><span>{page.nameAndDateLabel}</span></p>
       </header>
 

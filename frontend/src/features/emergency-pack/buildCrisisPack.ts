@@ -47,6 +47,8 @@ interface CrisisPackPageBase {
 export interface CrisisPackGetHelpPage extends CrisisPackPageBase {
   kind: 'get-help'
   title: string
+  /** "Near <Suburb> <postcode>", only when places are included and the saved area names a suburb. */
+  areaLine?: string
   nameAndDateLabel: string
   helplinesTitle: string
   helplines?: CrisisPackHelpline[]
@@ -134,6 +136,14 @@ function placeColumn(
     : { id, title, places: [], message: 'None listed near this area' }
 }
 
+function areaLine(snapshot: EmergencyPackSnapshot): string | undefined {
+  const postcode = snapshot.postcode.trim()
+  const label = snapshot.areaLabel.trim()
+  const suburb = postcode && label.endsWith(postcode) ? label.slice(0, -postcode.length).trim() : label
+  if (!postcode || !suburb || /^\d{4}$/.test(suburb)) return undefined
+  return `Near ${suburb} ${postcode}`
+}
+
 function getHelpPage(input: BuildCrisisPackInput): UnnumberedPage | null {
   const { preferences, snapshot, downloadedAt } = input
   if (!preferences.includeHelplines && !preferences.includeWifi && !preferences.includeCharities) return null
@@ -143,7 +153,7 @@ function getHelpPage(input: BuildCrisisPackInput): UnnumberedPage | null {
     placeColumns.push(placeColumn('wifi', 'Wi-Fi spots', snapshot.wifi, snapshot.placesSavedAt.wifi))
   }
   if (preferences.includeCharities) {
-    placeColumns.push(placeColumn('charities', 'Charities', snapshot.support, snapshot.placesSavedAt.support))
+    placeColumns.push(placeColumn('charities', 'Charities near you', snapshot.support, snapshot.placesSavedAt.support))
   }
 
   return {
@@ -151,6 +161,7 @@ function getHelpPage(input: BuildCrisisPackInput): UnnumberedPage | null {
     id: 'get-help',
     label: 'Get help',
     title: 'Your crisis pack',
+    ...(placeColumns.length > 0 && areaLine(snapshot) ? { areaLine: areaLine(snapshot) } : {}),
     nameAndDateLabel: 'Name and date',
     helplinesTitle: 'Helplines',
     helplines: preferences.includeHelplines ? packHelplines(snapshot) : undefined,

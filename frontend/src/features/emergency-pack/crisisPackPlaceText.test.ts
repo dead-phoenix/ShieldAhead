@@ -56,6 +56,18 @@ describe('crisis pack place text', () => {
       .toBe('12 Smith St, Harcourt 3453')
   })
 
+  it('drops chained suite, level and unit prefixes seen in the live charity data', () => {
+    const docklands = { suburb: 'Docklands', postcode: '3008' }
+    expect(packPlaceAddress({ name: 'A', address: 'Suite 904, Level 9, 401 Docklands Dr, Docklands, VIC, 3008', ...docklands }))
+      .toBe('401 Docklands Dr, Docklands VIC 3008')
+    expect(packPlaceAddress({ name: 'B', address: 'L 1 U 108 198 Harbour Esp, Docklands, VIC, 3008', ...docklands }))
+      .toBe('198 Harbour Esp, Docklands VIC 3008')
+    expect(packPlaceAddress({ name: 'C', address: 'SE 223, 838 Collins Street, Docklands, VIC, 3008', ...docklands }))
+      .toBe('838 Collins Street, Docklands VIC 3008')
+    expect(packPlaceAddress({ name: 'D', address: 'U 1115 100 Harbour Esp, Docklands, VIC, 3008', ...docklands }))
+      .toBe('100 Harbour Esp, Docklands VIC 3008')
+  })
+
   it('does not strip words that only look like a unit prefix', () => {
     expect(packPlaceAddress({ name: 'Seaford', address: 'Seaford 3198' })).toBe('Seaford 3198')
     expect(packPlaceAddress({ name: 'Shop', address: 'Shop 5 Main Street', suburb: 'Bendigo', postcode: '3550' }))

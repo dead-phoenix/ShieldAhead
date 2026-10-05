@@ -131,6 +131,25 @@ describe('buildCrisisPack', () => {
     ])
   })
 
+  it('adds a "Near" area line when places are included and the saved area names a suburb', () => {
+    const pack = buildCrisisPack({
+      preferences: { ...allOff, includeCharities: true },
+      snapshot: snapshot({ areaLabel: 'Harcourt 3453', postcode: '3453' }),
+      downloadedAt,
+    })
+    const getHelp = pack.pages[0] as CrisisPackGetHelpPage
+    expect(getHelp.areaLine).toBe('Near Harcourt 3453')
+    expect(getHelp.placeColumns[0].title).toBe('Charities near you')
+  })
+
+  it('omits the area line when there is no location, only a postcode, or no places', () => {
+    const areaLineFor = (overrides: Partial<EmergencyPackSnapshot>, preferences = { ...allOff, includeWifi: true }) =>
+      (buildCrisisPack({ preferences, snapshot: snapshot(overrides), downloadedAt }).pages[0] as CrisisPackGetHelpPage).areaLine
+    expect(areaLineFor({ areaLabel: '', postcode: '' })).toBeUndefined()
+    expect(areaLineFor({ areaLabel: '3453', postcode: '3453' })).toBeUndefined()
+    expect(areaLineFor({ areaLabel: 'Harcourt 3453', postcode: '3453' }, { ...allOff, includeHelplines: true })).toBeUndefined()
+  })
+
   it('marks a place column as not available offline when it was never loaded', () => {
     const pack = buildCrisisPack({
       preferences: { ...allOff, includeWifi: true, includeCharities: true },
