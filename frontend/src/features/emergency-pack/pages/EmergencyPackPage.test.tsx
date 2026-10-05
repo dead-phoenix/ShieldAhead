@@ -76,8 +76,10 @@ describe('Crisis pack page', () => {
   })
 
   it('shows six pressed toggles by default and the full preview', async () => {
-    renderPage()
+    document.title = 'ShieldAhead'
+    const { unmount } = renderPage()
     expect(screen.getByRole('heading', { level: 1, name: 'Crisis pack' })).toBeVisible()
+    expect(document.title).toBe('Crisis pack')
     for (const name of toggleNames) {
       expect(screen.getByRole('button', { name })).toHaveAttribute('aria-pressed', 'true')
     }
@@ -88,6 +90,8 @@ describe('Crisis pack page', () => {
     expect(preview()).toHaveAccessibleDescription(
       'Preview: 5 pages. Get help, Bushfire checklist, Flood checklist, Power outage checklist, My emergency contacts.',
     )
+    unmount()
+    expect(document.title).toBe('ShieldAhead')
   })
 
   it('adds and removes the Flood checklist page and updates the count', async () => {
@@ -99,6 +103,11 @@ describe('Crisis pack page', () => {
     expect(flood).toHaveAttribute('aria-pressed', 'false')
     expect(pageRegions()).toHaveLength(4)
     expect(within(preview()).queryByRole('heading', { name: 'Flood checklist' })).not.toBeInTheDocument()
+    const announcement = within(preview()).getByText(/^Preview: \d+ pages?\./)
+    expect(announcement).toHaveAttribute('aria-live', 'polite')
+    expect(announcement).toHaveTextContent(
+      'Preview: 4 pages. Get help, Bushfire checklist, Power outage checklist, My emergency contacts.',
+    )
 
     fireEvent.click(flood)
     expect(flood).toHaveAttribute('aria-pressed', 'true')

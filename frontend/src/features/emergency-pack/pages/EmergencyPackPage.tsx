@@ -8,7 +8,7 @@ import { useOnlineStatus } from '../../../shared/hooks/useOnlineStatus'
 import { getSearchLocation } from '../../../storage/searchLocationStorage'
 import type { CrisisKind } from '../../crisis/crisisContent'
 import { getMapPlaceRepository } from '../../map/data/mapPlaceRepository'
-import { buildCrisisPack } from '../buildCrisisPack'
+import { CRISIS_PACK_DOCUMENT_TITLE, buildCrisisPack } from '../buildCrisisPack'
 import { CrisisPackPreview } from '../components/CrisisPackPreview'
 import { nearestPlaces, toChecklistGroups, toPackHelplines } from '../crisisPackSnapshot'
 import { crisisPackOptions } from '../emergencyPackContent'
@@ -52,6 +52,14 @@ export function EmergencyPackPage() {
   const [snapshot, setSnapshot] = useState<EmergencyPackSnapshot>(() => readEmergencyPack().snapshot)
   const [isLoading, setIsLoading] = useState(false)
   const [notice, setNotice] = useState('')
+
+  useEffect(() => {
+    const previousTitle = document.title
+    document.title = CRISIS_PACK_DOCUMENT_TITLE
+    return () => {
+      document.title = previousTitle
+    }
+  }, [])
 
   useEffect(() => {
     let isCurrent = true
