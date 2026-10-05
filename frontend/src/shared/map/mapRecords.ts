@@ -1,6 +1,13 @@
-import type { SupportService, WifiLocation } from '../../data/contracts'
+import type { EmergencyFacility, FacilityType, SupportService, WifiLocation } from '../../data/contracts'
 
-export type MapRecordKind = 'wifi' | 'support'
+export type MapRecordKind = 'wifi' | 'support' | 'hospital' | 'police' | 'fire' | 'ambulance'
+
+const facilityTypeToKind: Record<FacilityType, MapRecordKind> = {
+  Hospital: 'hospital',
+  'Police Station': 'police',
+  'Fire Station': 'fire',
+  'Ambulance Station': 'ambulance',
+}
 
 export interface MapRecord {
   id: string
@@ -49,6 +56,22 @@ export function wifiMapRecords(locations: WifiLocation[]): MapRecord[] {
     previewLines: [
       `${location.address ? `${location.address}, ` : ''}${location.suburb} VIC ${location.postcode}${location.distanceKm === undefined ? '' : ` · ${location.distanceKm} km`}`,
       location.openingHours ?? 'Opening hours not confirmed',
+    ],
+  }))
+}
+
+export function emergencyFacilityMapRecords(facilities: EmergencyFacility[]): MapRecord[] {
+  return facilities.filter(hasValidCoordinates).map((facility) => ({
+    id: facility.id,
+    kind: facilityTypeToKind[facility.facilityType],
+    name: facility.name,
+    latitude: facility.latitude,
+    longitude: facility.longitude,
+    markerLabel: facility.facilityType,
+    previewStatus: facility.facilityType,
+    previewLines: [
+      facility.distanceKm === undefined ? 'Distance not confirmed' : `${facility.distanceKm} km away`,
+      'Street address not published in this dataset',
     ],
   }))
 }

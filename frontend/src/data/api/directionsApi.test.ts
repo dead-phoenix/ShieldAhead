@@ -21,6 +21,16 @@ describe('getDirections', () => {
           distance_meters: 1250,
           duration_seconds: 900,
           geometry: { type: 'LineString', coordinates: [[144.96, -37.81], [144.97, -37.82]] },
+          steps: [
+            {
+              distance_meters: 1250,
+              duration_seconds: 900,
+              maneuver_type: 11,
+              instruction: 'Head east',
+              street_name: '-',
+              way_points: [0, 1],
+            },
+          ],
         },
         {
           distance_meters: 1400,
@@ -36,8 +46,15 @@ describe('getDirections', () => {
 
     expect(alternatives).toEqual({
       routes: [
-        { distanceMeters: 1250, durationSeconds: 900, coordinates: [[144.96, -37.81], [144.97, -37.82]] },
-        { distanceMeters: 1400, durationSeconds: 860, coordinates: [[144.96, -37.81], [144.965, -37.815], [144.97, -37.82]] },
+        {
+          distanceMeters: 1250,
+          durationSeconds: 900,
+          coordinates: [[144.96, -37.81], [144.97, -37.82]],
+          steps: [
+            { distanceMeters: 1250, durationSeconds: 900, maneuverType: 11, instruction: 'Head east', streetName: undefined, startCoordinateIndex: 0 },
+          ],
+        },
+        { distanceMeters: 1400, durationSeconds: 860, coordinates: [[144.96, -37.81], [144.965, -37.815], [144.97, -37.82]], steps: [] },
       ],
       disclaimer: 'Standard route only.',
     })

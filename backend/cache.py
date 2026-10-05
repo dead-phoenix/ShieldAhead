@@ -36,3 +36,12 @@ _extra_postcode_cache = {}
 # so retyping or backspacing during a live search doesn't repeat the same
 # external geocoding round trip.
 _location_search_cache = {}
+
+# Emergency facilities (hospitals, police/fire/ambulance stations) —
+# statewide, refreshed in full like _cache, kept in its own dict so a
+# refresh of one never wipes or blocks the other.
+_emergency_facility_cache = {
+    "data": None,
+    "timestamp": None,
+    "freshness_status": None,
+}

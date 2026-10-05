@@ -13,6 +13,23 @@ vi.mock('../../../data/supportServiceRepository', () => ({
   getSupportServiceRepository: repositoryMocks.getSupportServiceRepository,
 }))
 
+// Without this, useEmergencyFacilities fires a real, unmocked fetch() on
+// every render of this page — its resolution/rejection timing then races
+// against these tests' synchronous assertions, making them flaky under
+// full-suite load even though they pass reliably in isolation.
+vi.mock('../../../data/api/facilitiesApi', () => ({
+  fetchEmergencyFacilities: vi.fn().mockResolvedValue({
+    records: [],
+    metadata: {
+      version: '1.0',
+      generatedAt: '2026-01-01T00:00:00.000Z',
+      sourceName: 'Vicmap Features of Interest',
+      coverageAreas: [],
+      limitations: [],
+    },
+  }),
+}))
+
 vi.mock('../../../shared/map/LazyMapView', () => ({
   LazyMapView: ({ ariaLabel, markers, onSelect }: { ariaLabel: string; markers: Array<{ id: string; name: string }>; onSelect: (ids: string[]) => void }) => (
     <div aria-label={ariaLabel} role="region">

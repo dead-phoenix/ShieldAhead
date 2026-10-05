@@ -2,10 +2,11 @@ import sys
 import threading
 import time
 
-from cache import _cache, _charity_cache
+from cache import _cache, _charity_cache, _emergency_facility_cache
 from config import (
     CACHE_TTL_SECONDS,
     CHARITY_CACHE_TTL_SECONDS,
+    EMERGENCY_FACILITY_CACHE_TTL_SECONDS,
     PRIORITY_REFRESH_POSTCODES,
 )
 from db import (
@@ -14,15 +15,18 @@ from db import (
     load_cache_meta,
     save_cache_meta,
     save_charities_to_db,
+    save_emergency_facilities_to_db,
     save_wifi_records_to_db,
 )
 from services import acnc_service
 from services import geocoding
+from services.emergency_facility_service import emergency_features_to_records, fetch_emergency_facility_features
 from services.vicfreewifi_service import csv_to_wifi_locations, fetch_wifi_csv
 from services.vicmap_service import fetch_public_spaces, public_spaces_to_wifi_locations
 
 
 _wifi_refresh_lock = threading.Lock()
+_emergency_facility_refresh_lock = threading.Lock()
 _charity_refresh_locks = {}
 _charity_locks_guard = threading.Lock()
 
@@ -103,6 +107,42 @@ def refresh_wifi(blocking=True):
         return list(_cache.get("data") or []), str(e), str(e)
     finally:
         _wifi_refresh_lock.release()
+
+
+def refresh_emergency_facilities(blocking=True):
+    """Fetch hospitals/police/fire/ambulance stations from Vicmap and
+    persist. Returns (records, error)."""
+    acquired = _emergency_facility_refresh_lock.acquire(blocking=blocking)
+    if not acquired:
+        return list(_emergency_facility_cache.get("data") or []), None
+
+    try:
+        now = time.time()
+        try:
+            features = fetch_emergency_facility_features()
+            records = emergency_features_to_records(features)
+        except Exception as e:
+            error = str(e)
+            _flask_app().logger.error(f"Emergency facility refresh failed: {error}")
+            return list(_emergency_facility_cache.get("data") or []), error
+
+        records = [r for r in records if r.get("id") and r.get("name")]
+        freshness_status = "current" if records else "stale"
+
+        if records:
+            _emergency_facility_cache["data"] = records
+            _emergency_facility_cache["timestamp"] = now
+            _emergency_facility_cache["freshness_status"] = freshness_status
+            save_emergency_facilities_to_db(records)
+            save_cache_meta("emergency_facilities", now, freshness_status, [])
+
+        return records, None
+    finally:
+        _emergency_facility_refresh_lock.release()
+
+
+def schedule_emergency_facility_refresh():
+    threading.Thread(target=refresh_emergency_facilities, kwargs={"blocking": False}, daemon=True).start()
 
 
 def refresh_charities_for_postcode(postcode, place_names=None, blocking=True, geocode_streets=True):
@@ -196,6 +236,7 @@ def charity_refresh_postcodes():
 
 def refresh_all():
     refresh_wifi(blocking=True)
+    refresh_emergency_facilities(blocking=True)
     for postcode in charity_refresh_postcodes():
         refresh_charities_for_postcode(postcode, blocking=True)
 
@@ -218,6 +259,11 @@ def maybe_refresh_on_startup():
             wifi_stale = wifi_meta is None or (now - wifi_meta.get("timestamp", 0)) >= CACHE_TTL_SECONDS
             if wifi_stale:
                 refresh_wifi(blocking=True)
+
+            facility_meta = load_cache_meta("emergency_facilities")
+            facility_stale = facility_meta is None or (now - facility_meta.get("timestamp", 0)) >= EMERGENCY_FACILITY_CACHE_TTL_SECONDS
+            if facility_stale:
+                refresh_emergency_facilities(blocking=True)
 
             for postcode in charity_refresh_postcodes():
                 meta = load_cache_meta(f"postcode:{postcode}")

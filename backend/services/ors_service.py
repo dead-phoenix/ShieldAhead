@@ -105,10 +105,28 @@ def get_route(start_lat, start_lng, end_lat, end_lng, profile="driving-car"):
         duration = summary.get("duration")
         if geometry is None or distance is None or duration is None:
             continue
+        # Turn-by-turn steps for live navigation — ORS returns these split
+        # across "segments" (one per leg between via-points); a two-point
+        # request has exactly one segment, but steps are flattened here so
+        # callers don't need to know about that structure. way_points are
+        # already indices into this feature's own geometry.coordinates.
+        steps = [
+            {
+                "distance_meters": step.get("distance"),
+                "duration_seconds": step.get("duration"),
+                "maneuver_type": step.get("type"),
+                "instruction": step.get("instruction"),
+                "street_name": step.get("name"),
+                "way_points": step.get("way_points"),
+            }
+            for segment in (properties.get("segments") or [])
+            for step in (segment.get("steps") or [])
+        ]
         routes.append({
             "distance_meters": distance,
             "duration_seconds": duration,
             "geometry": geometry,
+            "steps": steps,
         })
 
     if not routes:

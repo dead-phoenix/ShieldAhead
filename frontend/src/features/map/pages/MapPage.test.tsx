@@ -16,12 +16,17 @@ const mapResult: MapPlaceResult = {
     {
       id: 'support:s1', sourceId: 's1', source: 'support', kind: 'support', name: 'Community House',
       postcode: '3453', suburb: 'Harcourt', latitude: -36.98, longitude: 144.25,
-      dataUpdatedAt: '2026-09-30T00:00:00.000Z', dataOrigin: 'network', serviceTypes: ['Homelessness support'],
+      dataUpdatedAt: '2026-09-30T00:00:00.000Z', dataOrigin: 'network', serviceTypes: ['Food support'],
     },
     {
       id: 'support:s2', sourceId: 's2', source: 'support', kind: 'support', name: 'Regional Pantry',
       postcode: '3453', suburb: 'Harcourt',
-      dataUpdatedAt: '2026-09-30T00:00:00.000Z', dataOrigin: 'network', serviceTypes: ['Food relief'],
+      dataUpdatedAt: '2026-09-30T00:00:00.000Z', dataOrigin: 'network',
+    },
+    {
+      id: 'emergency:e1', sourceId: 'e1', source: 'emergency', kind: 'hospital', name: 'Harcourt Hospital',
+      latitude: -36.97, longitude: 144.24,
+      dataUpdatedAt: '2026-09-30T00:00:00.000Z', dataOrigin: 'network',
     },
   ],
   generatedAt: '2026-09-30T00:00:00.000Z',
@@ -58,7 +63,8 @@ describe('unified Map page', () => {
     expect(await screen.findByText('Library Wi-Fi')).toBeVisible()
     expect(screen.getByText('Community House')).toBeVisible()
     expect(screen.getByText('Regional Pantry')).toBeVisible()
-    expect(screen.getByTestId('map-marker-count')).toHaveTextContent('2')
+    expect(screen.getByText('Harcourt Hospital')).toBeVisible()
+    expect(screen.getByTestId('map-marker-count')).toHaveTextContent('3')
     expect(screen.getByText('Not shown on map — coordinates not provided')).toBeVisible()
 
     fireEvent.click(screen.getByRole('button', { name: 'Free Wi-Fi' }))
@@ -66,35 +72,43 @@ describe('unified Map page', () => {
     expect(screen.getByText('Library Wi-Fi')).toBeVisible()
     expect(screen.queryByText('Community House')).not.toBeInTheDocument()
     expect(screen.queryByText('Regional Pantry')).not.toBeInTheDocument()
+    expect(screen.queryByText('Harcourt Hospital')).not.toBeInTheDocument()
     expect(screen.getByTestId('map-marker-count')).toHaveTextContent('1')
   })
 
-  it('keeps the newly chosen charity tag instead of returning to All', async () => {
+  it('shows emergency facility markers distinctly on the map and in the list', async () => {
+    render(<MemoryRouter initialEntries={['/map']}><MapPage /></MemoryRouter>)
+    await screen.findByText('Library Wi-Fi')
+
+    fireEvent.click(screen.getByRole('button', { name: 'Hospitals' }))
+
+    expect(screen.getByText('Harcourt Hospital')).toBeVisible()
+    expect(screen.getByText('Hospital')).toBeVisible()
+    expect(screen.queryByText('Library Wi-Fi')).not.toBeInTheDocument()
+    expect(screen.queryByText('Community House')).not.toBeInTheDocument()
+    expect(screen.getByTestId('map-marker-count')).toHaveTextContent('1')
+  })
+
+  it('uses OR logic when both category filters are selected', async () => {
     render(<MemoryRouter initialEntries={['/map?category=wifi']}><MapPage /></MemoryRouter>)
     expect(await screen.findByText('Library Wi-Fi')).toBeVisible()
     expect(screen.queryByText('Community House')).not.toBeInTheDocument()
 
-    fireEvent.click(screen.getByRole('button', { name: 'Homelessness' }))
-
-    expect(screen.getByText('Community House')).toBeVisible()
-    expect(screen.queryByText('Library Wi-Fi')).not.toBeInTheDocument()
-    expect(screen.queryByText('Regional Pantry')).not.toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'Homelessness' })).toHaveAttribute('aria-pressed', 'true')
-    expect(screen.getByRole('button', { name: 'All' })).toHaveAttribute('aria-pressed', 'false')
-
-    fireEvent.click(screen.getByRole('button', { name: 'Food' }))
-
-    expect(screen.getByText('Regional Pantry')).toBeVisible()
-    expect(screen.queryByText('Community House')).not.toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'Food' })).toHaveAttribute('aria-pressed', 'true')
+    fireEvent.click(screen.getByRole('button', { name: 'Charity and community support' }))
+    await waitFor(() => expect(screen.getByText('Community House')).toBeVisible())
+    expect(screen.getByText('Library Wi-Fi')).toBeVisible()
+    expect(screen.getByRole('button', { name: 'Free Wi-Fi' })).toHaveAttribute('aria-pressed', 'true')
+    expect(screen.getByRole('button', { name: 'Charity and community support' })).toHaveAttribute('aria-pressed', 'true')
     expect(screen.getByRole('button', { name: 'All' })).toHaveAttribute('aria-pressed', 'false')
   })
 
-  it('does not expose unconfirmed emergency filters', async () => {
+  it('exposes emergency facility filters now that their API is integrated', async () => {
     render(<MemoryRouter initialEntries={['/map']}><MapPage /></MemoryRouter>)
     await screen.findByText('Library Wi-Fi')
-    expect(screen.queryByRole('button', { name: 'Hospitals' })).not.toBeInTheDocument()
-    expect(screen.queryByRole('button', { name: 'Police' })).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Hospitals' })).toBeVisible()
+    expect(screen.getByRole('button', { name: 'Police' })).toBeVisible()
+    expect(screen.getByRole('button', { name: 'Fire stations' })).toBeVisible()
+    expect(screen.getByRole('button', { name: 'Ambulance stations' })).toBeVisible()
   })
 
   it('returns to results when a restored place is no longer in the current result set', async () => {
@@ -148,7 +162,7 @@ describe('unified Map page', () => {
     render(<MemoryRouter initialEntries={['/map']}><MapPage /></MemoryRouter>)
     fireEvent.click(await screen.findByRole('button', { name: /Community House/ }))
 
-    expect(screen.getByText('Homelessness support')).toBeVisible()
+    expect(screen.getByText('Food support')).toBeVisible()
     expect(screen.getByText(/inferred from published charity information/)).toBeVisible()
     expect(screen.getByRole('link', { name: 'Call' })).toHaveAttribute('href', 'tel:03 5555 0100')
   })

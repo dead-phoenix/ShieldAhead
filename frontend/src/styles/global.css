@@ -631,6 +631,35 @@ svg {
   color: var(--color-accent);
 }
 
+.record-row__icon--hospital {
+  background: color-mix(in srgb, #dc2626 18%, transparent);
+  color: #dc2626;
+}
+
+.record-row__icon--police {
+  background: color-mix(in srgb, #1d4ed8 18%, transparent);
+  color: #1d4ed8;
+}
+
+.record-row__icon--fire {
+  background: color-mix(in srgb, #ea580c 18%, transparent);
+  color: #ea580c;
+}
+
+.record-row__icon--ambulance {
+  background: color-mix(in srgb, #0f766e 18%, transparent);
+  color: #0f766e;
+}
+
+.facility-list {
+  margin-top: 1.5rem;
+}
+
+.facility-list > h2 {
+  margin-bottom: 0.75rem;
+  font-size: var(--text-base);
+}
+
 .benefit-row strong,
 .benefit-row small {
   display: block;
@@ -1791,6 +1820,9 @@ input[type='checkbox'] {
 }
 
 .filter-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
   min-height: 3rem;
   padding: 0.55rem 0.9rem;
   border: 1px solid var(--color-border);
@@ -2135,6 +2167,22 @@ input[type='checkbox'] {
   background: var(--color-warning-text);
 }
 
+.map-marker--hospital {
+  background: #dc2626;
+}
+
+.map-marker--police {
+  background: #1d4ed8;
+}
+
+.map-marker--fire {
+  background: #ea580c;
+}
+
+.map-marker--ambulance {
+  background: #0f766e;
+}
+
 .map-marker__count {
   position: absolute;
   top: -0.5rem;
@@ -2156,6 +2204,41 @@ input[type='checkbox'] {
 .map-marker.is-selected {
   outline: 3px solid var(--color-focus);
   outline-offset: 3px;
+}
+
+.live-position-marker {
+  position: relative;
+  width: 1.1rem;
+  height: 1.1rem;
+}
+
+.live-position-marker__dot {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: #1a73e8;
+  border: 2px solid #fff;
+  box-shadow: 0 0 0 6px rgba(26, 115, 232, 0.3), 0 2px 6px rgba(0, 0, 0, 0.35);
+  animation: live-position-pulse 2.4s ease-in-out infinite;
+}
+
+.live-position-marker.has-heading::before {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: -0.7rem;
+  width: 0;
+  height: 0;
+  border-left: 0.4rem solid transparent;
+  border-right: 0.4rem solid transparent;
+  border-bottom: 0.6rem solid #1a73e8;
+  transform-origin: 50% 1.25rem;
+  transform: translateX(-50%) rotate(var(--live-heading, 0deg));
+}
+
+@keyframes live-position-pulse {
+  0%, 100% { box-shadow: 0 0 0 6px rgba(26, 115, 232, 0.3), 0 2px 6px rgba(0, 0, 0, 0.35); }
+  50% { box-shadow: 0 0 0 10px rgba(26, 115, 232, 0.12), 0 2px 6px rgba(0, 0, 0, 0.35); }
 }
 
 .map-note {
@@ -2224,6 +2307,22 @@ input[type='checkbox'] {
 
 .map-legend__symbol--support {
   background: var(--color-ink);
+}
+
+.map-legend__symbol--hospital {
+  background: #dc2626;
+}
+
+.map-legend__symbol--police {
+  background: #1d4ed8;
+}
+
+.map-legend__symbol--fire {
+  background: #ea580c;
+}
+
+.map-legend__symbol--ambulance {
+  background: #0f766e;
 }
 
 .directions-panel {
@@ -2396,6 +2495,88 @@ input[type='checkbox'] {
   background: var(--color-danger-bg);
   color: var(--color-danger);
 }
+
+.live-navigation {
+  display: grid;
+  gap: 0.85rem;
+}
+
+.live-navigation__header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.live-navigation__header h2 {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-size: var(--text-base);
+  overflow-wrap: anywhere;
+}
+
+.live-navigation__icon-button {
+  display: grid;
+  flex-shrink: 0;
+  width: 2.5rem;
+  height: 2.5rem;
+  place-items: center;
+  border: 1px solid var(--color-border);
+  border-radius: 50%;
+  background: var(--color-surface);
+  color: var(--color-text);
+}
+
+.live-navigation__status {
+  color: var(--color-text-muted);
+  font-size: var(--text-sm);
+}
+
+.live-navigation__instruction {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 0.9rem;
+  align-items: center;
+  padding: 1rem;
+  border-radius: var(--radius-md);
+  background: var(--color-accent);
+  color: #fff;
+}
+.live-navigation__maneuver-icon {
+  display: grid;
+  place-items: center;
+}
+.live-navigation__instruction div { min-width: 0; }
+.live-navigation__instruction strong {
+  display: block;
+  font-size: var(--text-lg);
+  overflow-wrap: anywhere;
+}
+.live-navigation__instruction span {
+  font-size: var(--text-sm);
+  opacity: 0.9;
+}
+
+.live-navigation__then {
+  color: var(--color-text-muted);
+  font-size: var(--text-sm);
+}
+
+.live-navigation__arrived {
+  display: grid;
+  justify-items: center;
+  gap: 0.5rem;
+  padding: 1.5rem 1rem;
+  border-radius: var(--radius-md);
+  background: var(--color-secondary-soft);
+  color: #115e59;
+  text-align: center;
+}
+
+.live-navigation__footer {
+  display: flex;
+  justify-content: space-between;
+  font-weight: 700;
+}
+.live-navigation__footer strong { font-size: var(--text-lg); }
 
 .map-detail-card {
   position: relative;
@@ -3339,6 +3520,28 @@ input[type='checkbox'] {
 .crisis-query-search__suggestions button:hover { background: var(--color-surface-muted); }
 
 .crisis-query-search__error { color: var(--color-danger); font-size: var(--text-sm); }
+.crisis-query-search__status { color: var(--color-text-muted); font-size: var(--text-sm); }
+
+.crisis-query-search__mic {
+  width: 3rem;
+  min-height: 3rem;
+  justify-content: center;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-background);
+  color: var(--color-text);
+}
+.crisis-query-search__mic:hover { background: var(--color-surface-muted); }
+.crisis-query-search__mic.is-listening {
+  border-color: var(--color-danger);
+  color: var(--color-danger);
+  animation: crisis-mic-pulse 1.2s ease-in-out infinite;
+}
+
+@keyframes crisis-mic-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.35); }
+  50% { box-shadow: 0 0 0 0.4rem rgba(220, 38, 38, 0); }
+}
 
 .crisis-local-label {
   display: inline-flex;

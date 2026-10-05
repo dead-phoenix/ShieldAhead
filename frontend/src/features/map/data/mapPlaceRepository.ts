@@ -1,8 +1,10 @@
 import type { DatasetMetadata, DatasetResult, SupportService, WifiLocation } from '../../../data/contracts'
+import { fetchEmergencyFacilities } from '../../../data/api/facilitiesApi'
 import { getSupportServiceRepository } from '../../../data/supportServiceRepository'
 import type { SupportServiceRepository, WifiRepository } from '../../../data/repositories'
 import { getWifiRepository } from '../../../data/wifiRepository'
 import {
+  emergencyFacilityToMapPlace,
   metadataOrigin,
   supportServiceToMapPlace,
   wifiLocationToMapPlace,
@@ -20,6 +22,7 @@ import type {
 interface CombinedMapPlaceRepositoryOptions {
   wifiRepository: WifiRepository
   supportRepository: SupportServiceRepository
+  postcode: string
 }
 
 type SupportedSource = 'wifi' | 'support'
@@ -69,18 +72,21 @@ function addDataset<T>(
 export function createCombinedMapPlaceRepository({
   wifiRepository,
   supportRepository,
+  postcode,
 }: CombinedMapPlaceRepositoryOptions): MapPlaceRepository {
   return {
     async findNearby() {
-      const [wifi, support] = await Promise.allSettled([
+      const [wifi, support, emergency] = await Promise.allSettled([
         wifiRepository.list(),
         supportRepository.list(),
+        fetchEmergencyFacilities(postcode),
       ])
 
       const places: MapPlace[] = []
       const datasets: MapPlaceDataset[] = []
       const sourceErrors: MapPlaceSourceError[] = []
       const origins: MapDataOrigin[] = []
+      const emergencyLimitations: string[] = []
 
       if (wifi.status === 'fulfilled') {
         addDataset<WifiLocation>(
@@ -108,6 +114,16 @@ export function createCombinedMapPlaceRepository({
         sourceErrors.push({ source: 'support', message: errorMessage(support.reason) })
       }
 
+      // Emergency facilities (hospital/police/fire/ambulance) are fetched
+      // directly rather than through the offline-aware repository/cache
+      // layer the other two sources use, so they're additive here: a
+      // failure just means those markers are missing this load, not a
+      // dataset-level error banner like wifi/support get.
+      if (emergency.status === 'fulfilled') {
+        places.push(...emergency.value.records.map(emergencyFacilityToMapPlace))
+        emergencyLimitations.push(...emergency.value.metadata.limitations)
+      }
+
       if (datasets.length === 0) {
         throw new Error(sourceErrors.map(({ message }) => message).join(' '))
       }
@@ -117,7 +133,7 @@ export function createCombinedMapPlaceRepository({
         datasets,
         sourceErrors,
         generatedAt: latestGeneratedAt(datasets),
-        limitations: datasets.flatMap(({ metadata }) => metadata.limitations),
+        limitations: [...datasets.flatMap(({ metadata }) => metadata.limitations), ...emergencyLimitations],
         dataOrigin: combinedOrigin(origins),
       }
     },
@@ -128,5 +144,6 @@ export function getMapPlaceRepository(query: NearbyPlacesQuery): MapPlaceReposit
   return createCombinedMapPlaceRepository({
     wifiRepository: getWifiRepository(query.postcode),
     supportRepository: getSupportServiceRepository(query.postcode),
+    postcode: query.postcode,
   })
 }

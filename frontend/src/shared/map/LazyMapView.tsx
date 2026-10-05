@@ -2,7 +2,7 @@ import { Component, lazy, Suspense, type ReactNode } from 'react'
 import type { MapRecord } from './mapRecords'
 import type { RoutePreview } from '../../data/api/directionsApi'
 import type { RoutePoint } from '../../data/api/directionsApi'
-import type { MapViewport, SearchMarkerPoint } from './MapView'
+import type { LivePositionPoint, MapViewport, SearchMarkerPoint } from './MapView'
 
 const MapView = lazy(async () => {
   const module = await import('./MapView')
@@ -24,6 +24,7 @@ interface LazyMapViewProps {
   routeRecentreKey?: number
   focusSelectedMarker?: boolean
   searchMarker?: SearchMarkerPoint
+  livePosition?: LivePositionPoint
 }
 
 class MapLoadBoundary extends Component<{ children: ReactNode; onReturnToList: () => void }, { failed: boolean }> {

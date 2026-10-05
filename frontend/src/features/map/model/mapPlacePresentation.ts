@@ -27,25 +27,25 @@ export const mapPlaceKindPresentation: Record<
     label: 'Police',
     singularLabel: 'Police station',
     markerLabel: 'Police',
-    filterEnabled: false,
+    filterEnabled: true,
   },
   fire: {
     label: 'Fire stations',
     singularLabel: 'Fire station',
     markerLabel: 'Fire',
-    filterEnabled: false,
+    filterEnabled: true,
   },
   hospital: {
     label: 'Hospitals',
     singularLabel: 'Hospital',
     markerLabel: 'Hospital',
-    filterEnabled: false,
+    filterEnabled: true,
   },
   ambulance: {
     label: 'Ambulance stations',
     singularLabel: 'Ambulance station',
     markerLabel: 'Ambulance',
-    filterEnabled: false,
+    filterEnabled: true,
   },
 }
 

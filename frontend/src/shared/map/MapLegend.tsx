@@ -1,6 +1,6 @@
 interface MapLegendItem {
   label: string
-  variant: 'confirmed' | 'likely' | 'support'
+  variant: 'confirmed' | 'likely' | 'support' | 'hospital' | 'police' | 'fire' | 'ambulance'
 }
 
 interface MapLegendProps {

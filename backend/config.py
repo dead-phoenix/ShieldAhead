@@ -63,6 +63,22 @@ EXCLUDED_FACILITY_TYPES = [
     "school",
 ]
 
+#  Emergency facilities (hospital/police/fire/ambulance) config
+
+EMERGENCY_FACILITY_CACHE_TTL_SECONDS = 86400  # 24 hours, same as wifi/public spaces
+
+# Same Vicmap Features of Interest source as the public-space wifi
+# fallback above, but feature_subtype is a closed, exact set for these
+# (confirmed against the live service), so this maps it directly to the
+# facility_types.type_name seeded in db.py instead of a free-text scan.
+EMERGENCY_FACILITY_SUBTYPE_TO_TYPE_NAME = {
+    "general hospital": "Hospital",
+    "day procedure centre": "Hospital",
+    "police station": "Police Station",
+    "fire station": "Fire Station",
+    "ambulance station": "Ambulance Station",
+}
+
 #  Charities (ACNC) config
 
 # ACNC Registered Charities Register, published on data.gov.au. This is the

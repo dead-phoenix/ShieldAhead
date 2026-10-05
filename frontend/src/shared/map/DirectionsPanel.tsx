@@ -1,4 +1,4 @@
-import { ArrowClockwise, Car, Crosshair, CursorClick, MapPin, PersonSimpleBike, PersonSimpleWalk, Warning } from '@phosphor-icons/react'
+import { ArrowClockwise, Car, Crosshair, CursorClick, MapPin, NavigationArrow, PersonSimpleBike, PersonSimpleWalk, Warning } from '@phosphor-icons/react'
 import { useEffect, useRef, useState } from 'react'
 import {
   getDirections,
@@ -9,6 +9,9 @@ import {
 } from '../../data/api/directionsApi'
 import { LocationResolveError, readBrowserPosition } from '../../features/location/resolveSearchLocation'
 import { searchLocations, type SearchLocationResult } from '../../features/map/data/locationSearchApi'
+import type { LivePositionPoint } from './MapView'
+import { LiveNavigationOverlay } from './LiveNavigationOverlay'
+import { useLiveNavigation } from '../navigation/useLiveNavigation'
 
 interface DirectionsPanelProps {
   destination: RoutePoint & { name: string }
@@ -22,6 +25,9 @@ interface DirectionsPanelProps {
   onStateChange?: (state: DirectionsPanelState) => void
   onRecentreRoute?: () => void
   showHeading?: boolean
+  /** The traveller's live GPS position while "Start navigation" is active,
+   * so the parent page can show it as a marker on its own map instance. */
+  onLivePositionChange?: (position: LivePositionPoint | undefined) => void
 }
 
 export interface DirectionsPanelState {
@@ -45,7 +51,7 @@ const FALLBACK_DISCLAIMER = (
   + 'Always follow official CFA/VicSES guidance during an active emergency.'
 )
 
-export function DirectionsPanel({ destination, onRouteChange, destinationIsApproximate = false, selectedMapStart, isSelectingMapStart = false, onRequestMapStart, isOnline = true, initialState, onStateChange, onRecentreRoute, showHeading = true }: DirectionsPanelProps) {
+export function DirectionsPanel({ destination, onRouteChange, destinationIsApproximate = false, selectedMapStart, isSelectingMapStart = false, onRequestMapStart, isOnline = true, initialState, onStateChange, onRecentreRoute, showHeading = true, onLivePositionChange }: DirectionsPanelProps) {
   const [profile, setProfile] = useState<DirectionsProfile>(initialState?.profile ?? 'foot-walking')
   const [origin, setOrigin] = useState<RoutePoint | undefined>(initialState?.origin)
   const [routeOptions, setRouteOptions] = useState<RouteOption[]>(
@@ -64,6 +70,53 @@ export function DirectionsPanel({ destination, onRouteChange, destinationIsAppro
   const route: RoutePreview | undefined = routeOptions[selectedRouteIndex]
     ? { ...routeOptions[selectedRouteIndex], disclaimer }
     : undefined
+
+  const [isNavigating, setIsNavigating] = useState(false)
+  const [voiceEnabled, setVoiceEnabled] = useState(true)
+  const [isRerouting, setIsRerouting] = useState(false)
+  const onLivePositionChangeRef = useRef(onLivePositionChange)
+  onLivePositionChangeRef.current = onLivePositionChange
+
+  const liveNav = useLiveNavigation({
+    // A route restored from an older saved session may predate turn-by-turn
+    // steps being recorded at all — default to [] rather than letting a
+    // missing field reach the navigation math as undefined.
+    route: route ? { coordinates: route.coordinates, steps: route.steps ?? [] } : undefined,
+    onOffRoute: (position) => void handleOffRoute(position),
+    voiceEnabled,
+  })
+
+  useEffect(() => {
+    if (!isNavigating) return
+    onLivePositionChangeRef.current?.(
+      liveNav.position
+        ? { latitude: liveNav.position.latitude, longitude: liveNav.position.longitude, heading: liveNav.position.heading }
+        : undefined,
+    )
+  }, [isNavigating, liveNav.position])
+
+  async function handleOffRoute(position: RoutePoint) {
+    setIsRerouting(true)
+    try {
+      // Pass on only lat/lng — position is a LivePosition (it also carries
+      // heading/accuracy), and calculate()'s origin shouldn't leak those
+      // navigation-only fields across to the directions API.
+      await calculate(profile, { latitude: position.latitude, longitude: position.longitude })
+    } finally {
+      setIsRerouting(false)
+    }
+  }
+
+  function startNavigation() {
+    setIsNavigating(true)
+    liveNav.start()
+  }
+
+  function endNavigation() {
+    liveNav.stop()
+    setIsNavigating(false)
+    onLivePositionChangeRef.current?.(undefined)
+  }
 
   useEffect(() => {
     onStateChange?.({ profile, origin, originLabel, route })
@@ -208,8 +261,26 @@ export function DirectionsPanel({ destination, onRouteChange, destinationIsAppro
     if (origin) void calculate(profile, origin)
   }
 
+  const remainingDurationSeconds = route && liveNav.progress
+    ? route.durationSeconds * (liveNav.progress.distanceRemainingMeters / Math.max(1, route.distanceMeters))
+    : undefined
+
   return (
     <section className="directions-panel" aria-labelledby={showHeading ? 'directions-title' : undefined} aria-label={showHeading ? undefined : 'Route options'}>
+      {isNavigating ? (
+        <LiveNavigationOverlay
+          destinationName={destination.name}
+          steps={route?.steps ?? []}
+          progress={liveNav.progress}
+          remainingDurationSeconds={remainingDurationSeconds}
+          error={liveNav.error}
+          isRerouting={isRerouting}
+          voiceEnabled={voiceEnabled}
+          onToggleVoice={() => setVoiceEnabled((current) => !current)}
+          onEnd={endNavigation}
+        />
+      ) : (
+      <>
       <div className="directions-panel__header">
         {showHeading ? <h2 id="directions-title">Plan a route</h2> : null}
         <div className="directions-modes" aria-label="Travel mode">
@@ -310,6 +381,9 @@ export function DirectionsPanel({ destination, onRouteChange, destinationIsAppro
             <Warning aria-hidden="true" size={22} weight="fill" />
             <span>{route.disclaimer || FALLBACK_DISCLAIMER}</span>
           </p>
+          <button className="button button--primary" type="button" onClick={startNavigation} disabled={!isOnline}>
+            <NavigationArrow aria-hidden="true" size={19} weight="fill" /> Start navigation
+          </button>
           {onRecentreRoute ? (
             <button className="button button--quiet" type="button" onClick={onRecentreRoute}>
               <Crosshair aria-hidden="true" size={18} /> Re-centre route
@@ -325,6 +399,8 @@ export function DirectionsPanel({ destination, onRouteChange, destinationIsAppro
       ) : null}
       <p className="directions-note">Your location is used only to calculate this route and is not saved.</p>
       {destinationIsApproximate ? <p className="directions-warning">The destination is a postcode-area point, not a confirmed street location. Check the service address before travelling.</p> : null}
+      </>
+      )}
     </section>
   )
 }

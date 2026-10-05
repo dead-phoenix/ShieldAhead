@@ -82,6 +82,7 @@ def post_directions():
                     "distance_meters": route["distance_meters"],
                     "duration_seconds": route["duration_seconds"],
                     "geometry": route["geometry"],
+                    "steps": route.get("steps") or [],
                 }
                 for route in routes
             ],
