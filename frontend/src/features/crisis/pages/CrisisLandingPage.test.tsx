@@ -5,10 +5,15 @@ import { CrisisLandingPage } from './CrisisLandingPage'
 
 const voiceMocks = vi.hoisted(() => ({
   useVoiceInput: vi.fn(),
+  useOnlineStatus: vi.fn(() => true),
 }))
 
 vi.mock('../../../shared/hooks/useVoiceInput', () => ({
   useVoiceInput: voiceMocks.useVoiceInput,
+}))
+
+vi.mock('../../../shared/hooks/useOnlineStatus', () => ({
+  useOnlineStatus: voiceMocks.useOnlineStatus,
 }))
 
 function stubVoice(overrides: Partial<ReturnType<typeof defaultVoiceState>> = {}) {
@@ -34,6 +39,7 @@ function renderPage() {
 
 afterEach(() => {
   vi.clearAllMocks()
+  voiceMocks.useOnlineStatus.mockReturnValue(true)
 })
 
 describe('CrisisLandingPage voice input', () => {
@@ -78,5 +84,13 @@ describe('CrisisLandingPage voice input', () => {
     renderPage()
 
     expect(screen.getByRole('alert')).toHaveTextContent('We could not access your microphone.')
+  })
+
+  it('disables the mic button when offline, since transcription needs a connection', () => {
+    voiceMocks.useOnlineStatus.mockReturnValue(false)
+    stubVoice()
+    renderPage()
+
+    expect(screen.getByRole('button', { name: /needs an internet connection/ })).toBeDisabled()
   })
 })

@@ -2,6 +2,7 @@ import { MagnifyingGlass, Microphone } from '@phosphor-icons/react'
 import { lazy, Suspense, useCallback, useRef, useState, type FormEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { appRoutes } from '../../../app/config/product'
+import { useOnlineStatus } from '../../../shared/hooks/useOnlineStatus'
 import { useVoiceInput } from '../../../shared/hooks/useVoiceInput'
 import { crisisContent } from '../crisisContent'
 import { matchCrisisKind, matchCrisisStage, SUGGESTED_CRISIS_QUERIES } from '../matchCrisisQuery'
@@ -16,6 +17,7 @@ export function CrisisLandingPage() {
   const [searchError, setSearchError] = useState('')
   const [showSuggestions, setShowSuggestions] = useState(false)
   const hideSuggestionsTimer = useRef<number | undefined>(undefined)
+  const isOnline = useOnlineStatus()
   const voice = useVoiceInput((transcript) => {
     setQuery(transcript)
     setSearchError('')
@@ -90,11 +92,11 @@ export function CrisisLandingPage() {
           />
           {voice.isSupported ? (
             <button
-              aria-label={voice.isRecording ? 'Stop and transcribe' : 'Ask by voice'}
+              aria-label={voice.isRecording ? 'Stop and transcribe' : !isOnline ? 'Ask by voice (needs an internet connection)' : 'Ask by voice'}
               aria-pressed={voice.isRecording}
               className={`crisis-query-search__mic${voice.isRecording ? ' is-listening' : ''}`}
               onClick={() => (voice.isRecording ? voice.stop() : voice.start())}
-              disabled={voice.isTranscribing}
+              disabled={voice.isTranscribing || !isOnline}
               type="button"
             >
               <Microphone aria-hidden="true" size={18} />

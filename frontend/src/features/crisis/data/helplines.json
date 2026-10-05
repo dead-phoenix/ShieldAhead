@@ -1,0 +1,95 @@
+{
+  "_comment": "Frontend-bundled copy of backend/data/helplines.json, kept in sync by hand. Shown immediately on each crisis page and replaced by GET /api/helplines when that succeeds — this copy is what's left if the API is unreachable (e.g. no signal). See useHelplines in useCrisisApiContent.ts.",
+  "records": [
+    {
+      "id": "bushfire-triple-zero",
+      "crisisType": "bushfire",
+      "name": "Triple Zero (000)",
+      "serviceType": "Emergency",
+      "phone": "000",
+      "website": "https://www.triplezero.gov.au/",
+      "description": "Call for police, fire or ambulance when life, property or the environment is in immediate danger.",
+      "availability": "24/7",
+      "coverageArea": "Australia-wide",
+      "verifiedAgainst": "https://www.cfa.vic.gov.au/",
+      "verifiedOn": "2026-09-15"
+    },
+    {
+      "id": "bushfire-vicemergency-hotline",
+      "crisisType": "bushfire",
+      "name": "VicEmergency Hotline",
+      "serviceType": "Emergency information",
+      "phone": "1800 226 226",
+      "website": "https://www.emergency.vic.gov.au/",
+      "description": "Current emergency warnings and incident information for Victoria.",
+      "availability": "24/7",
+      "coverageArea": "Victoria",
+      "verifiedAgainst": "https://www.cfa.vic.gov.au/",
+      "verifiedOn": "2026-09-15"
+    },
+    {
+      "id": "bushfire-burn-off-notification",
+      "crisisType": "bushfire",
+      "name": "Burn-off notification",
+      "serviceType": "Fire safety",
+      "phone": "1800 668 511",
+      "website": "https://www.cfa.vic.gov.au/",
+      "description": "Register a permitted burn-off so nearby residents and emergency services aren't alarmed by the smoke.",
+      "coverageArea": "Victoria",
+      "verifiedAgainst": "https://www.cfa.vic.gov.au/",
+      "verifiedOn": "2026-09-15"
+    },
+    {
+      "id": "bushfire-cfa-headquarters",
+      "crisisType": "bushfire",
+      "name": "CFA Headquarters",
+      "serviceType": "Fire safety",
+      "phone": "(03) 9262 8444",
+      "website": "https://www.cfa.vic.gov.au/",
+      "description": "Country Fire Authority head office.",
+      "availability": "Business hours",
+      "coverageArea": "Victoria",
+      "verifiedAgainst": "https://www.cfa.vic.gov.au/",
+      "verifiedOn": "2026-09-15"
+    },
+    {
+      "id": "flood-triple-zero",
+      "crisisType": "flood",
+      "name": "Triple Zero (000)",
+      "serviceType": "Emergency",
+      "phone": "000",
+      "website": "https://www.ses.vic.gov.au/when-to-call",
+      "description": "Call for police, fire or ambulance when life is in immediate danger.",
+      "availability": "24/7",
+      "coverageArea": "Australia-wide",
+      "verifiedAgainst": "https://www.ses.vic.gov.au/when-to-call",
+      "verifiedOn": "2026-09-16"
+    },
+    {
+      "id": "flood-vicses-emergency-line",
+      "crisisType": "flood",
+      "name": "VICSES Flood and Storm Emergency Line",
+      "serviceType": "Emergency",
+      "phone": "132 500",
+      "website": "https://www.ses.vic.gov.au/when-to-call",
+      "description": "Call for flood, storm or tree emergencies, such as flooding to your home or business.",
+      "availability": "24/7",
+      "coverageArea": "Victoria",
+      "verifiedAgainst": "https://www.ses.vic.gov.au/when-to-call",
+      "verifiedOn": "2026-09-16"
+    },
+    {
+      "id": "power-outage-vicemergency-hotline",
+      "crisisType": "power-outage",
+      "name": "VicEmergency Hotline",
+      "serviceType": "Emergency information",
+      "phone": "1800 226 226",
+      "website": "https://www.energy.vic.gov.au/about-energy/safety/power-outages",
+      "description": "Current emergency warnings and incident information for Victoria, including major power outage events.",
+      "availability": "24/7",
+      "coverageArea": "Victoria",
+      "verifiedAgainst": "https://www.energy.vic.gov.au/about-energy/safety/power-outages",
+      "verifiedOn": "2026-09-16"
+    }
+  ]
+}
