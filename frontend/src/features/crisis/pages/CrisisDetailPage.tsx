@@ -2,15 +2,9 @@ import { ArrowLeft, ArrowRight, ArrowSquareOut, Check, CheckCircle, CloudCheck, 
 import { useMemo, useState } from 'react'
 import { Link, Navigate, useParams } from 'react-router-dom'
 import { appRoutes } from '../../../app/config/product'
-import { getCrisisContent } from '../crisisContent'
+import { getCrisisContent, householdChecklistTitles } from '../crisisContent'
 import { readCrisisChecklist, saveCrisisChecklist } from '../crisisChecklistStorage'
 import { useCrisisChecklist, useHelplines } from '../useCrisisApiContent'
-
-const checklistTitles = {
-  bushfire: 'Bushfire Household Checklist',
-  flood: 'Flood Household Checklist',
-  'power-outage': 'Power Outage Household Checklist',
-} as const
 
 export function CrisisDetailPage() {
   const { kind } = useParams()
@@ -55,7 +49,7 @@ export function CrisisDetailPage() {
       </aside>}
     </header>
     <section className="crisis-checklist" aria-labelledby="checklist-title">
-      <div className="crisis-checklist__summary"><div><h2 id="checklist-title">{checklistTitles[content.kind]}</h2><p>This checklist belongs only to this hazard page.</p></div><strong>{completed} of {itemIds.length} complete</strong></div>
+      <div className="crisis-checklist__summary"><div><h2 id="checklist-title">{householdChecklistTitles[content.kind]}</h2><p>This checklist belongs only to this hazard page.</p></div><strong>{completed} of {itemIds.length} complete</strong></div>
       <progress aria-label="Checklist progress" max={itemIds.length} value={completed}>{completed} of {itemIds.length}</progress>
       <div className={`crisis-checklist__next${nextItem ? '' : ' is-complete'}`}>
         <div>

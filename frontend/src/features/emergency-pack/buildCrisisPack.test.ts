@@ -1,5 +1,7 @@
 import { describe, expect, it, vi } from 'vitest'
+import { bundledChecklistGroups } from '../crisis/useCrisisApiContent'
 import { buildCrisisPack, type CrisisPackChecklistPage, type CrisisPackGetHelpPage } from './buildCrisisPack'
+import { crisisGuidelines } from './emergencyPackContent'
 import { emptyEmergencyPackSnapshot, type EmergencyPackPreferences, type EmergencyPackSnapshot } from './emergencyPackStorage'
 
 vi.mock('./crisisPackSources', () => ({
@@ -57,22 +59,25 @@ describe('buildCrisisPack', () => {
     expect(pack).toMatchSnapshot()
   })
 
-  it('renders a flood checklist with short titles and only filled-in sources', () => {
+  it('renders the flood checklist exactly as the crisis page groups it, with only filled-in sources', () => {
     const pack = buildCrisisPack({ preferences: { ...allOff, crises: ['flood'] }, snapshot: snapshot(), downloadedAt })
     const flood = pack.pages[0] as CrisisPackChecklistPage
     expect(pack.pages.map((page) => page.id)).toEqual(['checklist-flood', 'contacts'])
-    expect(flood.tasks.map((task) => task.title)).toEqual([
-      'Check local flood risk',
-      'Write contact plan',
-      'Pack an emergency kit',
-      'Plan items to move higher',
-      'Name a helper per dependant',
-      'Get pets ready',
-      'Plan medication and access',
-      'Write emergency numbers',
-    ])
+    expect(flood.title).toBe('Flood Household Checklist')
+    expect(flood.groups).toEqual(bundledChecklistGroups('flood').map((group) => ({
+      id: group.id,
+      title: group.title,
+      tasks: group.items.map((item) => ({ id: `${group.id}.${item.id}`, title: item.label, description: item.description })),
+    })))
     expect(flood.sources).toEqual([{ label: 'Example flood source', url: 'https://example.org/flood' }])
     expect(pack).toMatchSnapshot()
+  })
+
+  it("puts the dos and don'ts on the checklist page", () => {
+    const pack = buildCrisisPack({ preferences: { ...allOff, crises: ['flood'] }, snapshot: snapshot(), downloadedAt })
+    const { guidelines } = pack.pages[0] as CrisisPackChecklistPage
+    expect(guidelines.dos).toEqual(crisisGuidelines.flood.dos)
+    expect(guidelines.donts).toContain('Never walk, ride, or drive through floodwater.')
   })
 
   it('orders all three checklists bushfire, flood, power outage and numbers every page', () => {
@@ -160,7 +165,7 @@ describe('buildCrisisPack', () => {
     expect(columns.map((column) => column.message)).toEqual(['Not available offline', 'Not available offline'])
   })
 
-  it('falls back to the task text for checklist items without a short title', () => {
+  it('prints the saved checklist from the API when there is one', () => {
     const pack = buildCrisisPack({
       preferences: { ...allOff, crises: ['bushfire'] },
       snapshot: snapshot({
@@ -168,6 +173,8 @@ describe('buildCrisisPack', () => {
       }),
       downloadedAt,
     })
-    expect((pack.pages[0] as CrisisPackChecklistPage).tasks).toEqual([{ id: 'new-group.new-item', title: 'A brand new task' }])
+    expect((pack.pages[0] as CrisisPackChecklistPage).groups).toEqual([
+      { id: 'new-group', title: 'New', tasks: [{ id: 'new-group.new-item', title: 'A brand new task' }] },
+    ])
   })
 })

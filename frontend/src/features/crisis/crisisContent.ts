@@ -51,6 +51,12 @@ export interface PinnedHelpline {
   note?: string
 }
 
+export const householdChecklistTitles: Record<CrisisKind, string> = {
+  bushfire: 'Bushfire Household Checklist',
+  flood: 'Flood Household Checklist',
+  'power-outage': 'Power Outage Household Checklist',
+}
+
 export const pinnedHelplines: PinnedHelpline[] = [
   { id: 'triple-zero', name: 'Triple Zero', phone: '000', note: 'For life-threatening danger' },
   { id: 'vicses', name: 'VICSES', phone: '132 500' },

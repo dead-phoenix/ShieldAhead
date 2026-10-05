@@ -1,9 +1,8 @@
-import { pinnedHelplines, type CrisisKind } from '../crisis/crisisContent'
-import { crisisPackChecklistTitles } from './crisisPackChecklistTitles'
+import { householdChecklistTitles, pinnedHelplines, type CrisisKind } from '../crisis/crisisContent'
 import { clampPlaceText, distinctPlaces, packDisplayName, packPlaceAddress } from './crisisPackPlaceText'
 import { bundledPackChecklist } from './crisisPackSnapshot'
 import { crisisPackSources, type CrisisPackSource } from './crisisPackSources'
-import { HANDWRITTEN_CONTACT_ROWS, NEARBY_PLACE_LIMIT, crisisPackOptions } from './emergencyPackContent'
+import { HANDWRITTEN_CONTACT_ROWS, NEARBY_PLACE_LIMIT, crisisGuidelines, crisisPackOptions } from './emergencyPackContent'
 import type { EmergencyPackPreferences, EmergencyPackSnapshot, PackPlace } from './emergencyPackStorage'
 
 export const CRISIS_PACK_FOOTER_LABEL = 'ShieldAhead'
@@ -34,6 +33,13 @@ export interface CrisisPackPlaceColumn {
 export interface CrisisPackTask {
   id: string
   title: string
+  description?: string
+}
+
+export interface CrisisPackTaskGroup {
+  id: string
+  title: string
+  tasks: CrisisPackTask[]
 }
 
 interface CrisisPackPageBase {
@@ -61,9 +67,17 @@ export interface CrisisPackChecklistPage extends CrisisPackPageBase {
   crisis: CrisisKind
   title: string
   subtitle: string
-  tasks: CrisisPackTask[]
+  groups: CrisisPackTaskGroup[]
+  guidelines: CrisisPackGuidelines
   sourcesTitle: string
   sources: CrisisPackSource[]
+}
+
+export interface CrisisPackGuidelines {
+  dosTitle: string
+  dos: string[]
+  dontsTitle: string
+  donts: string[]
 }
 
 export interface CrisisPackContactsPage extends CrisisPackPageBase {
@@ -174,19 +188,28 @@ function getHelpPage(input: BuildCrisisPackInput): UnnumberedPage | null {
 
 function checklistPage(kind: CrisisKind, label: string, snapshot: EmergencyPackSnapshot): UnnumberedPage {
   const groups = snapshot.checklists[kind]?.length ? snapshot.checklists[kind] : bundledPackChecklist(kind)
-  const titles = crisisPackChecklistTitles[kind]
-  const title = `${label} checklist`
   return {
     kind: 'checklist',
     id: `checklist-${kind}`,
-    label: title,
+    label: `${label} checklist`,
     crisis: kind,
-    title,
+    title: householdChecklistTitles[kind],
     subtitle: 'Tick each one when it is done',
-    tasks: groups.flatMap((group) => group.items.map((item) => {
-      const key = `${group.id}.${item.id}`
-      return { id: key, title: titles[key] ?? item.task }
+    groups: groups.map((group) => ({
+      id: group.id,
+      title: group.title,
+      tasks: group.items.map((item) => ({
+        id: `${group.id}.${item.id}`,
+        title: item.task,
+        ...(item.description?.trim() ? { description: item.description } : {}),
+      })),
     })),
+    guidelines: {
+      dosTitle: 'What to do',
+      dos: crisisGuidelines[kind].dos,
+      dontsTitle: 'What not to do',
+      donts: crisisGuidelines[kind].donts,
+    },
     sourcesTitle: 'Sources',
     sources: crisisPackSources[kind].filter((source) => source.label.trim() && source.url.trim()),
   }

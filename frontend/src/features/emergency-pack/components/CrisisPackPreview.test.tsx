@@ -73,15 +73,27 @@ describe('Crisis pack preview', () => {
     expect(within(page).getByText(/Details were correct when this pack was downloaded on 5 October 2026/)).toBeInTheDocument()
   })
 
-  it('renders tick boxes with short titles and prints sources only where they exist', () => {
+  it('renders the crisis page checklist groups with tick boxes and prints sources only where they exist', () => {
     renderPreview()
     const bushfire = screen.getByRole('region', { name: 'Page 2 of 4: Bushfire checklist' })
+    expect(within(bushfire).getByRole('heading', { name: 'Bushfire Household Checklist' })).toBeInTheDocument()
     expect(within(bushfire).getByText('Tick each one when it is done')).toBeInTheDocument()
-    expect(within(bushfire).getAllByRole('listitem')).toHaveLength(8)
+    expect(within(bushfire).getByRole('heading', { name: 'Children and pets' })).toBeInTheDocument()
+    expect(bushfire.querySelectorAll('.pack-tick-list li')).toHaveLength(8)
+    expect(within(bushfire).getByText('Write down your bushfire plan')).toBeInTheDocument()
     expect(within(bushfire).queryByRole('heading', { name: 'Sources' })).not.toBeInTheDocument()
 
     const flood = screen.getByRole('region', { name: 'Page 3 of 4: Flood checklist' })
     expect(within(flood).getByText('Example flood source: https://example.org/flood')).toBeInTheDocument()
+  })
+
+  it('prints what to do and what not to do beneath the checklist on the same page', () => {
+    renderPreview()
+    const page = screen.getByRole('region', { name: 'Page 2 of 4: Bushfire checklist' })
+    const dos = within(page).getByRole('heading', { name: 'What to do' }).closest('section') as HTMLElement
+    const donts = within(page).getByRole('heading', { name: 'What not to do' }).closest('section') as HTMLElement
+    expect(within(dos).getAllByRole('listitem')).toHaveLength(4)
+    expect(within(donts).getByText('Do not wait until you can see flames or smell smoke.')).toBeInTheDocument()
   })
 
   it('leaves the contacts page blank for handwriting', () => {
