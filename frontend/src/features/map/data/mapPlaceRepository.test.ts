@@ -1,7 +1,8 @@
 import { describe, expect, it, vi } from 'vitest'
 import type { DatasetMetadata } from '../../../data/contracts'
 import type { SupportServiceRepository, WifiRepository } from '../../../data/repositories'
-import { createCombinedMapPlaceRepository } from './mapPlaceRepository'
+import type { MapPlace } from '../model/mapTypes'
+import { createCombinedMapPlaceRepository, groupWifiAccessPoints } from './mapPlaceRepository'
 
 // Without this, findNearby() fires a real, unmocked fetch() to the live
 // Vicmap-backed /api/facilities endpoint on every test run — slow, flaky,
@@ -121,3 +122,39 @@ describe('combined map place repository', () => {
   })
 })
 
+
+describe('groupWifiAccessPoints', () => {
+  const wifi = (name: string, distanceKm: number): MapPlace => ({
+    id: `wifi:${name}`,
+    sourceId: name,
+    source: 'wifi',
+    kind: 'wifi',
+    name,
+    postcode: '3000',
+    latitude: -37.818 + distanceKm / 100,
+    longitude: 144.952,
+    distanceKm,
+    dataUpdatedAt: '2026-01-01',
+    dataOrigin: 'network',
+  })
+
+  it('merges access points of one site into a single entry at the nearest point', () => {
+    const grouped = groupWifiAccessPoints([
+      wifi('Flinders Street Station - Concourse', 0.9),
+      wifi('Flinders Street Station - ML_Platform1/2', 0.7),
+      wifi('Flinders Street Station - ML_Platform3/4', 0.7),
+      wifi('Tennis Australia - Melbourne Park', 0.5),
+    ])
+
+    expect(grouped).toHaveLength(2)
+    const station = grouped.find((place) => place.name === 'Flinders Street Station')
+    expect(station?.accessPoints).toHaveLength(3)
+    expect(station?.distanceKm).toBe(0.7)
+    expect(grouped.find((place) => place.name === 'Tennis Australia')?.accessPoints).toBeUndefined()
+  })
+
+  it('leaves non-wifi places untouched', () => {
+    const hospital: MapPlace = { ...wifi('Hospital', 1), kind: 'hospital', source: 'emergency' }
+    expect(groupWifiAccessPoints([hospital])).toEqual([hospital])
+  })
+})

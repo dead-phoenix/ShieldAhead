@@ -577,6 +577,12 @@ export function MapPage() {
           <div><dt>Updated</dt><dd>{formatDate(selectedPlace.dataUpdatedAt)}</dd></div>
           <div><dt>Information</dt><dd>{selectedPlace.dataOrigin === 'cache' ? 'Saved on this device' : 'Loaded online'}</dd></div>
         </dl>
+        {selectedPlace.accessPoints?.length ? (
+          <div className="unified-map-detail__access-points">
+            <h3>Access points</h3>
+            <ul>{selectedPlace.accessPoints.map((point) => <li key={point.name}>{point.name}</li>)}</ul>
+          </div>
+        ) : null}
         {selectedPlace.serviceTypes?.length ? (
           <section className="unified-map-service-types" aria-labelledby="service-types-title">
             <h3 id="service-types-title">Published information may indicate</h3>
@@ -651,6 +657,7 @@ export function MapPage() {
                 <strong>{place.name}</strong>
                 <small>{mapPlaceKindPresentation[place.kind].singularLabel}</small>
                 <small><MapPin aria-hidden="true" size={15} /> {placeAddress(place)}{place.distanceKm === undefined ? '' : ` · ${place.distanceKm} km`}</small>
+                {place.accessPoints ? <small>{place.accessPoints.length} access points</small> : null}
                 {!mapPlaceHasCoordinates(place) ? <small className="unified-map-place__map-note">Not shown on map — coordinates not provided</small> : null}
               </span>
             </button>

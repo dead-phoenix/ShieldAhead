@@ -16,6 +16,12 @@ export type MapPlaceKind =
 export type MapPlaceSource = 'wifi' | 'support' | 'emergency'
 export type MapDataOrigin = 'network' | 'cache'
 
+export interface MapAccessPoint {
+  name: string
+  latitude?: number
+  longitude?: number
+}
+
 export interface MapPlace {
   id: string
   sourceId: string
@@ -39,6 +45,8 @@ export interface MapPlace {
   availabilityStatus?: AvailabilityStatus
   availabilityUpdatedAt?: string
   availabilityFreshness?: SupportService['availabilityFreshness']
+  /** Individual Wi-Fi access points grouped under this one site. */
+  accessPoints?: MapAccessPoint[]
   dataUpdatedAt: string
   dataOrigin: MapDataOrigin
 }
