@@ -33,35 +33,48 @@ function wifiSiteName(name: string): string {
   return name.split(' - ')[0].trim()
 }
 
+function wifiSiteKey(place: MapPlace): string {
+  return `${wifiSiteName(place.name)}|${place.postcode ?? ''}`
+}
+
+function siteEntry(members: MapPlace[]): MapPlace {
+  const [nearest] = [...members].sort(
+    (a, b) => (a.distanceKm ?? Infinity) - (b.distanceKm ?? Infinity),
+  )
+  if (members.length === 1) return nearest
+  const siteName = wifiSiteName(nearest.name)
+  return {
+    ...nearest,
+    id: `wifi-site:${siteName}|${nearest.postcode ?? ''}`,
+    name: siteName,
+    accessPoints: members.map((member) => ({
+      name: member.name,
+      latitude: member.latitude,
+      longitude: member.longitude,
+    })),
+  }
+}
+
 export function groupWifiAccessPoints(places: MapPlace[]): MapPlace[] {
   const groups = new Map<string, MapPlace[]>()
-  const others: MapPlace[] = []
   for (const place of places) {
-    if (place.kind !== 'wifi') {
-      others.push(place)
-      continue
-    }
-    const key = `${wifiSiteName(place.name)}|${place.postcode ?? ''}`
+    if (place.kind !== 'wifi') continue
+    const key = wifiSiteKey(place)
     groups.set(key, [...(groups.get(key) ?? []), place])
   }
-  const grouped = [...groups.values()].map((members) => {
-    const [nearest] = [...members].sort(
-      (a, b) => (a.distanceKm ?? Infinity) - (b.distanceKm ?? Infinity),
-    )
-    if (members.length === 1) return nearest
-    const siteName = wifiSiteName(nearest.name)
-    return {
-      ...nearest,
-      id: `wifi-site:${siteName}|${nearest.postcode ?? ''}`,
-      name: siteName,
-      accessPoints: members.map((member) => ({
-        name: member.name,
-        latitude: member.latitude,
-        longitude: member.longitude,
-      })),
+  const emitted = new Set<string>()
+  const result: MapPlace[] = []
+  for (const place of places) {
+    if (place.kind !== 'wifi') {
+      result.push(place)
+      continue
     }
-  })
-  return [...others, ...grouped]
+    const key = wifiSiteKey(place)
+    if (emitted.has(key)) continue
+    emitted.add(key)
+    result.push(siteEntry(groups.get(key) ?? [place]))
+  }
+  return result
 }
 
 function errorMessage(reason: unknown): string {

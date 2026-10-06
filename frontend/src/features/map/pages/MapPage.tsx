@@ -617,11 +617,6 @@ export function MapPage() {
           <p>This information was saved on this device for {area.label}{latestSavedAt(result) ? ` on ${formatDate(latestSavedAt(result))}` : ''}. Check the update dates before travelling.</p>
         </StatusBanner>
       ) : null}
-      {result?.datasets.some(({ metadata }) => metadata.freshnessStatus === 'stale') ? (
-        <StatusBanner title="Some information may be out of date" tone="warning">
-          <p>The latest online update was not available. Saved records remain visible with their update dates.</p>
-        </StatusBanner>
-      ) : null}
       {isLoading ? <LoadingState /> : null}
       {loadError ? (
         <div className="error-state" role="alert">
