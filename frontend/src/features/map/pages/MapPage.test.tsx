@@ -135,6 +135,30 @@ describe('unified Map page', () => {
     expect(screen.queryByText('Community House')).not.toBeInTheDocument()
   })
 
+  it.each(['hospital', 'police', 'fire', 'ambulance'] as const)(
+    'applies a %s category search from the URL even when a different filter was left selected in a restored session',
+    async (category) => {
+      window.sessionStorage.setItem('shieldahead.map.session.v1', JSON.stringify({
+        area: { postcode: '3453', label: 'Harcourt 3453' },
+        query: 'Harcourt 3453',
+        selectedKinds: ['support'],
+        panelMode: 'results',
+        mobileView: 'map',
+        panelSize: 'half',
+        listScrollTop: 0,
+      }))
+
+      render(<MemoryRouter initialEntries={[`/map?category=${category}`]}><MapPage /></MemoryRouter>)
+
+      await screen.findByRole('heading', { name: 'Places near Harcourt 3453' })
+      expect(screen.queryByText('Library Wi-Fi')).not.toBeInTheDocument()
+      expect(screen.queryByText('Community House')).not.toBeInTheDocument()
+      expect(screen.queryByText('Regional Pantry')).not.toBeInTheDocument()
+      if (category === 'hospital') expect(screen.getByText('Harcourt Hospital')).toBeVisible()
+      else expect(screen.queryByText('Harcourt Hospital')).not.toBeInTheDocument()
+    },
+  )
+
   it('opens one shared detail state and enters route planning without losing the selected place', async () => {
     render(<MemoryRouter initialEntries={['/map']}><MapPage /></MemoryRouter>)
     fireEvent.click(await screen.findByRole('button', { name: /Library Wi-Fi/ }))

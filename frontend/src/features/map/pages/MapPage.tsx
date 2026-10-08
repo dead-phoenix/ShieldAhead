@@ -48,7 +48,8 @@ import {
 import './MapPage.css'
 
 function restoredKinds(kinds: MapPlaceKind[] | undefined, category: string | null): MapPlaceKind[] {
-  if (category === 'wifi' || category === 'support') return [category]
+  const categoryKind = enabledMapPlaceKinds.find((kind) => kind === category)
+  if (categoryKind) return [categoryKind]
   const enabled = kinds?.filter((kind) => enabledMapPlaceKinds.includes(kind)) ?? []
   return enabled.length > 0 ? enabled : [...enabledMapPlaceKinds]
 }
