@@ -2492,6 +2492,30 @@ input[type='checkbox'] {
   font-size: var(--text-sm);
 }
 
+.app-crash-fallback {
+  display: grid;
+  gap: var(--space-3);
+  justify-items: start;
+  max-width: 32rem;
+  margin: var(--space-6) auto;
+  padding: var(--space-4);
+}
+
+.crisis-hazard-fallback-list {
+  display: grid;
+  gap: var(--space-2);
+  padding: var(--space-4);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+}
+
+.crisis-hazard-fallback-list a {
+  display: block;
+  padding: var(--space-2);
+  font-weight: 600;
+}
+
 .app-offline-banner,
 .app-update-banner {
   display: flex;

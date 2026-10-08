@@ -3,6 +3,7 @@ import { ArrowRight, Check, FireTruck, Heart, MapPin, WifiHigh } from '@phosphor
 import { Link } from 'react-router-dom'
 import { appRoutes } from '../../../app/config/product'
 import { CrisisQuerySearch } from '../../crisis/components/CrisisQuerySearch'
+import { LazyLoadBoundary } from '../../../shared/components/LazyLoadBoundary'
 import './HomePage.css'
 
 const HomeStaticMap = lazy(async () => {
@@ -51,9 +52,11 @@ function HomeMapPreview() {
         alt="The entrance of the State Library Victoria in Melbourne"
       />
       {showMap ? (
-        <Suspense fallback={null}>
-          <HomeStaticMap />
-        </Suspense>
+        <LazyLoadBoundary fallback={null}>
+          <Suspense fallback={null}>
+            <HomeStaticMap />
+          </Suspense>
+        </LazyLoadBoundary>
       ) : null}
       <ul className="home-map__pins" aria-hidden="true">
         {mapPins.map((pin) => (

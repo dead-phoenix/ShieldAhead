@@ -7,13 +7,16 @@ import '@fontsource/inter/latin-600.css'
 import '@fontsource/inter/latin-700.css'
 import { AppRouter } from './app/AppRouter'
 import { PasswordGate } from './app/PasswordGate'
+import { AppErrorBoundary } from './shared/components/AppErrorBoundary'
 import './App.css'
 
 function App() {
   return (
-    <PasswordGate>
-      <AppRouter />
-    </PasswordGate>
+    <AppErrorBoundary>
+      <PasswordGate>
+        <AppRouter />
+      </PasswordGate>
+    </AppErrorBoundary>
   )
 }
 
