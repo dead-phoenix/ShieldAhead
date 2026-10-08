@@ -42,8 +42,8 @@ function mockGeolocation(outcome: Outcome) {
   return getCurrentPosition
 }
 
-function renderPage() {
-  return render(<MemoryRouter><NearbyPage /></MemoryRouter>)
+function renderPage(initialEntries: string[] = ['/nearby']) {
+  return render(<MemoryRouter initialEntries={initialEntries}><NearbyPage /></MemoryRouter>)
 }
 
 function clickUseMyLocation() {
@@ -70,6 +70,39 @@ describe('Saved nearby services page', () => {
     expect(within(list).getByText('Bendigo Food Share').parentElement).toHaveTextContent('Approximate location')
     expect(screen.getByText(/^Saved on 8 October 2026\./)).toBeVisible()
     expect(refreshNearbySnapshot).not.toHaveBeenCalled()
+  })
+
+  it('shows every category section when there is no category in the URL', () => {
+    setArea(harcourt)
+    saveSnapshotFor(harcourt)
+    renderPage()
+
+    const list = screen.getByRole('region', { name: 'Near Harcourt 3453' })
+    expect(within(list).getByRole('heading', { name: 'Hospitals' })).toBeVisible()
+    expect(within(list).getByRole('heading', { name: 'Police stations' })).toBeVisible()
+    expect(within(list).getByRole('heading', { name: 'Free Wi-Fi' })).toBeVisible()
+    expect(within(list).getByRole('heading', { name: 'Charities' })).toBeVisible()
+  })
+
+  it('shows only the matching category when the search sent a specific kind', () => {
+    setArea(harcourt)
+    saveSnapshotFor(harcourt)
+    renderPage(['/nearby?category=hospital'])
+
+    const list = screen.getByRole('region', { name: 'Near Harcourt 3453' })
+    expect(within(list).getByRole('heading', { name: 'Hospitals' })).toBeVisible()
+    expect(within(list).queryByRole('heading', { name: 'Police stations' })).not.toBeInTheDocument()
+    expect(within(list).queryByRole('heading', { name: 'Free Wi-Fi' })).not.toBeInTheDocument()
+  })
+
+  it('maps the Map\'s "support" category name to charities, the offline data\'s own name for it', () => {
+    setArea(harcourt)
+    saveSnapshotFor(harcourt)
+    renderPage(['/nearby?category=support'])
+
+    const list = screen.getByRole('region', { name: 'Near Harcourt 3453' })
+    expect(within(list).getByRole('heading', { name: 'Charities' })).toBeVisible()
+    expect(within(list).queryByRole('heading', { name: 'Hospitals' })).not.toBeInTheDocument()
   })
 
   it('warns when the saved list is for a different area than My area', () => {

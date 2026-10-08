@@ -5,8 +5,19 @@ describe('offlineNavigationTarget', () => {
   it('sends the plain Map destination to /nearby only when offline', () => {
     expect(offlineNavigationTarget('/map', false)).toBe('/nearby')
     expect(offlineNavigationTarget('/map', true)).toBe('/map')
-    expect(offlineNavigationTarget('/map?category=wifi', false)).toBe('/map?category=wifi')
+  })
+
+  it.each(['wifi', 'hospital', 'police', 'fire', 'ambulance', 'support'])(
+    'sends a %s category search to /nearby (keeping the category) when offline, since the Map itself is unusable offline',
+    (category) => {
+      expect(offlineNavigationTarget(`/map?category=${category}`, false)).toBe(`/nearby?category=${category}`)
+      expect(offlineNavigationTarget(`/map?category=${category}`, true)).toBe(`/map?category=${category}`)
+    },
+  )
+
+  it('leaves non-Map destinations alone regardless of connectivity', () => {
     expect(offlineNavigationTarget('/emergency-pack', false)).toBe('/emergency-pack')
+    expect(offlineNavigationTarget('/crisis', false)).toBe('/crisis')
   })
 })
 

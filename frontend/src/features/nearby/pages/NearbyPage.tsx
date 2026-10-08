@@ -1,7 +1,8 @@
 import { MapPin, Phone } from '@phosphor-icons/react'
 import { useEffect, useState, useSyncExternalStore } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 import { appRoutes } from '../../../app/config/product'
+import type { OfflineServiceCategory } from '../../../data/offlineData'
 import {
   isInRegion,
   rankNearby,
@@ -33,11 +34,24 @@ function useMyArea() {
   return area
 }
 
+// The Map's own category naming ("support") differs from the offline data's
+// ("charity") for this one category — everything else is a 1:1 match.
+const CATEGORY_PARAM_TO_OFFLINE: Record<string, OfflineServiceCategory> = {
+  wifi: 'wifi',
+  hospital: 'hospital',
+  police: 'police',
+  fire: 'fire',
+  ambulance: 'ambulance',
+  support: 'charity',
+}
+
 function RegionNotice({ regionName }: { regionName: string }) {
   return <p className="nearby-notice nearby-notice--warning" role="alert">{nearbyCopy.outOfRegion(regionName)}</p>
 }
 
 export function NearbyPage() {
+  const [searchParams] = useSearchParams()
+  const onlyCategory = CATEGORY_PARAM_TO_OFFLINE[searchParams.get('category') ?? '']
   const snapshot = useSyncExternalStore(subscribeToNearbySnapshot, readNearbySnapshot, () => null)
   const myArea = useMyArea()
   const isOnline = useOnlineStatus()
@@ -111,7 +125,7 @@ export function NearbyPage() {
         {livePoint && !liveSource && liveData.status === 'failed' ? <p className="nearby-notice" role="alert">{nearbyCopy.gps.noData}</p> : null}
         {showRegionNoticeInLive ? <RegionNotice regionName={regionName} /> : null}
         {livePoint && liveSource && livePointInRegion ? (
-          <NearbyServiceList heading={nearbyCopy.liveListHeading} lists={rankNearby(liveSource.records, livePoint)} />
+          <NearbyServiceList heading={nearbyCopy.liveListHeading} lists={rankNearby(liveSource.records, livePoint)} onlyCategory={onlyCategory} />
         ) : null}
       </section>
 
@@ -126,6 +140,7 @@ export function NearbyPage() {
               <NearbyServiceList
                 heading={isStale ? nearbyCopy.staleListHeading(snapshot.originLabel) : nearbyCopy.savedListHeading(snapshot.originLabel)}
                 lists={snapshot.nearest}
+                onlyCategory={onlyCategory}
               />
             ) : null}
             {savedOn ? <p className="nearby-freshness">{nearbyCopy.savedOn(savedOn)}</p> : null}

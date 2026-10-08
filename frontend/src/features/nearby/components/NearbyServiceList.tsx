@@ -1,3 +1,4 @@
+import type { OfflineServiceCategory } from '../../../data/offlineData'
 import type { NearbyLists } from '../../../data/offline/nearbySnapshot'
 import {
   NEARBY_CATEGORY_ORDER,
@@ -8,11 +9,20 @@ import {
   serviceDetail,
 } from '../nearbyCopy'
 
-export function NearbyServiceList({ heading, lists }: { heading: string; lists: NearbyLists }) {
+interface NearbyServiceListProps {
+  heading: string
+  lists: NearbyLists
+  /** Shows only this one category's section — used when someone searched
+   * for a specific kind (e.g. "hospital") rather than services generally. */
+  onlyCategory?: OfflineServiceCategory
+}
+
+export function NearbyServiceList({ heading, lists, onlyCategory }: NearbyServiceListProps) {
+  const categories = onlyCategory ? [onlyCategory] : NEARBY_CATEGORY_ORDER
   return (
     <section className="nearby-list" aria-label={heading}>
       <h2>{heading}</h2>
-      {NEARBY_CATEGORY_ORDER.map((category) => {
+      {categories.map((category) => {
         const records = lists[category] ?? []
         return (
           <section className="nearby-list__category" key={category} aria-label={nearbyCategoryTitles[category]}>

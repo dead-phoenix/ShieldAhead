@@ -50,7 +50,14 @@ export function matchNavigationIntent(query: string): string | undefined {
   return NAVIGATION_PATTERNS.find(({ pattern }) => pattern.test(trimmed))?.path
 }
 
-/** Offline, "map", "nearby" and "near me" open the saved nearby services instead of the Map. */
+/** Offline, any Map destination — "map", "nearby", or a specific category
+ * like "hospital"/"police"/"ambulance"/"wifi"/"charities" — opens the saved
+ * nearby services instead, keeping the category so that page can filter to
+ * it rather than showing every section. The Map itself is unusable offline
+ * (no tiles), so sending a category search there would be a dead end. */
 export function offlineNavigationTarget(path: string, isOnline: boolean): string {
-  return !isOnline && path === appRoutes.map ? appRoutes.nearby : path
+  if (isOnline || !path.startsWith(appRoutes.map)) return path
+  const queryIndex = path.indexOf('?')
+  const query = queryIndex === -1 ? '' : path.slice(queryIndex)
+  return `${appRoutes.nearby}${query}`
 }
