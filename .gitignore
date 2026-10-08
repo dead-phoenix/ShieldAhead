@@ -5,3 +5,5 @@ __pycache__/
 *.py[cod]
 .neon
 .env.local
+# Local HTTP cache for scripts/build_offline_data.py --cache-dir
+scripts/.cache/

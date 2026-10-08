@@ -1,0 +1,100 @@
+name: Offline data
+
+on:
+  # Scheduled runs only fire from the repository's DEFAULT branch, using the
+  # copy of this file on that branch; until it is merged there, use
+  # workflow_dispatch. Scheduled runs use the base_branch default below.
+  schedule:
+    - cron: "0 18 * * 0" # Sunday 18:00 UTC = Monday 04:00/05:00 Melbourne
+  workflow_dispatch:
+    inputs:
+      base_branch:
+        description: Branch to build from and open the pull request against
+        required: true
+        default: iteration-3
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: offline-data
+  cancel-in-progress: false
+
+env:
+  BASE_BRANCH: ${{ inputs.base_branch || 'iteration-3' }}
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90 # an uncached run is ~35 min, mostly Vicmap Address count queries
+    steps:
+      - name: Check out base branch
+        # actions/checkout v7.0.1 (SHA from github.com/actions/checkout tags)
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: ${{ env.BASE_BRANCH }}
+
+      - name: Set up Python
+        # actions/setup-python v7.0.0 (SHA from github.com/actions/setup-python tags)
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
+        with:
+          python-version: "3.12.5"
+
+      - name: Install pinned dependencies
+        run: python -m pip install --disable-pip-version-check -r scripts/requirements-offline-data.txt
+
+      - name: Test pipeline
+        run: python -m pytest -q scripts/tests
+
+      - name: Cache key month
+        id: month
+        run: echo "month=$(date -u +%Y-%m)" >> "$GITHUB_OUTPUT"
+
+      # One cache per UTC month and no restore-keys: entries are keyed by request,
+      # so restoring an older month would keep serving its stale responses.
+      # Within a month only ACNC (not cached by the script) is fetched fresh.
+      - name: Cache source responses
+        # actions/cache v6.1.0 (SHA from github.com/actions/cache tags)
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
+        with:
+          path: scripts/.cache
+          key: offline-data-http-${{ steps.month.outputs.month }}
+
+      - name: Build offline data
+        run: python scripts/build_offline_data.py --cache-dir scripts/.cache --report-json "$RUNNER_TEMP/offline-report.json"
+
+      - name: Report sizes
+        if: always()
+        run: |
+          if [ -f "$RUNNER_TEMP/offline-report.json" ]; then
+            {
+              echo '### Offline data'
+              echo '```json'
+              python -c "import json,sys; r=json.load(open(sys.argv[1])); print(json.dumps({k: r[k] for k in ('sizes','serviceBytes','totalBytes','charityStats','overrideWarnings','errors','runtimeSeconds','requestsBySource')}, indent=2))" "$RUNNER_TEMP/offline-report.json"
+              echo '```'
+            } >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - name: Open or update pull request
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if [ -z "$(git status --porcelain -- frontend/public/data)" ]; then
+            echo "Offline data unchanged; no pull request."
+            exit 0
+          fi
+          branch="bot/offline-data-${BASE_BRANCH}"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git switch -C "$branch"
+          git add -- frontend/public/data
+          git commit -m "Refresh offline data ($(date -u +%Y-%m-%d))"
+          git push --force origin "$branch"
+          if [ -n "$(gh pr list --head "$branch" --base "$BASE_BRANCH" --state open --json number --jq '.[].number')" ]; then
+            echo "Updated the existing pull request for $branch."
+          else
+            gh pr create --base "$BASE_BRANCH" --head "$branch" \
+              --title "Refresh offline data" \
+              --body "Automated refresh by the Offline data workflow (scripts/build_offline_data.py). Review counts and sizes in the workflow run summary. Workflows triggered by GITHUB_TOKEN do not run on this PR; close and reopen it to trigger CI."
+          fi

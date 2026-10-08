@@ -122,7 +122,8 @@ MAX_ADDRESSES_TO_GEOCODE_FOR_EXTRA_POSTCODE = 8  # kept small: runs inline on a 
 ORS_DIRECTIONS_URL = "https://api.openrouteservice.org/v2/directions/{profile}/geojson"
 
 
-def _load_ors_api_key():
+def get_ors_api_key():
+    """Resolved on demand, not at import: importing config must never read a .env file."""
     key = os.environ.get("ORS_API_KEY", "").strip()
     # Tests must not read a local .env key and accidentally call the live ORS API.
     if not key and "pytest" not in sys.modules:
@@ -140,9 +141,6 @@ def _load_ors_api_key():
             if key:
                 break
     return key
-
-
-ORS_API_KEY = _load_ors_api_key()
 
 
 def get_refresh_secret():

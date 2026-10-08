@@ -1,0 +1,34 @@
+{
+  "schemaVersion": 1,
+  "exclude": [
+    {
+      "id": "vicmap-foi-1340683",
+      "name": "Wayipunga Bendigo Early Parenting Centre",
+      "reason": "Classified 'general hospital' in Vicmap Features of Interest, but it is a residential early parenting service, not a hospital with emergency or general admissions. Reviewed 2026-10-08."
+    },
+    {
+      "id": "vicmap-foi-138673",
+      "name": "Hems3 Ambulance Station",
+      "reason": "Classified 'ambulance station' in Vicmap Features of Interest (auth_org_id HEMS31), but it is the Bendigo Helicopter Emergency Medical Service (air ambulance) base, not a station the public can visit for help. Reviewed 2026-10-08."
+    },
+    {
+      "id": "vicmap-foi-992617",
+      "name": "Oscar 1 Emerg Response Fire Station",
+      "reason": "Vicmap lists it as an ordinary CFA 'fire station' (auth_org_code 106, auth_org_id 3788, no operator or notes fields), but CFA describes Oscar 1 as a specialist volunteer mine-rescue and technical-rescue brigade, not a community fire station. Reviewed 2026-10-08."
+    }
+  ],
+  "addServiceTypes": [
+    {
+      "id": "vicmap-foi-1344486",
+      "name": "Dingee Bush Nursing Centre",
+      "serviceTypes": ["Bush nursing centre"],
+      "reason": "Kept as a hospital (Vicmap 'general hospital'), but it is a small bush nursing centre, so the UI should not imply full hospital services. Reviewed 2026-10-08."
+    },
+    {
+      "id": "vicmap-foi-1344480",
+      "name": "Lockington District Bush Nursing Centre",
+      "serviceTypes": ["Bush nursing centre"],
+      "reason": "Kept as a hospital (Vicmap 'general hospital'), but it is a small bush nursing centre, so the UI should not imply full hospital services. Reviewed 2026-10-08."
+    }
+  ]
+}

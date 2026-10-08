@@ -1,6 +1,8 @@
 import requests as http_requests
 
-from config import HEADERS_CKAN, ORS_API_KEY, ORS_DIRECTIONS_URL
+from config import HEADERS_CKAN, ORS_DIRECTIONS_URL, get_ors_api_key
+
+ORS_API_KEY = get_ors_api_key()
 
 ALLOWED_PROFILES = ("driving-car", "foot-walking", "cycling-regular")
 

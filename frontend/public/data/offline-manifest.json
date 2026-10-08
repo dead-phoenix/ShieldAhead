@@ -1,0 +1,41 @@
+{
+  "schemaVersion": 1,
+  "generatedAt": "2026-10-08T05:44:43Z",
+  "files": [
+    {
+      "file": "localities.json",
+      "dataVersion": "f6dbbb65b2526997",
+      "recordCount": 341,
+      "bytes": 34753,
+      "sha256": "13897430a64d5b8226f2f0664e27e0d0ecb514925c83e9615cd3ff615b9388a3"
+    },
+    {
+      "file": "offline-charities.json",
+      "dataVersion": "bd33393cffd5c6c0",
+      "recordCount": 202,
+      "bytes": 78410,
+      "sha256": "a73aa01c486006eea9b72b1e34384093effd3d056c8c1326e4ec51024fcef16a"
+    },
+    {
+      "file": "offline-emergency-services.json",
+      "dataVersion": "79a761bff701562f",
+      "recordCount": 197,
+      "bytes": 66338,
+      "sha256": "df18523b6fad20f9063af411454af7fb61a2844ffdee63f81bba342b45ce0fda"
+    },
+    {
+      "file": "offline-wifi.json",
+      "dataVersion": "71b4cbb0e0bc4ac8",
+      "recordCount": 83,
+      "bytes": 32260,
+      "sha256": "ba8f85eb4e00d34dd1e307ef294355c8b554c366fddd57528dd1acaae3daec2b"
+    },
+    {
+      "file": "postcodes.json",
+      "dataVersion": "f395711afd978a87",
+      "recordCount": 694,
+      "bytes": 44668,
+      "sha256": "2f52fd4daaba0a5b2bf4c89c9041cce4be52affcc217f502c1a13502f8b97740"
+    }
+  ]
+}
