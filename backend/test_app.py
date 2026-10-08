@@ -812,6 +812,30 @@ def test_spa_serves_built_assets(tmp_path, monkeypatch, client):
     assert b"console.log" in response.data
 
 
+def test_spa_404s_a_missing_asset_instead_of_serving_html(tmp_path, monkeypatch, client):
+    dist = tmp_path / "dist"
+    (dist / "assets").mkdir(parents=True)
+    (dist / "index.html").write_text("<html>shieldahead</html>", encoding="utf-8")
+    monkeypatch.setattr("routes.spa_routes.frontend_dist_path", lambda: dist)
+
+    response = client.get("/assets/missing-chunk.js")
+
+    assert response.status_code == 404
+    assert b"shieldahead" not in response.data
+
+
+def test_spa_sets_no_cache_for_service_worker(tmp_path, monkeypatch, client):
+    dist = tmp_path / "dist"
+    dist.mkdir(parents=True)
+    (dist / "sw.js").write_text("// sw", encoding="utf-8")
+    monkeypatch.setattr("routes.spa_routes.frontend_dist_path", lambda: dist)
+
+    response = client.get("/sw.js")
+
+    assert response.status_code == 200
+    assert response.headers.get("Cache-Control") == "no-cache"
+
+
 def test_api_stats_is_not_captured_by_spa(client):
     response = client.get("/api/stats")
     assert response.status_code == 200

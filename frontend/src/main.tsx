@@ -4,6 +4,7 @@ import './index.css'
 import App from './App.tsx'
 import { preloadNearbyData } from './data/preloadNearbyData'
 import { capturePwaInstallPrompt } from './shared/pwa/pwaInstall'
+import { registerServiceWorkerUpdates } from './shared/pwa/serviceWorkerUpdate'
 import { migrateLegacyLocalData } from './storage/legacyLocalDataMigration'
 import { getSearchPostcode } from './storage/searchLocationStorage'
 
@@ -21,10 +22,6 @@ if (existingPostcode) {
   void preloadNearbyData(existingPostcode)
 }
 
-if ('serviceWorker' in navigator && import.meta.env.PROD) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/sw.js').catch(() => {
-      // The online app remains usable when service-worker registration fails.
-    })
-  })
+if (import.meta.env.PROD) {
+  window.addEventListener('load', registerServiceWorkerUpdates)
 }

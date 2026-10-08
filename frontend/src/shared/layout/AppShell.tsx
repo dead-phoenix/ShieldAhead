@@ -1,4 +1,6 @@
 import {
+  ArrowClockwise,
+  CloudSlash,
   FirstAidKit,
   House,
   Lifebuoy,
@@ -9,9 +11,13 @@ import {
 import type { CSSProperties } from 'react'
 import { Link, NavLink, Outlet, useLocation } from 'react-router-dom'
 import { appRoutes, productConfig } from '../../app/config/product'
+import { readNearbySnapshot } from '../../data/offline/nearbySnapshot'
 import { useNearbySnapshotRefresh } from '../../data/offline/useNearbySnapshotRefresh'
 import { hasCompletedSetup } from '../../storage/onboardingDraftStorage'
 import { GetTheAppButton } from '../components/GetTheAppButton'
+import { useConnectivity } from '../hooks/useConnectivity'
+import { useServiceWorkerUpdate } from '../hooks/useServiceWorkerUpdate'
+import { formatSavedDate } from '../utils/formatDate'
 
 const primaryNavigation = [
   { to: appRoutes.home, label: 'Home', end: true, icon: House },
@@ -22,6 +28,8 @@ const primaryNavigation = [
 
 export function AppShell() {
   useNearbySnapshotRefresh()
+  const { isOnline } = useConnectivity()
+  const { hasUpdate, reload } = useServiceWorkerUpdate()
   const { pathname } = useLocation()
   const isSetupFlow = pathname.startsWith(appRoutes.setup)
   const showSetupAction = !isSetupFlow && !hasCompletedSetup()
@@ -81,6 +89,23 @@ export function AppShell() {
           </nav>
         ) : null}
       </header>
+
+      {!isOnline ? (
+        <p className="app-offline-banner" role="status">
+          <CloudSlash aria-hidden="true" size={18} />
+          {' '}You're offline. Showing information saved on {formatSavedDate(readNearbySnapshot()?.builtAt)}.
+          In an emergency call 000. Check VicEmergency when you're back online.
+        </p>
+      ) : null}
+
+      {hasUpdate ? (
+        <p className="app-update-banner" role="status">
+          A new version is ready.
+          <button className="button button--quiet button--compact" type="button" onClick={reload}>
+            <ArrowClockwise aria-hidden="true" size={16} /> Reload to update
+          </button>
+        </p>
+      ) : null}
 
       <main id="main-content" className="app-main" tabIndex={-1}>
         <Outlet />

@@ -107,6 +107,8 @@ export function CrisisQuerySearch({ variant = 'crisis' }: { variant?: 'crisis' |
         <p className="crisis-query-search__status" role="status">Listening… tap the microphone again when you're done</p>
       ) : voice.isTranscribing ? (
         <p className="crisis-query-search__status" role="status">Transcribing…</p>
+      ) : !isOnline && voice.isSupported ? (
+        <p className="crisis-query-search__status" role="status">Voice search needs an internet connection. Type your question instead.</p>
       ) : null}
       {voice.error ? <p className="crisis-query-search__error" role="alert">{voice.error}</p> : null}
       {showSuggestions ? (

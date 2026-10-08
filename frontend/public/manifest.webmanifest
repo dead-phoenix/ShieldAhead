@@ -1,8 +1,10 @@
 {
+  "id": "/",
   "name": "ShieldAhead",
   "short_name": "ShieldAhead",
-  "description": "Prepare local Wi-Fi and support information for unreliable connections.",
+  "description": "The crisis guide, checklists, and nearby Wi-Fi, charities and emergency services, saved so they still open with no signal.",
   "start_url": "/",
+  "scope": "/",
   "display": "standalone",
   "background_color": "#fbf8f1",
   "theme_color": "#3F6B63",
