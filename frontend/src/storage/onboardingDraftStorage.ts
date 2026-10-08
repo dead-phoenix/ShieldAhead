@@ -1,6 +1,5 @@
 import { storageKeys } from '../app/config/product'
-import { preloadNearbyData } from '../data/preloadNearbyData'
-import { clearAllOfflineDatasets } from '../data/offline/offlineDatasetStore'
+import { migrateLegacyLocalData, normalizeHouseholdProfile } from './legacyLocalDataMigration'
 
 import type {
   ConsentState,
@@ -9,12 +8,15 @@ import type {
 } from '../data/contracts'
 
 export interface OnboardingDraft {
-  currentStep: 'household-basics' | 'household-needs' | 'review' | 'choices'
+  currentStep: 'household-needs' | 'review' | 'choices'
   profile: Partial<HouseholdProfile>
+  /** The My area postcode entered during setup; saved as My area when setup finishes. */
+  areaPostcode?: string
   updatedAt: string
 }
 
 export function getOnboardingDraft(): OnboardingDraft | null {
+  migrateLegacyLocalData()
   try {
     const storedValue = window.localStorage.getItem(storageKeys.onboardingDraft)
     return storedValue ? (JSON.parse(storedValue) as OnboardingDraft) : null
@@ -58,23 +60,18 @@ function writeStoredValue<T>(key: string, value: T): boolean {
 }
 
 export function getHouseholdProfile(): HouseholdProfile | null {
-  return readStoredValue<HouseholdProfile>(storageKeys.householdProfile)
+  migrateLegacyLocalData()
+  const stored = readStoredValue<unknown>(storageKeys.householdProfile)
+  if (typeof stored !== 'object' || stored === null || Array.isArray(stored)) return null
+  return normalizeHouseholdProfile(stored as Record<string, unknown>)
 }
 
 export function saveHouseholdProfile(profile: HouseholdProfile): boolean {
-  const previousPostcode = getHouseholdProfile()?.postcode
-  const saved = writeStoredValue(storageKeys.householdProfile, profile)
-  if (saved && profile.postcode && profile.postcode !== previousPostcode) {
-    // A changed household postcode becomes the active search area. Remove any
-    // older location override so Wi-Fi and support pages fall back to this
-    // newly saved postcode on their next render.
-    window.localStorage.removeItem(storageKeys.searchLocation)
-    void preloadNearbyData(profile.postcode)
-  }
-  return saved
+  return writeStoredValue(storageKeys.householdProfile, normalizeHouseholdProfile({ ...profile }))
 }
 
 export function getConsentState(): ConsentState | null {
+  migrateLegacyLocalData()
   return readStoredValue<ConsentState>(storageKeys.consent)
 }
 
@@ -86,41 +83,38 @@ export function saveConsentState(consent: ConsentState): boolean {
   return writeStoredValue(storageKeys.consent, consent)
 }
 
-export function saveConsentChoices(
-  choices: Record<string, boolean>,
-): boolean {
-  const profile = getHouseholdProfile()
-  if (!profile) return false
-
-  const filteredProfile: HouseholdProfile = {
-    postcode: profile.postcode,
-    ...(choices.basics
-      ? {
-          name: profile.name,
-          age: profile.age,
-          householdSize: profile.householdSize,
-        }
-      : {}),
-    ...(choices.dependants
+export function profileForChoices(
+  profile: Partial<HouseholdProfile>,
+  choices: Record<string, boolean | null | undefined>,
+): HouseholdProfile {
+  return {
+    ...(choices.dependants === true
       ? {
           childrenUnder15: profile.childrenUnder15,
           hasPets: profile.hasPets,
         }
       : {}),
-    ...(choices.needs
+    ...(choices.needs === true
       ? {
           accessibilityNeeds: profile.accessibilityNeeds,
           healthNeeds: profile.healthNeeds,
         }
       : {}),
   }
+}
+
+export function saveConsentChoices(
+  choices: Record<string, boolean>,
+): boolean {
+  const profile = getHouseholdProfile()
+  if (!profile) return false
 
   const consentSaved = saveConsentState({
     profileStorageAccepted: true,
     optionalCategories: choices,
     updatedAt: new Date().toISOString(),
   })
-  const profileSaved = saveHouseholdProfile(filteredProfile)
+  const profileSaved = saveHouseholdProfile(profileForChoices(profile, choices))
   return consentSaved && profileSaved
 }
 
@@ -147,18 +141,4 @@ export function saveUsualWifiSpot(id: string): void {
 
 export function clearUsualWifiSpot(): void {
   window.localStorage.removeItem(storageKeys.usualWifiSpot)
-}
-
-export function clearProfileAndChoices(removeOfflineInformation: boolean): void {
-  window.localStorage.removeItem(storageKeys.householdProfile)
-  window.localStorage.removeItem(storageKeys.consent)
-  window.localStorage.removeItem(storageKeys.onboardingDraft)
-  window.localStorage.removeItem(storageKeys.usualWifiSpot)
-  if (removeOfflineInformation) {
-    writeStoredValue(storageKeys.offlinePreferences, {
-      wifiSaved: false,
-      supportSaved: false,
-    })
-    void clearAllOfflineDatasets()
-  }
 }

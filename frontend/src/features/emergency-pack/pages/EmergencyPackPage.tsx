@@ -5,9 +5,10 @@ import { appRoutes } from '../../../app/config/product'
 import { fetchChecklistItems, fetchHelplines } from '../../../data/api/apiCrisisRepository'
 import { LoadingState } from '../../../shared/components/LoadingState'
 import { useOnlineStatus } from '../../../shared/hooks/useOnlineStatus'
-import { getSearchLocation } from '../../../storage/searchLocationStorage'
+import { getMyArea } from '../../../storage/myAreaStorage'
 import type { CrisisKind } from '../../crisis/crisisContent'
 import { getMapPlaceRepository } from '../../map/data/mapPlaceRepository'
+import { MyAreaForm } from '../../settings/components/MyAreaForm'
 import { CRISIS_PACK_DOCUMENT_TITLE, buildCrisisPack } from '../buildCrisisPack'
 import { CrisisPackPreview } from '../components/CrisisPackPreview'
 import { nearestPlaces, toChecklistGroups, toPackHelplines } from '../crisisPackSnapshot'
@@ -45,13 +46,15 @@ function PackToggle({ label, pressed, onToggle }: { label: string; pressed: bool
 
 export function EmergencyPackPage() {
   const isOnline = useOnlineStatus()
-  const area = getSearchLocation()
-  const areaPostcode = area?.postcode ?? ''
-  const areaLabel = area?.label ?? ''
+  const [myArea, setMyArea] = useState(getMyArea)
+  const areaPostcode = myArea?.postcode ?? ''
+  const areaLabel = myArea?.label ?? ''
   const [preferences, setPreferences] = useState<EmergencyPackPreferences>(() => readEmergencyPack().preferences)
   const [snapshot, setSnapshot] = useState<EmergencyPackSnapshot>(() => readEmergencyPack().snapshot)
   const [isLoading, setIsLoading] = useState(false)
   const [notice, setNotice] = useState('')
+  const [isAreaPromptOpen, setIsAreaPromptOpen] = useState(false)
+  const [isReadyAfterAreaSave, setIsReadyAfterAreaSave] = useState(false)
 
   useEffect(() => {
     const previousTitle = document.title
@@ -79,9 +82,11 @@ export function EmergencyPackPage() {
       if (!isOnline) {
         if (isCurrent) {
           setIsLoading(false)
-          setNotice(next.savedAt
-            ? 'You are offline. This pack shows the last copy saved on this device.'
-            : 'You are offline. Connect once to save helplines, checklists, and nearby places on this device.')
+          setNotice(areaChanged
+            ? `You are offline. This pack was built for ${saved.areaLabel || saved.postcode}. Connect to rebuild it for ${areaLabel}.`
+            : next.savedAt
+              ? 'You are offline. This pack shows the last copy saved on this device.'
+              : 'You are offline. Connect once to save helplines, checklists, and nearby places on this device.')
         }
         return
       }
@@ -139,7 +144,7 @@ export function EmergencyPackPage() {
   }, [areaLabel, areaPostcode, isOnline])
 
   const pack = useMemo(
-    () => buildCrisisPack({ preferences, snapshot, downloadedAt: new Date() }),
+    () => buildCrisisPack({ preferences, snapshot }),
     [preferences, snapshot],
   )
 
@@ -163,10 +168,15 @@ export function EmergencyPackPage() {
 
   // TODO(group 4): replace window.print() with client-side PDF generation, then remove the print CSS in EmergencyPackPage.css.
   function downloadPack() {
+    if (!myArea) {
+      setIsAreaPromptOpen(true)
+      return
+    }
+    setIsReadyAfterAreaSave(false)
     window.print()
   }
 
-  const includesPlaces = preferences.includeWifi || preferences.includeCharities
+  const isReady = isReadyAfterAreaSave && !isLoading
 
   return (
     <section className="emergency-pack-page" aria-labelledby="emergency-pack-title">
@@ -206,18 +216,36 @@ export function EmergencyPackPage() {
         </div>
       </div>
 
-      <div className="emergency-pack-toolbar">
-        <button className="button button--primary" type="button" onClick={downloadPack}>
-          <DownloadSimple aria-hidden="true" size={18} /> Download crisis pack as PDF
-        </button>
-      </div>
+      <p className="emergency-pack-area">
+        {myArea ? (
+          <>My area: <strong>{myArea.label}</strong> · <Link to={appRoutes.myArea}>Change</Link></>
+        ) : (
+          <>My area is not set. You will be asked for it when you download the pack.</>
+        )}
+      </p>
 
-      {includesPlaces && !areaPostcode ? (
-        <p className="inline-status">
-          Choose an area before nearby places can be added.{' '}
-          <Link to={`${appRoutes.location}?next=${encodeURIComponent(appRoutes.emergencyPack)}`}>Choose an area</Link>
-        </p>
-      ) : null}
+      {isAreaPromptOpen ? (
+        <section className="emergency-pack-area-prompt" aria-labelledby="pack-area-prompt-title">
+          <h2 id="pack-area-prompt-title">Which area is this pack for?</h2>
+          <MyAreaForm
+            label="Postcode"
+            submitLabel="Save My area and build pack"
+            onSaved={(saved) => {
+              setIsAreaPromptOpen(false)
+              setIsLoading(true)
+              setIsReadyAfterAreaSave(true)
+              setMyArea(saved)
+            }}
+          />
+        </section>
+      ) : (
+        <div className="emergency-pack-toolbar">
+          <button className="button button--primary" type="button" onClick={downloadPack} disabled={isReadyAfterAreaSave && isLoading}>
+            <DownloadSimple aria-hidden="true" size={18} /> {isReady ? 'Ready. Download pack' : 'Download crisis pack as PDF'}
+          </button>
+        </div>
+      )}
+      {isReady ? <p className="inline-status" role="status">Your pack is built for {areaLabel}.</p> : null}
       {notice ? <p className="inline-status" role="status">{notice}</p> : null}
       {isLoading ? <LoadingState label="Updating saved information" /> : null}
 

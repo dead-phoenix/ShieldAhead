@@ -1,17 +1,18 @@
 import { ArrowLeft, CloudSlash, LockKey, SlidersHorizontal, UserCircle } from '@phosphor-icons/react'
 import { Link } from 'react-router-dom'
 import { appRoutes } from '../../../app/config/product'
+import { LocalOnlyNote } from '../../../shared/components/LocalOnlyNote'
 
 const privacyPoints = [
   {
     icon: CloudSlash,
-    title: 'Your profile stays on this device',
-    copy: 'No account is created and nothing is uploaded.',
+    title: 'Your household notes stay on this device',
+    copy: 'There is nothing to register, and your household notes are never uploaded.',
   },
   {
     icon: UserCircle,
-    title: 'Only postcode is required',
-    copy: 'This allows us to organise local information without knowing your exact location.',
+    title: 'Only My area is required',
+    copy: 'A postcode lets us look up nearby places without knowing your exact location.',
   },
   {
     icon: SlidersHorizontal,
@@ -27,7 +28,7 @@ export function DataPrivacyPage() {
         <LockKey size={34} weight="duotone" />
       </div>
       <h1 id="privacy-title">Your Privacy Matters</h1>
-      <p className="lead">ShieldAhead is designed to be useful without tracking you. Your data stays here.</p>
+      <p className="lead">ShieldAhead is designed to be useful without tracking you. Your household details stay here.</p>
       <div className="benefit-list privacy-point-list">
         {privacyPoints.map((point) => {
           const Icon = point.icon
@@ -39,8 +40,9 @@ export function DataPrivacyPage() {
           )
         })}
       </div>
+      <LocalOnlyNote variant="postcode" />
       <div className="flow-actions flow-actions--stacked">
-        <Link className="button button--primary" to={appRoutes.householdBasics}>Continue</Link>
+        <Link className="button button--primary" to={appRoutes.householdNeeds}>Continue</Link>
         <Link className="button button--quiet" to={appRoutes.setup}><ArrowLeft aria-hidden="true" size={18} /> Back</Link>
       </div>
     </section>

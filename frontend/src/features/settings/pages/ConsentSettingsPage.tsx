@@ -8,18 +8,12 @@ import {
   getHouseholdProfile,
   saveConsentChoices,
 } from '../../../storage/onboardingDraftStorage'
-
-const categories = [
-  ['basics', 'Household basics', 'Name, age and household size'],
-  ['dependants', 'Children and pets', 'Used to tailor household guidance'],
-  ['needs', 'Health and accessibility', 'Used to highlight relevant preparation tips'],
-] as const
+import { householdCategories as categories } from '../../onboarding/householdCategories'
 
 function inferChoices() {
   const consent = getConsentState()
   const profile = getHouseholdProfile()
   return {
-    basics: consent?.optionalCategories.basics ?? Boolean(profile?.name || profile?.age || profile?.householdSize),
     dependants: consent?.optionalCategories.dependants ?? Boolean(profile?.childrenUnder15 !== undefined || profile?.hasPets !== undefined),
     needs: consent?.optionalCategories.needs ?? Boolean(profile?.accessibilityNeeds?.length || profile?.healthNeeds?.length),
   }
@@ -47,7 +41,7 @@ export function ConsentSettingsPage() {
     <section className="flow-page settings-flow-page" aria-labelledby="consent-settings-title">
       <PageBackLink to={appRoutes.settings}>Back to profile</PageBackLink>
       <h1 id="consent-settings-title">Consent choices</h1>
-      <p className="lead">Choose which optional household details ShieldAhead may keep on this device.</p>
+      <p className="lead">Choose which optional household notes ShieldAhead may keep on this device.</p>
 
       <div className="notice-card consent-removal-note">
         <Info aria-hidden="true" size={22} />
@@ -68,7 +62,7 @@ export function ConsentSettingsPage() {
         ))}
       </div>
 
-      <div className="privacy-card"><LockKey aria-hidden="true" size={22} /><p>Your postcode is stored separately because it is required to organise nearby information.</p></div>
+      <div className="privacy-card"><LockKey aria-hidden="true" size={22} /><p>Stays on this device. Nothing is sent to our servers. My area is managed separately in Profile.</p></div>
       {message ? <p className="inline-status" role="status" aria-live="polite">{message}</p> : null}
       {error ? <p className="field-error" role="alert">{error}</p> : null}
       <button className="button button--primary settings-save-button" type="button" onClick={saveChanges}>Save consent choices</button>

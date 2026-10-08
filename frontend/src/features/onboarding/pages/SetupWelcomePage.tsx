@@ -1,10 +1,11 @@
 import { ArrowRight, CloudSlash, Info, LockKey, ShieldCheck, UserCircle } from '@phosphor-icons/react'
 import { Link } from 'react-router-dom'
 import { appRoutes } from '../../../app/config/product'
+import { LocalOnlyNote } from '../../../shared/components/LocalOnlyNote'
 
 const setupBenefits = [
-  { icon: UserCircle, title: 'No account required', copy: 'Start using the app without signing up.' },
-  { icon: LockKey, title: 'Private by default', copy: 'Your household profile and choices stay on this device.' },
+  { icon: UserCircle, title: 'Nothing to register', copy: 'Use every part of the app straight away.' },
+  { icon: LockKey, title: 'Private by default', copy: 'Your household notes and choices stay on this device.' },
   { icon: CloudSlash, title: 'Works offline', copy: 'Saved public information remains available without a connection.' },
 ]
 
@@ -25,8 +26,9 @@ export function SetupWelcomePage() {
           )
         })}
       </div>
+      <LocalOnlyNote variant="no-postcode" />
       <div className="flow-actions flow-actions--stacked">
-        <Link className="button button--primary" to={appRoutes.setupPrivacy}>Set up ShieldAhead <ArrowRight aria-hidden="true" size={18} weight="bold" /></Link>
+        <Link className="button button--primary" to={appRoutes.setupPrivacy}>Set up my household <ArrowRight aria-hidden="true" size={18} weight="bold" /></Link>
         <Link className="button button--text" to={appRoutes.setupPrivacy}><Info aria-hidden="true" size={17} /> How your information is stored</Link>
       </div>
     </section>

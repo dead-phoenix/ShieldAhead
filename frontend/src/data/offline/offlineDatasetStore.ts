@@ -126,6 +126,17 @@ export async function clearAllOfflineDatasets(): Promise<void> {
   announceChange()
 }
 
+/** Resolves even when the deletion is blocked; the browser finishes it once other windows close their connection. */
+export function deleteOfflineDatabase(): Promise<void> {
+  if (!('indexedDB' in window)) return Promise.resolve()
+  return new Promise<void>((resolve) => {
+    const request = window.indexedDB.deleteDatabase(DATABASE_NAME)
+    request.onsuccess = () => resolve()
+    request.onerror = () => resolve()
+    request.onblocked = () => resolve()
+  }).then(announceChange)
+}
+
 export async function getOfflineDatasetSummaries(
   postcode: string,
 ): Promise<Partial<Record<OfflineDatasetKind, OfflineDatasetSummary>>> {

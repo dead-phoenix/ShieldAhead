@@ -1,6 +1,6 @@
 import { storageKeys } from '../app/config/product'
 import { preloadNearbyData } from '../data/preloadNearbyData'
-import { getHouseholdProfile } from './onboardingDraftStorage'
+import { getMyArea } from './myAreaStorage'
 
 export interface SearchLocation {
   postcode: string
@@ -18,11 +18,11 @@ function readSearchLocation(): SearchLocation | null {
     const parsed = JSON.parse(storedValue) as Partial<StoredSearchLocation>
     const postcode = typeof parsed.postcode === 'string' ? parsed.postcode.trim() : ''
     if (!/^\d{4}$/.test(postcode)) return null
-    const profilePostcode = getHouseholdProfile()?.postcode
+    const myAreaPostcode = getMyArea()?.postcode
     // Search locations saved by older builds did not record whether the user
-    // deliberately selected them. If one conflicts with the current profile,
-    // use the profile once; future explicit selections include selectedAt.
-    if (!parsed.selectedAt && profilePostcode && postcode !== profilePostcode) return null
+    // deliberately selected them. If one conflicts with My area, use My area
+    // once; future explicit selections include selectedAt.
+    if (!parsed.selectedAt && myAreaPostcode && postcode !== myAreaPostcode) return null
     return {
       postcode,
       label: typeof parsed.label === 'string' && parsed.label.trim()
@@ -55,5 +55,5 @@ export function saveSearchLocation(location: SearchLocation): boolean {
 }
 
 export function getSearchPostcode(): string {
-  return getSearchLocation()?.postcode || getHouseholdProfile()?.postcode || ''
+  return getSearchLocation()?.postcode || getMyArea()?.postcode || ''
 }

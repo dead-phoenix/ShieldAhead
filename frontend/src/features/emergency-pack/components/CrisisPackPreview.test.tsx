@@ -12,8 +12,6 @@ vi.mock('../crisisPackSources', () => ({
   },
 }))
 
-const downloadedAt = new Date(2026, 9, 5, 12)
-
 const everything: EmergencyPackPreferences = {
   includeHelplines: true,
   includeWifi: true,
@@ -28,13 +26,13 @@ function renderPreview(preferences: EmergencyPackPreferences = everything) {
       ...emptyEmergencyPackSnapshot(),
       areaLabel: 'Docklands 3008',
       postcode: '3008',
+      savedAt: '2026-10-05T00:00:00.000Z',
       placesSavedAt: { wifi: '2026-10-05T00:00:00.000Z' },
       wifi: [
         { id: 'w1', name: 'LIBRARY AT THE DOCK', address: '107 Victoria Harbour Prom', suburb: 'Docklands', postcode: '3008' },
         { id: 'w2', name: 'Pop-up hotspot', suburb: 'Area not confirmed', postcode: '' },
       ],
     },
-    downloadedAt,
   })
   render(<CrisisPackPreview pack={pack} />)
 }
@@ -49,6 +47,9 @@ describe('Crisis pack preview', () => {
     expect(pages).toHaveLength(4)
     expect(within(pages[0]).getByText('ShieldAhead')).toBeInTheDocument()
     expect(within(pages[3]).getByText('4 of 4')).toBeInTheDocument()
+    for (const page of pages) {
+      expect(within(page).getByText('Built for Docklands 3008 · Saved 5 October 2026')).toBeInTheDocument()
+    }
   })
 
   it('shows helplines, numbered places, the offline fallback and the freshness note on page 1', () => {
@@ -70,7 +71,7 @@ describe('Crisis pack preview', () => {
     expect(within(page).getByText('Near Docklands 3008')).toBeInTheDocument()
     const charities = within(page).getByRole('heading', { name: 'Charities near you' }).closest('section') as HTMLElement
     expect(within(charities).getByText('Not available offline')).toBeInTheDocument()
-    expect(within(page).getByText(/Details were correct when this pack was downloaded on 5 October 2026/)).toBeInTheDocument()
+    expect(within(page).getByText(/Details were correct when this pack was saved on 5 October 2026/)).toBeInTheDocument()
   })
 
   it('renders the crisis page checklist groups with tick boxes and prints sources only where they exist', () => {

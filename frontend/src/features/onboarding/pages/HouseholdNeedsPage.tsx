@@ -1,7 +1,9 @@
 import { useState, type FormEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { appRoutes } from '../../../app/config/product'
+import { LocalOnlyNote } from '../../../shared/components/LocalOnlyNote'
 import { StepProgress } from '../../../shared/components/StepProgress'
+import { getMyArea } from '../../../storage/myAreaStorage'
 import { getHouseholdProfile, getOnboardingDraft, saveOnboardingDraft } from '../../../storage/onboardingDraftStorage'
 
 function toList(value: FormDataEntryValue | null) {
@@ -13,6 +15,7 @@ export function HouseholdNeedsPage() {
   const draft = getOnboardingDraft()
   const savedProfile = getHouseholdProfile()
   const currentProfile = draft?.profile ?? savedProfile ?? {}
+  const currentAreaPostcode = draft?.areaPostcode ?? getMyArea()?.postcode ?? ''
   const [postcodeError, setPostcodeError] = useState('')
   const [storageError, setStorageError] = useState('')
 
@@ -33,8 +36,8 @@ export function HouseholdNeedsPage() {
         hasPets: formData.get('hasPets') === 'yes',
         accessibilityNeeds: toList(formData.get('accessibilityNeeds')),
         healthNeeds: toList(formData.get('healthNeeds')),
-        postcode,
       },
+      areaPostcode: postcode,
       updatedAt: new Date().toISOString(),
     })
     if (!wasSaved) {
@@ -46,10 +49,15 @@ export function HouseholdNeedsPage() {
 
   return (
     <section className="flow-page" aria-labelledby="needs-title">
-      <StepProgress current={2} total={3} />
-      <h1 id="needs-title">Needs and location</h1>
-      <p className="lead">These optional details help organise useful preparation guidance.</p>
+      <StepProgress current={1} total={2} />
+      <h1 id="needs-title">About your household</h1>
+      <p className="lead">Only My area is required. Everything else is optional notes about your household, kept on this device.</p>
       <form className="form-stack" onSubmit={handleSubmit} noValidate>
+        <div className="field">
+          <label htmlFor="postcode">My area (postcode) <strong>Required</strong></label>
+          <input aria-describedby={postcodeError ? 'postcode-error' : 'postcode-help'} aria-invalid={Boolean(postcodeError)} id="postcode" name="postcode" inputMode="numeric" autoComplete="postal-code" maxLength={4} defaultValue={currentAreaPostcode} required />
+          {postcodeError ? <p className="field-error" id="postcode-error" role="alert">{postcodeError}</p> : <p className="field-help" id="postcode-help">Your crisis pack is built for this area. Exact location is not needed.</p>}
+        </div>
         <div className="field-grid">
           <div className="field">
             <label htmlFor="childrenUnder15">Children under 15 <span>Optional</span></label>
@@ -70,14 +78,10 @@ export function HouseholdNeedsPage() {
           <input id="healthNeeds" name="healthNeeds" defaultValue={currentProfile.healthNeeds?.join(', ')} />
           <p className="field-help">For example, medication needs refrigeration.</p>
         </div>
-        <div className="field">
-          <label htmlFor="postcode">Postcode <strong>Required</strong></label>
-          <input aria-describedby={postcodeError ? 'postcode-error' : 'postcode-help'} aria-invalid={Boolean(postcodeError)} id="postcode" name="postcode" inputMode="numeric" autoComplete="postal-code" maxLength={4} defaultValue={currentProfile.postcode ?? ''} required />
-          {postcodeError ? <p className="field-error" id="postcode-error" role="alert">{postcodeError}</p> : <p className="field-help" id="postcode-help">Used to organise nearby public information. Exact location is not needed.</p>}
-        </div>
+        <LocalOnlyNote variant="postcode" />
         {storageError ? <p className="field-error" role="alert">{storageError}</p> : null}
         <div className="flow-actions">
-          <button className="button button--quiet" type="button" onClick={() => navigate(appRoutes.householdBasics)}>Back</button>
+          <button className="button button--quiet" type="button" onClick={() => navigate(appRoutes.setupPrivacy)}>Back</button>
           <button className="button button--primary" type="submit">Review details</button>
         </div>
       </form>

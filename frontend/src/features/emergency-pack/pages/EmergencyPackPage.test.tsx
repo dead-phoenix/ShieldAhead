@@ -43,6 +43,10 @@ vi.mock('../../map/data/mapPlaceRepository', () => ({
   }),
 }))
 
+vi.mock('../../../data/preloadNearbyData', () => ({
+  preloadNearbyData: vi.fn(),
+}))
+
 vi.mock('../../../data/api/apiCrisisRepository', () => ({
   fetchHelplines: vi.fn().mockResolvedValue([
     { id: 'vicemergency', name: 'VicEmergency Hotline', serviceType: 'Emergency information', phone: '1800 226 226' },
@@ -68,11 +72,59 @@ describe('Crisis pack page', () => {
   beforeEach(() => {
     window.localStorage.clear()
     Object.defineProperty(window.navigator, 'onLine', { configurable: true, value: true })
-    window.localStorage.setItem(storageKeys.searchLocation, JSON.stringify({
+    window.localStorage.setItem(storageKeys.myArea, JSON.stringify({
       postcode: '3453',
       label: 'Harcourt 3453',
-      selectedAt: '2026-10-01T00:00:00.000Z',
+      savedAt: '2026-10-01T00:00:00.000Z',
     }))
+  })
+
+  it('builds the pack for My area, not for the last map search', async () => {
+    window.localStorage.setItem(storageKeys.searchLocation, JSON.stringify({
+      postcode: '3550',
+      label: 'Bendigo 3550',
+      selectedAt: '2026-10-02T00:00:00.000Z',
+    }))
+    renderPage()
+    await within(preview()).findByText('Wi-Fi 1')
+
+    expect(screen.getByText('Harcourt 3453', { selector: 'strong' })).toBeVisible()
+    expect(within(preview()).getByText('Near Harcourt 3453')).toBeVisible()
+    expect(within(preview()).queryByText(/Bendigo/)).not.toBeInTheDocument()
+    expect(JSON.parse(window.localStorage.getItem(storageKeys.emergencyPack)!).snapshot.postcode).toBe('3453')
+  })
+
+  it('prints the area and saved date in every page footer', async () => {
+    renderPage()
+    await within(preview()).findByText('Wi-Fi 1')
+    const today = new Intl.DateTimeFormat('en-AU', { dateStyle: 'long' }).format(new Date())
+
+    for (const page of pageRegions()) {
+      expect(within(page).getByText(`Built for Harcourt 3453 · Saved ${today}`)).toBeInTheDocument()
+    }
+    expect(within(preview()).getByText(`Details were correct when this pack was saved on ${today}. Check before relying on them.`)).toBeVisible()
+  })
+
+  it('asks which area the pack is for when My area is not set, then offers a ready download', async () => {
+    window.localStorage.removeItem(storageKeys.myArea)
+    const print = vi.spyOn(window, 'print').mockImplementation(() => undefined)
+    renderPage()
+    expect(screen.getByText(/My area is not set/)).toBeVisible()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Download crisis pack as PDF' }))
+    expect(print).not.toHaveBeenCalled()
+    expect(screen.getByRole('heading', { name: 'Which area is this pack for?' })).toBeVisible()
+
+    fireEvent.change(screen.getByLabelText('Postcode'), { target: { value: '3453' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Save My area and build pack' }))
+
+    const ready = await screen.findByRole('button', { name: 'Ready. Download pack' })
+    expect(JSON.parse(window.localStorage.getItem(storageKeys.myArea)!)).toMatchObject({ postcode: '3453', label: '3453' })
+    expect(print).not.toHaveBeenCalled()
+    fireEvent.click(ready)
+    expect(print).toHaveBeenCalledTimes(1)
+    expect(screen.getByRole('button', { name: 'Download crisis pack as PDF' })).toBeVisible()
+    print.mockRestore()
   })
 
   it('shows six pressed toggles by default and the full preview', async () => {

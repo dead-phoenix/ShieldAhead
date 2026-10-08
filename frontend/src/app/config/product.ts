@@ -30,6 +30,7 @@ export const appRoutes = {
   editProfile: '/settings/edit-profile',
   consentSettings: '/settings/consent',
   offlineInformation: '/settings/offline-information',
+  myArea: '/settings/my-area',
   deleteProfile: '/settings/delete-profile',
 } as const
 
@@ -40,6 +41,7 @@ export const storageKeys = {
   offlinePreferences: 'shieldahead.offline-preferences.v1',
   usualWifiSpot: 'shieldahead.usual-wifi-spot.v1',
   searchLocation: 'shieldahead.search-location.v1',
+  myArea: 'shieldahead.my-area.v1',
   crisisChecklist: 'shieldahead.crisis-checklist.v1',
   emergencyPack: 'shieldahead.emergency-pack.v1',
   siteUnlocked: 'shieldahead.site-unlocked.v1',

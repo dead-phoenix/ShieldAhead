@@ -6,7 +6,6 @@ import { CrisisLandingPage } from '../features/crisis/pages/CrisisLandingPage'
 import { CrisisDetailPage } from '../features/crisis/pages/CrisisDetailPage'
 import { CrisisGuidancePage } from '../features/crisis/pages/CrisisGuidancePage'
 import { ChooseLocationPage } from '../features/location/pages/ChooseLocationPage'
-import { HouseholdBasicsPage } from '../features/onboarding/pages/HouseholdBasicsPage'
 import { HouseholdNeedsPage } from '../features/onboarding/pages/HouseholdNeedsPage'
 import { ConsentChoicesPage } from '../features/onboarding/pages/ConsentChoicesPage'
 import { DataPrivacyPage } from '../features/onboarding/pages/DataPrivacyPage'
@@ -15,6 +14,7 @@ import { SetupReviewPage } from '../features/onboarding/pages/SetupReviewPage'
 import { SetupWelcomePage } from '../features/onboarding/pages/SetupWelcomePage'
 import { DeleteProfilePage } from '../features/settings/pages/DeleteProfilePage'
 import { EditProfilePage } from '../features/settings/pages/EditProfilePage'
+import { MyAreaPage } from '../features/settings/pages/MyAreaPage'
 import { ConsentSettingsPage } from '../features/settings/pages/ConsentSettingsPage'
 import { OfflineInformationPage } from '../features/settings/pages/OfflineInformationPage'
 import { SettingsPage } from '../features/settings/pages/SettingsPage'
@@ -60,10 +60,7 @@ export function AppRouter() {
           <Route index element={<HomePage />} />
           <Route path={appRoutes.setup} element={<SetupWelcomePage />} />
           <Route path={appRoutes.setupPrivacy} element={<DataPrivacyPage />} />
-          <Route
-            path={appRoutes.householdBasics}
-            element={<HouseholdBasicsPage />}
-          />
+          <Route path={appRoutes.householdBasics} element={<Navigate replace to={appRoutes.householdNeeds} />} />
           <Route path={appRoutes.householdNeeds} element={<HouseholdNeedsPage />} />
           <Route path={appRoutes.setupReview} element={<SetupReviewPage />} />
           <Route path={appRoutes.consentChoices} element={<ConsentChoicesPage />} />
@@ -84,6 +81,7 @@ export function AppRouter() {
           <Route path={appRoutes.editProfile} element={<EditProfilePage />} />
           <Route path={appRoutes.consentSettings} element={<ConsentSettingsPage />} />
           <Route path={appRoutes.offlineInformation} element={<OfflineInformationPage />} />
+          <Route path={appRoutes.myArea} element={<MyAreaPage />} />
           <Route path={appRoutes.deleteProfile} element={<DeleteProfilePage />} />
           <Route path="*" element={<Navigate replace to={appRoutes.home} />} />
         </Route>

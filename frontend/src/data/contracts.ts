@@ -1,12 +1,16 @@
 export interface HouseholdProfile {
-  name?: string
-  age?: number
-  householdSize?: number
   childrenUnder15?: number
   hasPets?: boolean
   accessibilityNeeds?: string[]
   healthNeeds?: string[]
+}
+
+export interface MyArea {
   postcode: string
+  localityId?: string
+  localityName?: string
+  label: string
+  savedAt: string
 }
 
 export interface ConsentState {

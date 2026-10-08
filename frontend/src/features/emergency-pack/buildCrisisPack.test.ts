@@ -15,8 +15,6 @@ vi.mock('./crisisPackSources', () => ({
   },
 }))
 
-const downloadedAt = new Date(2026, 9, 5, 12)
-
 const allOff: EmergencyPackPreferences = {
   includeHelplines: false,
   includeWifi: false,
@@ -44,13 +42,13 @@ function snapshot(overrides: Partial<EmergencyPackSnapshot> = {}): EmergencyPack
 
 describe('buildCrisisPack', () => {
   it('renders only the contacts page when every toggle is off', () => {
-    const pack = buildCrisisPack({ preferences: allOff, snapshot: snapshot(), downloadedAt })
+    const pack = buildCrisisPack({ preferences: allOff, snapshot: snapshot() })
     expect(pack.pages.map((page) => page.kind)).toEqual(['contacts'])
     expect(pack).toMatchSnapshot()
   })
 
   it('pins Triple Zero and VICSES first and drops data helplines with the same phone', () => {
-    const pack = buildCrisisPack({ preferences: { ...allOff, includeHelplines: true }, snapshot: snapshot(), downloadedAt })
+    const pack = buildCrisisPack({ preferences: { ...allOff, includeHelplines: true }, snapshot: snapshot() })
     const getHelp = pack.pages[0] as CrisisPackGetHelpPage
     expect(getHelp.helplines?.map((helpline) => helpline.phone)).toEqual(['000', '132 500', '1800 226 226'])
     expect(getHelp.helplines?.[0].note).toBe('For life-threatening danger')
@@ -60,7 +58,7 @@ describe('buildCrisisPack', () => {
   })
 
   it('renders the flood checklist exactly as the crisis page groups it, with only filled-in sources', () => {
-    const pack = buildCrisisPack({ preferences: { ...allOff, crises: ['flood'] }, snapshot: snapshot(), downloadedAt })
+    const pack = buildCrisisPack({ preferences: { ...allOff, crises: ['flood'] }, snapshot: snapshot() })
     const flood = pack.pages[0] as CrisisPackChecklistPage
     expect(pack.pages.map((page) => page.id)).toEqual(['checklist-flood', 'contacts'])
     expect(flood.title).toBe('Flood Household Checklist')
@@ -74,7 +72,7 @@ describe('buildCrisisPack', () => {
   })
 
   it("puts the dos and don'ts on the checklist page", () => {
-    const pack = buildCrisisPack({ preferences: { ...allOff, crises: ['flood'] }, snapshot: snapshot(), downloadedAt })
+    const pack = buildCrisisPack({ preferences: { ...allOff, crises: ['flood'] }, snapshot: snapshot() })
     const { guidelines } = pack.pages[0] as CrisisPackChecklistPage
     expect(guidelines.dos).toEqual(crisisGuidelines.flood.dos)
     expect(guidelines.donts).toContain('Never walk, ride, or drive through floodwater.')
@@ -84,7 +82,6 @@ describe('buildCrisisPack', () => {
     const pack = buildCrisisPack({
       preferences: { ...allOff, crises: ['power-outage', 'bushfire', 'flood'] },
       snapshot: snapshot(),
-      downloadedAt,
     })
     expect(pack.pages.map((page) => `${page.id} ${page.pageNumber} of ${page.totalPages}`)).toEqual([
       'checklist-bushfire 1 of 4',
@@ -100,12 +97,11 @@ describe('buildCrisisPack', () => {
     const pack = buildCrisisPack({
       preferences: { ...allOff, includeWifi: true, includeCharities: true },
       snapshot: snapshot({ wifi: [place('w1'), place('w2')], support: [place('s1')] }),
-      downloadedAt,
     })
     const getHelp = pack.pages[0] as CrisisPackGetHelpPage
     expect(getHelp.helplines).toBeUndefined()
     expect(getHelp.placeColumns.map((column) => column.places.length)).toEqual([2, 1])
-    expect(getHelp.freshnessNote).toBe('Details were correct when this pack was downloaded on 5 October 2026. Check before relying on them.')
+    expect(getHelp.freshnessNote).toBe('Details were correct when this pack was saved on 5 October 2026. Check before relying on them.')
     expect(pack).toMatchSnapshot()
   })
 
@@ -113,7 +109,6 @@ describe('buildCrisisPack', () => {
     const pack = buildCrisisPack({
       preferences: { ...allOff, includeWifi: true },
       snapshot: snapshot({ wifi: ['1', '2', '3', '4', '5', '6'].map(place) }),
-      downloadedAt,
     })
     expect((pack.pages[0] as CrisisPackGetHelpPage).placeColumns[0].places).toHaveLength(5)
   })
@@ -128,7 +123,6 @@ describe('buildCrisisPack', () => {
           { id: 'c', name: 'Pop-up hotspot', suburb: 'Area not confirmed', postcode: '' },
         ],
       }),
-      downloadedAt,
     })
     expect((pack.pages[0] as CrisisPackGetHelpPage).placeColumns[0].places).toEqual([
       { id: 'a', name: 'Library at the Dock', detail: '401 Docklands Dr, Docklands VIC 3008' },
@@ -140,7 +134,6 @@ describe('buildCrisisPack', () => {
     const pack = buildCrisisPack({
       preferences: { ...allOff, includeCharities: true },
       snapshot: snapshot({ areaLabel: 'Harcourt 3453', postcode: '3453' }),
-      downloadedAt,
     })
     const getHelp = pack.pages[0] as CrisisPackGetHelpPage
     expect(getHelp.areaLine).toBe('Near Harcourt 3453')
@@ -149,7 +142,7 @@ describe('buildCrisisPack', () => {
 
   it('omits the area line when there is no location, only a postcode, or no places', () => {
     const areaLineFor = (overrides: Partial<EmergencyPackSnapshot>, preferences = { ...allOff, includeWifi: true }) =>
-      (buildCrisisPack({ preferences, snapshot: snapshot(overrides), downloadedAt }).pages[0] as CrisisPackGetHelpPage).areaLine
+      (buildCrisisPack({ preferences, snapshot: snapshot(overrides) }).pages[0] as CrisisPackGetHelpPage).areaLine
     expect(areaLineFor({ areaLabel: '', postcode: '' })).toBeUndefined()
     expect(areaLineFor({ areaLabel: '3453', postcode: '3453' })).toBeUndefined()
     expect(areaLineFor({ areaLabel: 'Harcourt 3453', postcode: '3453' }, { ...allOff, includeHelplines: true })).toBeUndefined()
@@ -159,10 +152,26 @@ describe('buildCrisisPack', () => {
     const pack = buildCrisisPack({
       preferences: { ...allOff, includeWifi: true, includeCharities: true },
       snapshot: snapshot({ placesSavedAt: {} }),
-      downloadedAt,
     })
     const columns = (pack.pages[0] as CrisisPackGetHelpPage).placeColumns
     expect(columns.map((column) => column.message)).toEqual(['Not available offline', 'Not available offline'])
+  })
+
+  it('always states the area the pack was built for and when it was saved', () => {
+    const builtFor = (overrides: Partial<EmergencyPackSnapshot>) =>
+      buildCrisisPack({ preferences: allOff, snapshot: snapshot(overrides) }).builtForLine
+    expect(builtFor({ areaLabel: 'Harcourt 3453', postcode: '3453' })).toBe('Built for Harcourt 3453 · Saved 5 October 2026')
+    expect(builtFor({ areaLabel: '', postcode: '3453' })).toBe('Built for 3453 · Saved 5 October 2026')
+    expect(builtFor({ areaLabel: '', postcode: '', savedAt: undefined })).toBe('Area not set · Not saved yet')
+  })
+
+  it('says the pack has not been saved yet when there is no saved date', () => {
+    const pack = buildCrisisPack({
+      preferences: { ...allOff, includeWifi: true },
+      snapshot: snapshot({ savedAt: undefined }),
+    })
+    expect((pack.pages[0] as CrisisPackGetHelpPage).freshnessNote)
+      .toBe('This pack has not been saved on this device yet. Check details before relying on them.')
   })
 
   it('prints the saved checklist from the API when there is one', () => {
@@ -171,7 +180,6 @@ describe('buildCrisisPack', () => {
       snapshot: snapshot({
         checklists: { bushfire: [{ id: 'new-group', title: 'New', items: [{ id: 'new-item', task: 'A brand new task' }] }] },
       }),
-      downloadedAt,
     })
     expect((pack.pages[0] as CrisisPackChecklistPage).groups).toEqual([
       { id: 'new-group', title: 'New', tasks: [{ id: 'new-group.new-item', title: 'A brand new task' }] },

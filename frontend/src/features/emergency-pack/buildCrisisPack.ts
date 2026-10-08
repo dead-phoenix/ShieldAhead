@@ -94,12 +94,13 @@ export type CrisisPackPage = CrisisPackGetHelpPage | CrisisPackChecklistPage | C
 export interface CrisisPack {
   pages: CrisisPackPage[]
   summary: string
+  /** "Built for <area> · Saved <date>", printed in every page footer. */
+  builtForLine: string
 }
 
 export interface BuildCrisisPackInput {
   preferences: EmergencyPackPreferences
   snapshot: EmergencyPackSnapshot
-  downloadedAt: Date
 }
 
 type UnnumberedPage = CrisisPackPage extends infer Page
@@ -110,8 +111,26 @@ function phoneKey(phone: string): string {
   return phone.replace(/\D/g, '')
 }
 
-function formatDownloadDate(date: Date): string {
-  return new Intl.DateTimeFormat('en-AU', { dateStyle: 'long' }).format(date)
+function formatPackDate(value: string | undefined): string | undefined {
+  if (!value) return undefined
+  const date = new Date(value)
+  return Number.isNaN(date.getTime()) ? undefined : new Intl.DateTimeFormat('en-AU', { dateStyle: 'long' }).format(date)
+}
+
+function builtForLine(snapshot: EmergencyPackSnapshot): string {
+  const area = snapshot.areaLabel.trim() || snapshot.postcode.trim()
+  const savedOn = formatPackDate(snapshot.savedAt)
+  return [
+    area ? `Built for ${area}` : 'Area not set',
+    savedOn ? `Saved ${savedOn}` : 'Not saved yet',
+  ].join(' · ')
+}
+
+function freshnessNote(snapshot: EmergencyPackSnapshot): string {
+  const savedOn = formatPackDate(snapshot.savedAt)
+  return savedOn
+    ? `Details were correct when this pack was saved on ${savedOn}. Check before relying on them.`
+    : 'This pack has not been saved on this device yet. Check details before relying on them.'
 }
 
 function packHelplines(snapshot: EmergencyPackSnapshot): CrisisPackHelpline[] {
@@ -159,7 +178,7 @@ function areaLine(snapshot: EmergencyPackSnapshot): string | undefined {
 }
 
 function getHelpPage(input: BuildCrisisPackInput): UnnumberedPage | null {
-  const { preferences, snapshot, downloadedAt } = input
+  const { preferences, snapshot } = input
   if (!preferences.includeHelplines && !preferences.includeWifi && !preferences.includeCharities) return null
 
   const placeColumns: CrisisPackPlaceColumn[] = []
@@ -180,9 +199,7 @@ function getHelpPage(input: BuildCrisisPackInput): UnnumberedPage | null {
     helplinesTitle: 'Helplines',
     helplines: preferences.includeHelplines ? packHelplines(snapshot) : undefined,
     placeColumns,
-    freshnessNote: placeColumns.length > 0
-      ? `Details were correct when this pack was downloaded on ${formatDownloadDate(downloadedAt)}. Check before relying on them.`
-      : undefined,
+    freshnessNote: placeColumns.length > 0 ? freshnessNote(snapshot) : undefined,
   }
 }
 
@@ -244,5 +261,6 @@ export function buildCrisisPack(input: BuildCrisisPackInput): CrisisPack {
   return {
     pages,
     summary: `Preview: ${totalPages} ${pageWord}. ${pages.map((page) => page.label).join(', ')}.`,
+    builtForLine: builtForLine(input.snapshot),
   }
 }

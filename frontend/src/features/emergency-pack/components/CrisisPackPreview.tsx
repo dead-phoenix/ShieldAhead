@@ -23,7 +23,7 @@ export function CrisisPackPreview({ pack }: { pack: CrisisPack }) {
     <div className="crisis-pack-preview" role="region" aria-label="Crisis pack preview" aria-describedby={summaryId}>
       <p id={summaryId} className="crisis-pack-preview__summary" aria-live="polite">{pack.summary}</p>
       {pack.pages.map((page) => (
-        <PackPageFrame key={page.id} page={page}>
+        <PackPageFrame key={page.id} page={page} builtForLine={pack.builtForLine}>
           <PackPageContent page={page} />
         </PackPageFrame>
       ))}

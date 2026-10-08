@@ -2,6 +2,7 @@
 
 exports[`buildCrisisPack > orders all three checklists bushfire, flood, power outage and numbers every page 1`] = `
 {
+  "builtForLine": "Area not set · Saved 5 October 2026",
   "pages": [
     {
       "crisis": "bushfire",
@@ -293,6 +294,7 @@ exports[`buildCrisisPack > orders all three checklists bushfire, flood, power ou
 
 exports[`buildCrisisPack > pins Triple Zero and VICSES first and drops data helplines with the same phone 1`] = `
 {
+  "builtForLine": "Area not set · Saved 5 October 2026",
   "pages": [
     {
       "freshnessNote": undefined,
@@ -348,6 +350,7 @@ exports[`buildCrisisPack > pins Triple Zero and VICSES first and drops data help
 
 exports[`buildCrisisPack > renders only the contacts page when every toggle is off 1`] = `
 {
+  "builtForLine": "Area not set · Saved 5 October 2026",
   "pages": [
     {
       "columns": [
@@ -372,9 +375,10 @@ exports[`buildCrisisPack > renders only the contacts page when every toggle is o
 
 exports[`buildCrisisPack > renders only the places that exist when fewer than 5 are available 1`] = `
 {
+  "builtForLine": "Area not set · Saved 5 October 2026",
   "pages": [
     {
-      "freshnessNote": "Details were correct when this pack was downloaded on 5 October 2026. Check before relying on them.",
+      "freshnessNote": "Details were correct when this pack was saved on 5 October 2026. Check before relying on them.",
       "helplines": undefined,
       "helplinesTitle": "Helplines",
       "id": "get-help",
@@ -437,6 +441,7 @@ exports[`buildCrisisPack > renders only the places that exist when fewer than 5 
 
 exports[`buildCrisisPack > renders the flood checklist exactly as the crisis page groups it, with only filled-in sources 1`] = `
 {
+  "builtForLine": "Area not set · Saved 5 October 2026",
   "pages": [
     {
       "crisis": "flood",

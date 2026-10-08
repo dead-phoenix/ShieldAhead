@@ -22,7 +22,7 @@ const primaryNavigation = [
 export function AppShell() {
   const { pathname } = useLocation()
   const isSetupFlow = pathname.startsWith(appRoutes.setup)
-  const showAuthActions = !isSetupFlow && !hasCompletedSetup()
+  const showSetupAction = !isSetupFlow && !hasCompletedSetup()
   const activeNavigationIndex = primaryNavigation.findIndex((item) =>
     item.end ? pathname === item.to : pathname.startsWith(item.to),
   )
@@ -65,11 +65,8 @@ export function AppShell() {
         {!isSetupFlow ? (
           <nav className="header-auth" aria-label="Site actions">
             <GetTheAppButton />
-            {showAuthActions ? (
-              <>
-                <Link className="header-auth__login" to={appRoutes.setup}>Log in</Link>
-                <Link className="header-auth__signup" to={appRoutes.setup}>Sign up</Link>
-              </>
+            {showSetupAction ? (
+              <Link className="header-auth__signup" to={appRoutes.setup}>Set up my household</Link>
             ) : null}
             <NavLink
               aria-label="Profile"
