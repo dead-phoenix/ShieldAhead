@@ -5,6 +5,8 @@ import { LocalOnlyNote } from '../../../shared/components/LocalOnlyNote'
 import { StepProgress } from '../../../shared/components/StepProgress'
 import { getMyArea } from '../../../storage/myAreaStorage'
 import { getHouseholdProfile, getOnboardingDraft, saveOnboardingDraft } from '../../../storage/onboardingDraftStorage'
+import { LocalityPicker } from '../../settings/components/LocalityPicker'
+import { useAreaLocalityChoice } from '../../settings/components/useAreaLocalityChoice'
 
 function toList(value: FormDataEntryValue | null) {
   return String(value ?? '').split(',').map((item) => item.trim()).filter(Boolean)
@@ -18,8 +20,9 @@ export function HouseholdNeedsPage() {
   const currentAreaPostcode = draft?.areaPostcode ?? getMyArea()?.postcode ?? ''
   const [postcodeError, setPostcodeError] = useState('')
   const [storageError, setStorageError] = useState('')
+  const locality = useAreaLocalityChoice()
 
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
     const formData = new FormData(event.currentTarget)
     const postcode = String(formData.get('postcode') ?? '').trim()
@@ -27,6 +30,9 @@ export function HouseholdNeedsPage() {
       setPostcodeError('Enter a four-digit Australian postcode, such as 3453.')
       return
     }
+    setPostcodeError('')
+    const chosen = await locality.resolve(postcode, formData)
+    if (!chosen) return
     const childrenValue = String(formData.get('childrenUnder15') ?? '')
     const wasSaved = saveOnboardingDraft({
       currentStep: 'review',
@@ -38,6 +44,8 @@ export function HouseholdNeedsPage() {
         healthNeeds: toList(formData.get('healthNeeds')),
       },
       areaPostcode: postcode,
+      areaLocalityId: chosen.localityId,
+      areaLocalityName: chosen.localityName,
       updatedAt: new Date().toISOString(),
     })
     if (!wasSaved) {
@@ -52,12 +60,15 @@ export function HouseholdNeedsPage() {
       <StepProgress current={1} total={2} />
       <h1 id="needs-title">About your household</h1>
       <p className="lead">Only My area is required. Everything else is optional notes about your household, kept on this device.</p>
-      <form className="form-stack" onSubmit={handleSubmit} noValidate>
+      <form className="form-stack" onSubmit={(event) => void handleSubmit(event)} noValidate>
         <div className="field">
           <label htmlFor="postcode">My area (postcode) <strong>Required</strong></label>
-          <input aria-describedby={postcodeError ? 'postcode-error' : 'postcode-help'} aria-invalid={Boolean(postcodeError)} id="postcode" name="postcode" inputMode="numeric" autoComplete="postal-code" maxLength={4} defaultValue={currentAreaPostcode} required />
+          <input aria-describedby={postcodeError ? 'postcode-error' : 'postcode-help'} aria-invalid={Boolean(postcodeError)} id="postcode" name="postcode" inputMode="numeric" autoComplete="postal-code" maxLength={4} defaultValue={currentAreaPostcode} required onChange={(event) => {
+            if (locality.choices && event.target.value.trim() !== locality.choices.postcode) locality.reset()
+          }} />
           {postcodeError ? <p className="field-error" id="postcode-error" role="alert">{postcodeError}</p> : <p className="field-help" id="postcode-help">Your crisis pack is built for this area. Exact location is not needed.</p>}
         </div>
+        {locality.choices ? <LocalityPicker choices={locality.choices} error={locality.choiceError} /> : null}
         <div className="field-grid">
           <div className="field">
             <label htmlFor="childrenUnder15">Children under 15 <span>Optional</span></label>
@@ -82,7 +93,7 @@ export function HouseholdNeedsPage() {
         {storageError ? <p className="field-error" role="alert">{storageError}</p> : null}
         <div className="flow-actions">
           <button className="button button--quiet" type="button" onClick={() => navigate(appRoutes.setupPrivacy)}>Back</button>
-          <button className="button button--primary" type="submit">Review details</button>
+          <button className="button button--primary" type="submit" disabled={locality.isChecking}>Review details</button>
         </div>
       </form>
     </section>

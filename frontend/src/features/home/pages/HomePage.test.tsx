@@ -54,4 +54,21 @@ describe('home landing page', () => {
 
     expect(screen.getByTestId('location')).toHaveTextContent('/crisis/bushfire/guidance')
   })
+
+  it('links to the saved nearby services', () => {
+    renderHome()
+    expect(screen.getByRole('link', { name: 'Saved nearby services (works offline)' })).toHaveAttribute('href', '/nearby')
+  })
+
+  it.each(['map', 'nearby', 'near me'])('opens saved nearby services for "%s" when offline', (query) => {
+    Object.defineProperty(window.navigator, 'onLine', { configurable: true, value: false })
+    try {
+      renderHome()
+      fireEvent.change(screen.getByRole('combobox'), { target: { value: query } })
+      fireEvent.submit(screen.getByRole('combobox').closest('form')!)
+      expect(screen.getByTestId('location')).toHaveTextContent(/^\/nearby$/)
+    } finally {
+      Object.defineProperty(window.navigator, 'onLine', { configurable: true, value: true })
+    }
+  })
 })

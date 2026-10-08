@@ -1,4 +1,8 @@
+import type { MyArea } from '../../data/contracts'
+import { snapshotMatchesArea, type NearbySnapshot } from '../../data/offline/nearbySnapshot'
+import type { OfflineServiceCategory } from '../../data/offlineData'
 import { householdChecklistTitles, pinnedHelplines, type CrisisKind } from '../crisis/crisisContent'
+import { formatDistanceKm, formatNearbyDate, nearbyCategoryTitles, nearbyCopy, serviceDetail } from '../nearby/nearbyCopy'
 import { clampPlaceText, distinctPlaces, packDisplayName, packPlaceAddress } from './crisisPackPlaceText'
 import { bundledPackChecklist } from './crisisPackSnapshot'
 import { crisisPackSources, type CrisisPackSource } from './crisisPackSources'
@@ -89,7 +93,26 @@ export interface CrisisPackContactsPage extends CrisisPackPageBase {
   outsideContactLabel: string
 }
 
-export type CrisisPackPage = CrisisPackGetHelpPage | CrisisPackChecklistPage | CrisisPackContactsPage
+export interface CrisisPackNearbyGroup {
+  id: OfflineServiceCategory
+  title: string
+  places: CrisisPackPlace[]
+  /** Shown instead of the list when nothing is saved for this category. */
+  message?: string
+}
+
+export interface CrisisPackNearbyPage extends CrisisPackPageBase {
+  kind: 'nearby'
+  title: string
+  emergencyLine: string
+  areaHeading: string
+  /** Set when the saved list is for a different area than My area. */
+  staleNotice?: string
+  groups: CrisisPackNearbyGroup[]
+  freshnessNote?: string
+}
+
+export type CrisisPackPage = CrisisPackGetHelpPage | CrisisPackNearbyPage | CrisisPackChecklistPage | CrisisPackContactsPage
 
 export interface CrisisPack {
   pages: CrisisPackPage[]
@@ -101,6 +124,8 @@ export interface CrisisPack {
 export interface BuildCrisisPackInput {
   preferences: EmergencyPackPreferences
   snapshot: EmergencyPackSnapshot
+  /** The saved nearby services; the nearby page is left out when there is none. */
+  nearby?: { snapshot: NearbySnapshot | null; myArea: MyArea | null }
 }
 
 type UnnumberedPage = CrisisPackPage extends infer Page
@@ -203,6 +228,37 @@ function getHelpPage(input: BuildCrisisPackInput): UnnumberedPage | null {
   }
 }
 
+const PACK_NEARBY_CATEGORIES: readonly OfflineServiceCategory[] = ['hospital', 'police', 'fire', 'ambulance']
+const PACK_NEARBY_PER_CATEGORY = 3
+
+function nearbyPage(nearby: BuildCrisisPackInput['nearby']): UnnumberedPage | null {
+  const snapshot = nearby?.snapshot
+  if (!snapshot || !snapshot.originInRegion) return null
+  const myArea = nearby?.myArea ?? null
+  const isStale = Boolean(myArea && !snapshotMatchesArea(snapshot, myArea))
+  const savedOn = formatNearbyDate(snapshot.builtAt)
+
+  return {
+    kind: 'nearby',
+    id: 'nearby',
+    label: 'Nearby services',
+    title: nearbyCopy.pageTitle,
+    emergencyLine: nearbyCopy.emergency,
+    areaHeading: isStale ? nearbyCopy.staleListHeading(snapshot.originLabel) : nearbyCopy.savedListHeading(snapshot.originLabel),
+    ...(isStale && myArea ? { staleNotice: nearbyCopy.staleArea(snapshot.originLabel, myArea.label) } : {}),
+    groups: PACK_NEARBY_CATEGORIES.map((category) => {
+      const places = (snapshot.nearest[category] ?? []).slice(0, PACK_NEARBY_PER_CATEGORY).map((record) => {
+        const detail = [serviceDetail(record), formatDistanceKm(record.distanceKm)].filter(Boolean).join(' · ')
+        return { id: record.id, name: clampPlaceText(record.name), detail: clampPlaceText(detail) }
+      })
+      return places.length > 0
+        ? { id: category, title: nearbyCategoryTitles[category], places }
+        : { id: category, title: nearbyCategoryTitles[category], places: [], message: nearbyCopy.noneInCategory }
+    }),
+    ...(savedOn ? { freshnessNote: nearbyCopy.savedOn(savedOn) } : {}),
+  }
+}
+
 function checklistPage(kind: CrisisKind, label: string, snapshot: EmergencyPackSnapshot): UnnumberedPage {
   const groups = snapshot.checklists[kind]?.length ? snapshot.checklists[kind] : bundledPackChecklist(kind)
   return {
@@ -248,6 +304,7 @@ function contactsPage(): UnnumberedPage {
 export function buildCrisisPack(input: BuildCrisisPackInput): CrisisPack {
   const unnumbered: UnnumberedPage[] = [
     getHelpPage(input),
+    nearbyPage(input.nearby),
     ...crisisPackOptions
       .filter((option) => input.preferences.crises.includes(option.kind))
       .map((option) => checklistPage(option.kind, option.label, input.snapshot)),

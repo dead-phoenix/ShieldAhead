@@ -35,7 +35,7 @@ export function SettingsPage() {
           <section className="settings-group" aria-labelledby="stored-data-title"><h2 id="stored-data-title">Stored data</h2>
             <Link className="settings-row" to={appRoutes.offlineInformation}><Database aria-hidden="true" size={22} /><span><strong>Offline information</strong><small>{offline.wifiSaved || offline.supportSaved ? 'Wi-Fi and support records are available' : 'No public information selected'}</small></span><ArrowRight aria-hidden="true" size={19} /></Link>
             <Link className="settings-row" to={appRoutes.consentSettings}><ShieldCheck aria-hidden="true" size={22} /><span><strong>Consent choices</strong><small>{consent ? `${allowedConsentCount} of ${householdCategories.length} optional categories allowed` : 'No choices saved'}</small></span><ArrowRight aria-hidden="true" size={19} /></Link>
-            <div className="settings-row settings-row--static"><MapPin aria-hidden="true" size={22} /><span><strong>Location use</strong><small>Postcode only — no live location access</small></span></div>
+            <div className="settings-row settings-row--static"><MapPin aria-hidden="true" size={22} /><span><strong>Location use</strong><small>My area postcode. Live location only when you ask, and it stays on this device</small></span></div>
           </section>
         </>
       ) : (

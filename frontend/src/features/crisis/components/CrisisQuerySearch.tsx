@@ -5,7 +5,7 @@ import { appRoutes } from '../../../app/config/product'
 import { useOnlineStatus } from '../../../shared/hooks/useOnlineStatus'
 import { useVoiceInput } from '../../../shared/hooks/useVoiceInput'
 import { matchCrisisKind, matchCrisisStage, SUGGESTED_CRISIS_QUERIES } from '../matchCrisisQuery'
-import { matchNavigationIntent } from '../matchNavigationIntent'
+import { matchNavigationIntent, offlineNavigationTarget } from '../matchNavigationIntent'
 
 // Shared by the home and pre-crisis pages. Page destinations (wifi,
 // hospitals, charities, the emergency pack, …) are checked before hazards,
@@ -35,7 +35,7 @@ export function CrisisQuerySearch({ variant = 'crisis' }: { variant?: 'crisis' |
     if (destination) {
       setSearchError('')
       setShowSuggestions(false)
-      navigate(destination)
+      navigate(offlineNavigationTarget(destination, isOnline))
       return
     }
     const kind = matchCrisisKind(text)

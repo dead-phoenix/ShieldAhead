@@ -18,6 +18,7 @@ export const appRoutes = {
   setupComplete: '/setup/complete',
   location: '/location',
   map: '/map',
+  nearby: '/nearby',
   wifi: '/wifi',
   wifiDetail: (id: string) => `/wifi/${id}`,
   support: '/support',
@@ -45,4 +46,7 @@ export const storageKeys = {
   crisisChecklist: 'shieldahead.crisis-checklist.v1',
   emergencyPack: 'shieldahead.emergency-pack.v1',
   siteUnlocked: 'shieldahead.site-unlocked.v1',
+  nearbySnapshot: 'shieldahead.nearby-snapshot.v1',
+  /** sessionStorage: set once the background nearby refresh has been tried in this session. */
+  nearbyRefreshTried: 'shieldahead.nearby-refresh-tried.v1',
 } as const

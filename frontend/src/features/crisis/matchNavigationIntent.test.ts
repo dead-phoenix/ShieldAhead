@@ -1,5 +1,14 @@
 import { describe, expect, it } from 'vitest'
-import { matchNavigationIntent } from './matchNavigationIntent'
+import { matchNavigationIntent, offlineNavigationTarget } from './matchNavigationIntent'
+
+describe('offlineNavigationTarget', () => {
+  it('sends the plain Map destination to /nearby only when offline', () => {
+    expect(offlineNavigationTarget('/map', false)).toBe('/nearby')
+    expect(offlineNavigationTarget('/map', true)).toBe('/map')
+    expect(offlineNavigationTarget('/map?category=wifi', false)).toBe('/map?category=wifi')
+    expect(offlineNavigationTarget('/emergency-pack', false)).toBe('/emergency-pack')
+  })
+})
 
 describe('matchNavigationIntent', () => {
   it.each([

@@ -1,6 +1,18 @@
 import { describe, expect, it } from 'vitest'
 import type { OfflineServiceCategory } from '../../data/offlineData'
-import { haversineKm, nearestByCategory } from './geo'
+import { haversineKm, isWithinBbox, nearestByCategory } from './geo'
+
+describe('isWithinBbox', () => {
+  const bbox = [143.29, -37.59, 145.18, -35.86] as const
+
+  it('includes points inside the box or within the buffer, and excludes the rest', () => {
+    expect(isWithinBbox({ lat: -36.75, lng: 144.28 }, bbox)).toBe(true)
+    expect(isWithinBbox({ lat: -37.65, lng: 144.28 }, bbox)).toBe(false)
+    expect(isWithinBbox({ lat: -37.65, lng: 144.28 }, bbox, 0.1)).toBe(true)
+    expect(isWithinBbox({ lat: -37.8132, lng: 144.9624 }, bbox, 0.1)).toBe(false)
+    expect(isWithinBbox({ lat: Number.NaN, lng: 144.28 }, bbox, 0.1)).toBe(false)
+  })
+})
 
 const BENDIGO = { lat: -36.757, lng: 144.2794 }
 const CASTLEMAINE = { lat: -37.0636, lng: 144.2173 }

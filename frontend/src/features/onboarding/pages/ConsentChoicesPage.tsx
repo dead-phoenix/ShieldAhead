@@ -21,7 +21,11 @@ export function ConsentChoicesPage() {
   if (!draft?.areaPostcode) return <Navigate replace to={appRoutes.householdNeeds} />
 
   function finishSetup() {
-    const areaSaved = saveMyArea({ postcode: draft!.areaPostcode! })
+    const areaSaved = saveMyArea({
+      postcode: draft!.areaPostcode!,
+      localityId: draft!.areaLocalityId,
+      localityName: draft!.areaLocalityName,
+    })
     const profileSaved = saveHouseholdProfile(profileForChoices(draft!.profile, choices))
     const consentSaved = saveConsentState({
       profileStorageAccepted: true,

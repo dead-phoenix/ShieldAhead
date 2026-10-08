@@ -201,6 +201,16 @@
   font-size: calc(var(--pt) * 8);
 }
 
+.pack-nearby__emergency {
+  font-size: calc(var(--pt) * 12);
+}
+
+.pack-nearby__notice {
+  padding: calc(var(--pt) * 4) calc(var(--pt) * 6);
+  border: calc(var(--pt) * 1.5) solid currentColor;
+  font-weight: 700;
+}
+
 .pack-task-group {
   display: grid;
   gap: calc(var(--pt) * 6);

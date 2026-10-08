@@ -2,6 +2,8 @@ import { fireEvent, render, screen, within } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { storageKeys } from '../../../app/config/product'
+import { buildNearbySnapshot } from '../../../data/offline/nearbySnapshot'
+import { fixtureBundle } from '../../../test/nearbyFixtures'
 import { EmergencyPackPage } from './EmergencyPackPage'
 
 vi.mock('../../map/data/mapPlaceRepository', () => ({
@@ -45,6 +47,10 @@ vi.mock('../../map/data/mapPlaceRepository', () => ({
 
 vi.mock('../../../data/preloadNearbyData', () => ({
   preloadNearbyData: vi.fn(),
+}))
+
+vi.mock('../../../data/offline/offlineDataLoader', () => ({
+  lookupLocalities: vi.fn().mockResolvedValue(null),
 }))
 
 vi.mock('../../../data/api/apiCrisisRepository', () => ({
@@ -207,6 +213,19 @@ describe('Crisis pack page', () => {
     expect(screen.getByRole('button', { name: 'Bushfire' })).toHaveAttribute('aria-pressed', 'false')
     expect(screen.getByRole('button', { name: 'Flood' })).toHaveAttribute('aria-pressed', 'true')
     await screen.findByText('1800 226 226')
+  })
+
+  it('adds the saved nearby services page when a snapshot exists', async () => {
+    const area = { postcode: '3453', localityId: 'loc-harcourt', localityName: 'Harcourt', label: 'Harcourt 3453', savedAt: '' }
+    window.localStorage.setItem(storageKeys.myArea, JSON.stringify(area))
+    window.localStorage.setItem(storageKeys.nearbySnapshot, JSON.stringify(buildNearbySnapshot(area, fixtureBundle())))
+    renderPage()
+    await within(preview()).findByText('Wi-Fi 1')
+
+    const nearbyPage = within(preview()).getByRole('region', { name: 'Page 2 of 6: Nearby services' })
+    expect(within(nearbyPage).getByRole('heading', { name: 'Saved nearby services' })).toBeVisible()
+    expect(within(nearbyPage).getByText('Near Harcourt 3453')).toBeVisible()
+    expect(within(nearbyPage).getByText('Harcourt Fire Station')).toBeVisible()
   })
 
   it('offers a single download button with a clear label', async () => {

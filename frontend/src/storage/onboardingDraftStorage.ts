@@ -12,6 +12,8 @@ export interface OnboardingDraft {
   profile: Partial<HouseholdProfile>
   /** The My area postcode entered during setup; saved as My area when setup finishes. */
   areaPostcode?: string
+  areaLocalityId?: string
+  areaLocalityName?: string
   updatedAt: string
 }
 

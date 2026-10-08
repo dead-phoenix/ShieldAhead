@@ -3,6 +3,7 @@ import { Link, Navigate } from 'react-router-dom'
 import { appRoutes } from '../../../app/config/product'
 import { LocalOnlyNote } from '../../../shared/components/LocalOnlyNote'
 import { StepProgress } from '../../../shared/components/StepProgress'
+import { formatAreaLabel } from '../../../storage/myAreaStorage'
 import { getOnboardingDraft } from '../../../storage/onboardingDraftStorage'
 
 function valueOrSkipped(value: unknown) {
@@ -15,7 +16,7 @@ export function SetupReviewPage() {
   const draft = getOnboardingDraft()
   if (!draft?.areaPostcode) return <Navigate replace to={appRoutes.householdNeeds} />
   const rows = [
-    ['My area', draft.areaPostcode],
+    ['My area', formatAreaLabel(draft.areaPostcode, draft.areaLocalityName)],
     ['Children under 15', draft.profile.childrenUnder15],
     ['Pets', draft.profile.hasPets],
     ['Accessibility needs', draft.profile.accessibilityNeeds],

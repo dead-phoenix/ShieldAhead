@@ -27,6 +27,22 @@ export function haversineKm(a: LatLng, b: LatLng): number {
   return 2 * EARTH_RADIUS_KM * Math.atan2(Math.sqrt(h), Math.sqrt(1 - h))
 }
 
+/** bbox is [minLng, minLat, maxLng, maxLat]; bufferDeg widens every side. */
+export function isWithinBbox(
+  point: LatLng,
+  bbox: readonly [number, number, number, number],
+  bufferDeg = 0,
+): boolean {
+  if (!isValidPoint(point)) return false
+  const [minLng, minLat, maxLng, maxLat] = bbox
+  return (
+    point.lng >= minLng - bufferDeg &&
+    point.lng <= maxLng + bufferDeg &&
+    point.lat >= minLat - bufferDeg &&
+    point.lat <= maxLat + bufferDeg
+  )
+}
+
 /** The n closest records per category, nearest first (ties broken by id).
  * Records with missing or invalid coordinates are skipped. */
 export function nearestByCategory<T extends Pick<OfflineServiceRecord, 'id' | 'category' | 'lat' | 'lng'>>(

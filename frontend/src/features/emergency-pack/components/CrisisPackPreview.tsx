@@ -3,6 +3,7 @@ import type { CrisisPack, CrisisPackPage } from '../buildCrisisPack'
 import { PackChecklistPage } from './PackChecklistPage'
 import { PackContactsPage } from './PackContactsPage'
 import { PackGetHelpPage } from './PackGetHelpPage'
+import { PackNearbyPage } from './PackNearbyPage'
 import { PackPageFrame } from './PackPageFrame'
 import './CrisisPackPreview.css'
 
@@ -10,6 +11,8 @@ function PackPageContent({ page }: { page: CrisisPackPage }) {
   switch (page.kind) {
     case 'get-help':
       return <PackGetHelpPage page={page} />
+    case 'nearby':
+      return <PackNearbyPage page={page} />
     case 'checklist':
       return <PackChecklistPage page={page} />
     case 'contacts':

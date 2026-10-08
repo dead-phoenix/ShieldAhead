@@ -95,6 +95,10 @@ export function HomePage() {
           <span>Explore the map</span>
           <ArrowRight aria-hidden="true" size={17} weight="bold" />
         </Link>
+        <Link className="button landing-action landing-action--secondary" to={appRoutes.nearby}>
+          <span>Saved nearby services (works offline)</span>
+          <ArrowRight aria-hidden="true" size={17} weight="bold" />
+        </Link>
       </section>
 
       <section className="home-ahead" aria-labelledby="home-ahead-title">

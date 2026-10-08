@@ -9,6 +9,7 @@ import {
 import type { CSSProperties } from 'react'
 import { Link, NavLink, Outlet, useLocation } from 'react-router-dom'
 import { appRoutes, productConfig } from '../../app/config/product'
+import { useNearbySnapshotRefresh } from '../../data/offline/useNearbySnapshotRefresh'
 import { hasCompletedSetup } from '../../storage/onboardingDraftStorage'
 import { GetTheAppButton } from '../components/GetTheAppButton'
 
@@ -20,6 +21,7 @@ const primaryNavigation = [
 ]
 
 export function AppShell() {
+  useNearbySnapshotRefresh()
   const { pathname } = useLocation()
   const isSetupFlow = pathname.startsWith(appRoutes.setup)
   const showSetupAction = !isSetupFlow && !hasCompletedSetup()

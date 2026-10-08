@@ -49,3 +49,8 @@ export function matchNavigationIntent(query: string): string | undefined {
   if (!trimmed) return undefined
   return NAVIGATION_PATTERNS.find(({ pattern }) => pattern.test(trimmed))?.path
 }
+
+/** Offline, "map", "nearby" and "near me" open the saved nearby services instead of the Map. */
+export function offlineNavigationTarget(path: string, isOnline: boolean): string {
+  return !isOnline && path === appRoutes.map ? appRoutes.nearby : path
+}

@@ -1,8 +1,9 @@
 import { Check, DownloadSimple } from '@phosphor-icons/react'
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState, useSyncExternalStore } from 'react'
 import { Link } from 'react-router-dom'
 import { appRoutes } from '../../../app/config/product'
 import { fetchChecklistItems, fetchHelplines } from '../../../data/api/apiCrisisRepository'
+import { readNearbySnapshot, subscribeToNearbySnapshot } from '../../../data/offline/nearbySnapshot'
 import { LoadingState } from '../../../shared/components/LoadingState'
 import { useOnlineStatus } from '../../../shared/hooks/useOnlineStatus'
 import { getMyArea } from '../../../storage/myAreaStorage'
@@ -143,9 +144,10 @@ export function EmergencyPackPage() {
     }
   }, [areaLabel, areaPostcode, isOnline])
 
+  const nearbySnapshot = useSyncExternalStore(subscribeToNearbySnapshot, readNearbySnapshot, () => null)
   const pack = useMemo(
-    () => buildCrisisPack({ preferences, snapshot }),
-    [preferences, snapshot],
+    () => buildCrisisPack({ preferences, snapshot, nearby: { snapshot: nearbySnapshot, myArea } }),
+    [preferences, snapshot, nearbySnapshot, myArea],
   )
 
   function updatePreferences(next: EmergencyPackPreferences) {

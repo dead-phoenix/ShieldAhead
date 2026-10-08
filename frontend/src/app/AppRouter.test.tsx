@@ -1,11 +1,26 @@
-import { render, screen } from '@testing-library/react'
-import { beforeEach, describe, expect, it } from 'vitest'
+import { fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { refreshNearbySnapshot } from '../data/offline/nearbySnapshot'
+import { lookupLocalities } from '../data/offline/offlineDataLoader'
 import { storageKeys } from './config/product'
 import { AppRouter } from './AppRouter'
+
+vi.mock('../data/offline/offlineDataLoader', async (importActual) => ({
+  ...(await importActual<typeof import('../data/offline/offlineDataLoader')>()),
+  lookupLocalities: vi.fn().mockResolvedValue(null),
+}))
+
+vi.mock('../data/preloadNearbyData', () => ({ preloadNearbyData: vi.fn() }))
+
+vi.mock('../data/offline/nearbySnapshot', async (importActual) => ({
+  ...(await importActual<typeof import('../data/offline/nearbySnapshot')>()),
+  refreshNearbySnapshot: vi.fn().mockResolvedValue('saved'),
+}))
 
 describe('first-run routing', () => {
   beforeEach(() => {
     window.history.replaceState({}, '', '/')
+    vi.mocked(refreshNearbySnapshot).mockClear()
   })
 
   it('shows the home page to a new visitor, with a household setup link and no account wording', async () => {
@@ -96,6 +111,47 @@ describe('first-run routing', () => {
       expect(navigation).not.toHaveTextContent('Profile')
     })
     expect(screen.getByRole('link', { name: 'Profile' })).toHaveAttribute('href', '/settings')
+  })
+
+  it('opens saved nearby services at /nearby without fetching anything from the app shell', async () => {
+    const fetchSpy = vi.spyOn(globalThis, 'fetch')
+    window.localStorage.setItem(storageKeys.myArea, JSON.stringify({ postcode: '3453', label: '3453', savedAt: '' }))
+    window.history.replaceState({}, '', '/nearby')
+    Object.defineProperty(window.navigator, 'onLine', { configurable: true, value: false })
+
+    try {
+      render(<AppRouter />)
+      expect(await screen.findByRole('heading', { level: 1, name: 'Saved nearby services' })).toBeVisible()
+      expect(fetchSpy).not.toHaveBeenCalled()
+    } finally {
+      Object.defineProperty(window.navigator, 'onLine', { configurable: true, value: true })
+      fetchSpy.mockRestore()
+    }
+  })
+
+  it('asks which suburb during setup and shows it on the review page and in My area', async () => {
+    vi.mocked(lookupLocalities).mockResolvedValue([
+      { id: 'loc-harcourt', name: 'Harcourt', postcodes: ['3453'], lat: -36.9934, lng: 144.2583 },
+      { id: 'loc-harcourt-north', name: 'Harcourt North', postcodes: ['3453'], lat: -36.9511, lng: 144.2763 },
+    ])
+    window.history.replaceState({}, '', '/setup/needs')
+    render(<AppRouter />)
+
+    fireEvent.change(await screen.findByLabelText(/My area \(postcode\)/), { target: { value: '3453' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Review details' }))
+    fireEvent.click(await screen.findByRole('radio', { name: 'Harcourt' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Review details' }))
+
+    expect(await screen.findByRole('heading', { name: 'Review your details' })).toBeVisible()
+    expect(screen.getByText('My area').nextSibling).toHaveTextContent('Harcourt 3453')
+    fireEvent.click(screen.getByRole('link', { name: 'Continue to choices' }))
+    fireEvent.click(await screen.findByRole('button', { name: 'Save choices and continue' }))
+
+    await waitFor(() => expect(window.location.pathname).toBe('/setup/complete'))
+    expect(refreshNearbySnapshot).toHaveBeenCalledTimes(1)
+    expect(JSON.parse(window.localStorage.getItem(storageKeys.myArea)!)).toMatchObject({
+      postcode: '3453', localityId: 'loc-harcourt', localityName: 'Harcourt', label: 'Harcourt 3453',
+    })
   })
 
   it('opens the Crisis section from its new route', async () => {

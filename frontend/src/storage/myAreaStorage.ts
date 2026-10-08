@@ -10,8 +10,16 @@ export interface MyAreaInput {
   localityName?: string
 }
 
+export const MY_AREA_CHANGED_EVENT = 'shieldahead:my-area-changed'
+
 function optionalString(value: unknown): string | undefined {
   return typeof value === 'string' && value.trim() ? value.trim() : undefined
+}
+
+/** "Harcourt 3453" when the suburb is known, otherwise just the postcode. */
+export function formatAreaLabel(postcode: string, localityName?: string): string {
+  const name = optionalString(localityName)
+  return name ? `${name} ${postcode}` : postcode
 }
 
 function readMyArea(): MyArea | null {
@@ -27,7 +35,7 @@ function readMyArea(): MyArea | null {
       postcode,
       ...(localityId ? { localityId } : {}),
       ...(localityName ? { localityName } : {}),
-      label: optionalString(parsed.label) ?? postcode,
+      label: optionalString(parsed.label) ?? formatAreaLabel(postcode, localityName),
       savedAt: typeof parsed.savedAt === 'string' ? parsed.savedAt : '',
     }
   } catch {
@@ -44,14 +52,14 @@ export function getMyArea(): MyArea | null {
 export function saveMyArea(input: MyAreaInput): MyArea | null {
   const postcode = input.postcode.trim()
   if (!isValidPostcode(postcode)) return null
-  const previousPostcode = readMyArea()?.postcode
+  const previous = readMyArea()
   const localityId = optionalString(input.localityId)
   const localityName = optionalString(input.localityName)
   const area: MyArea = {
     postcode,
     ...(localityId ? { localityId } : {}),
     ...(localityName ? { localityName } : {}),
-    label: optionalString(input.label) ?? postcode,
+    label: optionalString(input.label) ?? formatAreaLabel(postcode, localityName),
     savedAt: new Date().toISOString(),
   }
   try {
@@ -59,6 +67,9 @@ export function saveMyArea(input: MyAreaInput): MyArea | null {
   } catch {
     return null
   }
-  if (postcode !== previousPostcode) void preloadNearbyData(postcode)
+  if (postcode !== previous?.postcode) void preloadNearbyData(postcode)
+  if (postcode !== previous?.postcode || localityId !== previous?.localityId) {
+    window.dispatchEvent(new Event(MY_AREA_CHANGED_EVENT))
+  }
   return area
 }
