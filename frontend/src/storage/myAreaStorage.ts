@@ -67,7 +67,7 @@ export function saveMyArea(input: MyAreaInput): MyArea | null {
   } catch {
     return null
   }
-  if (postcode !== previous?.postcode) void preloadNearbyData(postcode)
+  if (postcode !== previous?.postcode) void preloadNearbyData(postcode, { includeSupport: false })
   if (postcode !== previous?.postcode || localityId !== previous?.localityId) {
     window.dispatchEvent(new Event(MY_AREA_CHANGED_EVENT))
   }

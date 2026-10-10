@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import {
   LngLatBounds,
   Map as MapLibreMap,
@@ -153,6 +153,7 @@ export function MapView({ ariaLabel, markers, selectedIds = [], onSelect, onRetu
   const latestSearchMarkerRef = useRef(searchMarker)
   const [isReady, setIsReady] = useState(false)
   const [hasFailed, setHasFailed] = useState(false)
+  const [attempt, setAttempt] = useState(0)
   const initialViewportRef = useRef(initialViewport)
   const skipInitialMarkerFitRef = useRef(Boolean(initialViewport))
 
@@ -186,15 +187,23 @@ export function MapView({ ariaLabel, markers, selectedIds = [], onSelect, onRetu
         if (loadTimer) window.clearTimeout(loadTimer)
         setIsReady(true)
       })
-      map.on('error', () => {
-        if (!styleReady) setHasFailed(true)
+      map.on('error', (event) => {
+        if (styleReady) return
+        console.error('The map style could not be loaded.', event.error)
+        setHasFailed(true)
       })
-      map.on('webglcontextlost', () => setHasFailed(true))
+      map.on('webglcontextlost', () => {
+        console.error('The map lost its WebGL context.')
+        setHasFailed(true)
+      })
       mapRef.current = map
       loadTimer = window.setTimeout(() => {
-        if (!styleReady) setHasFailed(true)
+        if (styleReady) return
+        console.error('The map style did not load within 15 seconds.')
+        setHasFailed(true)
       }, 15_000)
-    } catch {
+    } catch (reason) {
+      console.error('The map could not be created.', reason)
       queueMicrotask(() => setHasFailed(true))
     }
 
@@ -211,7 +220,19 @@ export function MapView({ ariaLabel, markers, selectedIds = [], onSelect, onRetu
       mapRef.current?.remove()
       mapRef.current = null
     }
+  }, [attempt])
+
+  const retry = useCallback(() => {
+    setIsReady(false)
+    setHasFailed(false)
+    setAttempt((current) => current + 1)
   }, [])
+
+  useEffect(() => {
+    if (!hasFailed) return
+    window.addEventListener('online', retry)
+    return () => window.removeEventListener('online', retry)
+  }, [hasFailed, retry])
 
   useEffect(() => {
     const map = mapRef.current
@@ -473,6 +494,7 @@ export function MapView({ ariaLabel, markers, selectedIds = [], onSelect, onRetu
       <div className="map-unavailable" role="alert">
         <strong>The map could not be displayed</strong>
         <p>Use the list view to read all nearby results.</p>
+        <button className="button button--quiet" type="button" onClick={retry}>Try again</button>
         <button className="button button--quiet" type="button" onClick={onReturnToList}>Return to list</button>
       </div>
     )

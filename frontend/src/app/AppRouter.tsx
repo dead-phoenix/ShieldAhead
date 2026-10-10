@@ -23,6 +23,8 @@ import { WifiDetailPage } from '../features/wifi/pages/WifiDetailPage'
 import { EmergencyPackPage } from '../features/emergency-pack/pages/EmergencyPackPage'
 import { MapPage } from '../features/map/pages/MapPage'
 import { NearbyPage } from '../features/nearby/pages/NearbyPage'
+import { SavedPlaceDetailPage } from '../features/saved-places/pages/SavedPlaceDetailPage'
+import { SavedPlacesPage } from '../features/saved-places/pages/SavedPlacesPage'
 import { AppShell } from '../shared/layout/AppShell'
 import { getSearchPostcode } from '../storage/searchLocationStorage'
 import { appRoutes } from './config/product'
@@ -70,6 +72,8 @@ export function AppRouter() {
           <Route path={appRoutes.crisis} element={<CrisisLandingPage />} />
           <Route path={appRoutes.emergencyPack} element={<EmergencyPackPage />} />
           <Route path={appRoutes.nearby} element={<NearbyPage />} />
+          <Route path={appRoutes.saved} element={<SavedPlacesPage />} />
+          <Route path="/saved/place/:key" element={<SavedPlaceDetailPage />} />
           <Route path="/crisis/:kind" element={<CrisisDetailPage />} />
           <Route path="/crisis/:kind/guidance" element={<CrisisGuidancePage />} />
           <Route element={<RequireSearchLocation />}>

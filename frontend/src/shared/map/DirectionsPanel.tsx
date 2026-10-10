@@ -10,7 +10,7 @@ import {
 } from '../../data/api/directionsApi'
 import { LocationResolveError, readBrowserPosition } from '../../features/location/resolveSearchLocation'
 import { searchLocations, type SearchLocationResult } from '../../features/map/data/locationSearchApi'
-import { readOfflineRoute, saveOfflineRoute } from '../../features/map/data/offlineRouteStorage'
+import { CURRENT_LOCATION_LABEL, readOfflineRoute, saveOfflineRoute } from '../../features/map/data/offlineRouteStorage'
 import type { LivePositionPoint } from './MapView'
 import { LiveNavigationOverlay } from './LiveNavigationOverlay'
 import { useLiveNavigation } from '../navigation/useLiveNavigation'
@@ -80,6 +80,9 @@ export function DirectionsPanel({ destination, destinationId, onRouteChange, des
   // Confirms the person's own "Save for offline use" tap actually stored
   // this route — saving isn't automatic, so they can trust it happened.
   const [justSavedOffline, setJustSavedOffline] = useState(false)
+  // True while the shown route starts at the device's live position (Use my
+  // location, or a reroute during navigation); such routes are never saved.
+  const [routeFromGps, setRouteFromGps] = useState(initialState?.originLabel === CURRENT_LOCATION_LABEL)
   const [originSuggestions, setOriginSuggestions] = useState<SearchLocationResult[]>([])
   const [isSearchingOrigin, setIsSearchingOrigin] = useState(false)
   const appliedOriginLabelRef = useRef(initialState?.originLabel ?? '')
@@ -122,6 +125,7 @@ export function DirectionsPanel({ destination, destinationId, onRouteChange, des
       return
     }
     setIsRerouting(true)
+    setRouteFromGps(true)
     try {
       // Pass on only lat/lng — position is a LivePosition (it also carries
       // heading/accuracy), and calculate()'s origin shouldn't leak those
@@ -200,6 +204,7 @@ export function DirectionsPanel({ destination, destinationId, onRouteChange, des
     setOriginLabel(location.label)
     const nextOrigin = { latitude: location.latitude, longitude: location.longitude }
     setOrigin(nextOrigin)
+    setRouteFromGps(false)
     void calculate(profile, nextOrigin)
   }
 
@@ -238,8 +243,8 @@ export function DirectionsPanel({ destination, destinationId, onRouteChange, des
   }
 
   function saveCurrentRouteOffline() {
-    if (!route || !origin) return
-    saveOfflineRoute({
+    if (!route || !origin || routeFromGps) return
+    const saved = saveOfflineRoute({
       destinationId: destinationKey,
       destinationName: destination.name,
       destinationLatitude: destination.latitude,
@@ -249,7 +254,7 @@ export function DirectionsPanel({ destination, destinationId, onRouteChange, des
       originLabel: appliedOriginLabelRef.current || originLabel,
       route,
     })
-    setJustSavedOffline(true)
+    setJustSavedOffline(saved)
   }
 
   async function useCurrentLocation() {
@@ -262,10 +267,11 @@ export function DirectionsPanel({ destination, destinationId, onRouteChange, des
         longitude: position.coords.longitude,
       }
       setOrigin(nextOrigin)
+      setRouteFromGps(true)
       originRequestRef.current += 1
       setOriginSuggestions([])
-      appliedOriginLabelRef.current = 'Your current location'
-      setOriginLabel('Your current location')
+      appliedOriginLabelRef.current = CURRENT_LOCATION_LABEL
+      setOriginLabel(CURRENT_LOCATION_LABEL)
       await calculate(profile, nextOrigin)
     } catch (reason) {
       setIsLoading(false)
@@ -279,6 +285,7 @@ export function DirectionsPanel({ destination, destinationId, onRouteChange, des
     if (!selectedMapStart) return
     queueMicrotask(() => {
       setOrigin(selectedMapStart)
+      setRouteFromGps(false)
       originRequestRef.current += 1
       setOriginSuggestions([])
       appliedOriginLabelRef.current = 'Point selected on map'
@@ -457,13 +464,17 @@ export function DirectionsPanel({ destination, destinationId, onRouteChange, des
           <button className="button button--primary" type="button" onClick={startNavigation} disabled={!isOnline}>
             <NavigationArrow aria-hidden="true" size={19} weight="fill" /> Start navigation
           </button>
-          <button className="button button--quiet" type="button" onClick={saveCurrentRouteOffline}>
-            {justSavedOffline ? (
-              <><CloudCheck aria-hidden="true" size={18} weight="fill" /> Saved for offline use</>
-            ) : (
-              <><CloudArrowDown aria-hidden="true" size={18} /> Save for offline use</>
-            )}
-          </button>
+          {routeFromGps ? (
+            <p className="directions-note">Routes that start at your current location are not saved.</p>
+          ) : (
+            <button className="button button--quiet" type="button" onClick={saveCurrentRouteOffline}>
+              {justSavedOffline ? (
+                <><CloudCheck aria-hidden="true" size={18} weight="fill" /> Saved for offline use</>
+              ) : (
+                <><CloudArrowDown aria-hidden="true" size={18} /> Save for offline use</>
+              )}
+            </button>
+          )}
           {onRecentreRoute ? (
             <button className="button button--quiet" type="button" onClick={onRecentreRoute}>
               <Crosshair aria-hidden="true" size={18} /> Re-centre route
@@ -477,7 +488,7 @@ export function DirectionsPanel({ destination, destinationId, onRouteChange, des
           {origin && isOnline ? <button className="button button--quiet button--compact" type="button" onClick={retryRoute}><ArrowClockwise aria-hidden="true" size={17} /> Try again</button> : null}
         </div>
       ) : null}
-      <p className="directions-note">Your location is used only to calculate this route and is not saved.</p>
+      <p className="directions-note">Your location is used only to calculate this route.</p>
       {destinationIsApproximate ? <p className="directions-warning">The destination is a postcode-area point, not a confirmed street location. Check the service address before travelling.</p> : null}
       </>
       )}

@@ -1,6 +1,11 @@
 ﻿import { getSupportServiceRepository } from './supportServiceRepository'
 import { getWifiRepository } from './wifiRepository'
 
+interface PreloadOptions {
+  /** False for the My area postcode: the support-list cache job already requests it. */
+  includeSupport?: boolean
+}
+
 /**
  * Best-effort background warm-up: as soon as a postcode is known, start
  * loading wifi and support-service data for it, so the Wifi and Support
@@ -12,10 +17,7 @@ import { getWifiRepository } from './wifiRepository'
  * user-facing fetch. If it fails, the relevant page just fetches normally
  * when opened, exactly as it did before this existed.
  */
-export function preloadNearbyData(postcode: string): void {
-  const wifiRepository = getWifiRepository(postcode)
-  const supportRepository = getSupportServiceRepository(postcode)
-
-  wifiRepository.list().catch(() => {})
-  supportRepository.list().catch(() => {})
+export function preloadNearbyData(postcode: string, { includeSupport = true }: PreloadOptions = {}): void {
+  getWifiRepository(postcode).list().catch(() => {})
+  if (includeSupport) getSupportServiceRepository(postcode).list().catch(() => {})
 }

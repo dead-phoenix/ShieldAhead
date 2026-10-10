@@ -1,4 +1,3 @@
-import { storageKeys } from '../../app/config/product'
 import type { DatasetResult, SupportService, WifiLocation } from '../contracts'
 
 export type OfflineDatasetKind = 'wifi' | 'support'
@@ -11,11 +10,19 @@ export interface OfflineDatasetSummary {
   version: string
 }
 
-interface StoredDataset<T> {
+export type OfflineDatasetSource = 'api' | 'static'
+
+export interface OfflineDatasetDetails {
+  areaLabel?: string
+  dataSource?: OfflineDatasetSource
+}
+
+export interface StoredDataset<T> extends OfflineDatasetDetails {
   key: string
   kind: OfflineDatasetKind
   postcode: string
   savedAt: string
+  count?: number
   data: DatasetResult<T>
 }
 
@@ -26,19 +33,6 @@ export const OFFLINE_DATA_CHANGED_EVENT = 'shieldahead:offline-data-changed'
 
 function datasetKey(kind: OfflineDatasetKind, postcode: string) {
   return `${kind}:${postcode}`
-}
-
-export function isOfflineDatasetSelected(kind: OfflineDatasetKind): boolean {
-  try {
-    const raw = window.localStorage.getItem(storageKeys.offlinePreferences)
-    if (!raw) return false
-    const preferences = JSON.parse(raw) as { wifiSaved?: boolean; supportSaved?: boolean }
-    return kind === 'wifi'
-      ? preferences.wifiSaved === true
-      : preferences.supportSaved === true
-  } catch {
-    return false
-  }
 }
 
 function openDatabase(): Promise<IDBDatabase> {
@@ -89,6 +83,7 @@ export async function saveOfflineDataset<T>(
   kind: OfflineDatasetKind,
   postcode: string,
   data: DatasetResult<T>,
+  details: OfflineDatasetDetails = {},
 ): Promise<string> {
   const savedAt = new Date().toISOString()
   const stored: StoredDataset<T> = {
@@ -96,6 +91,8 @@ export async function saveOfflineDataset<T>(
     kind,
     postcode,
     savedAt,
+    count: data.records.length,
+    ...details,
     data,
   }
   await runTransaction('readwrite', (store) => store.put(stored))
@@ -118,6 +115,24 @@ export async function removeOfflineDataset(
   postcode: string,
 ): Promise<void> {
   await runTransaction('readwrite', (store) => store.delete(datasetKey(kind, postcode)))
+  announceChange()
+}
+
+export async function readAllOfflineDatasets<T>(kind: OfflineDatasetKind): Promise<StoredDataset<T>[]> {
+  const all = await runTransaction<StoredDataset<T>[]>('readonly', (store) => store.getAll())
+  return all.filter((item) => item.kind === kind)
+}
+
+/** Deletes every dataset of this kind except the one saved for keepPostcode. */
+export async function removeOfflineDatasetsExcept(
+  kind: OfflineDatasetKind,
+  keepPostcode: string,
+): Promise<void> {
+  const stale = (await readAllOfflineDatasets(kind)).filter((item) => item.postcode !== keepPostcode)
+  if (stale.length === 0) return
+  for (const item of stale) {
+    await runTransaction('readwrite', (store) => store.delete(item.key))
+  }
   announceChange()
 }
 

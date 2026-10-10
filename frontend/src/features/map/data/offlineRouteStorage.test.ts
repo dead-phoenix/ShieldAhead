@@ -1,5 +1,14 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { readOfflineRoute, saveOfflineRoute, type SavedOfflineRoute } from './offlineRouteStorage'
+import {
+  CURRENT_LOCATION_LABEL,
+  readOfflineRoute,
+  removeGpsStartedRoutes,
+  routeStartedFromGps,
+  saveOfflineRoute,
+  type SavedOfflineRoute,
+} from './offlineRouteStorage'
+
+const STORAGE_KEY = 'shieldahead.map.offlineRoutes.v1'
 
 const baseEntry: Omit<SavedOfflineRoute, 'savedAt'> = {
   destinationId: 'place-1',
@@ -8,7 +17,7 @@ const baseEntry: Omit<SavedOfflineRoute, 'savedAt'> = {
   destinationLongitude: 144.9,
   profile: 'foot-walking',
   origin: { latitude: -37.31, longitude: 144.91 },
-  originLabel: 'Your current location',
+  originLabel: '12 Sydney Street, Kilmore',
   route: {
     distanceMeters: 1200,
     durationSeconds: 900,
@@ -28,7 +37,7 @@ describe('offlineRouteStorage', () => {
   })
 
   it('saves and reads back a route for its destination', () => {
-    saveOfflineRoute(baseEntry)
+    expect(saveOfflineRoute(baseEntry)).toBe(true)
     const saved = readOfflineRoute('place-1')
     expect(saved?.destinationName).toBe('Kilmore District Hospital')
     expect(saved?.route.distanceMeters).toBe(1200)
@@ -67,7 +76,49 @@ describe('offlineRouteStorage', () => {
   })
 
   it('ignores malformed data already in storage', () => {
-    window.localStorage.setItem('shieldahead.map.offlineRoutes.v1', JSON.stringify([{ not: 'valid' }]))
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify([{ not: 'valid' }]))
     expect(readOfflineRoute('place-1')).toBeUndefined()
+  })
+})
+
+describe('routes that start at the current location', () => {
+  const gpsEntry = { ...baseEntry, originLabel: CURRENT_LOCATION_LABEL }
+  // A reroute keeps the original label but starts where the device was, far from the stored origin.
+  const reroutedEntry = {
+    ...baseEntry,
+    route: { ...baseEntry.route, coordinates: [[144.95, -37.35], [144.9, -37.3]] as Array<[number, number]> },
+  }
+
+  it('detects a route started with "Use my location"', () => {
+    expect(routeStartedFromGps(gpsEntry)).toBe(true)
+  })
+
+  it('detects a reroute whose first point is far from the chosen start', () => {
+    expect(routeStartedFromGps(reroutedEntry)).toBe(true)
+  })
+
+  it('treats a route from a typed address as not GPS-started', () => {
+    expect(routeStartedFromGps(baseEntry)).toBe(false)
+  })
+
+  it('refuses to save a GPS-started route', () => {
+    expect(saveOfflineRoute(gpsEntry)).toBe(false)
+    expect(saveOfflineRoute(reroutedEntry)).toBe(false)
+    expect(window.localStorage.getItem(STORAGE_KEY)).toBeNull()
+  })
+
+  it('removes already-saved GPS-started routes and keeps the rest', () => {
+    const savedAt = '2026-10-01T00:00:00.000Z'
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify([
+      { ...gpsEntry, destinationId: 'gps', savedAt },
+      { ...reroutedEntry, destinationId: 'rerouted', savedAt },
+      { ...baseEntry, destinationId: 'typed', savedAt },
+    ]))
+
+    expect(removeGpsStartedRoutes()).toBe(2)
+    expect(readOfflineRoute('gps')).toBeUndefined()
+    expect(readOfflineRoute('rerouted')).toBeUndefined()
+    expect(readOfflineRoute('typed')).toBeDefined()
+    expect(removeGpsStartedRoutes()).toBe(0)
   })
 })

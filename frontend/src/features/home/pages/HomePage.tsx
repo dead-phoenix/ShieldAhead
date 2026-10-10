@@ -102,6 +102,10 @@ export function HomePage() {
           <span>Saved nearby services (works offline)</span>
           <ArrowRight aria-hidden="true" size={17} weight="bold" />
         </Link>
+        <Link className="button landing-action landing-action--secondary" to={appRoutes.saved}>
+          <span>Your saved places (works offline)</span>
+          <ArrowRight aria-hidden="true" size={17} weight="bold" />
+        </Link>
       </section>
 
       <section className="home-ahead" aria-labelledby="home-ahead-title">

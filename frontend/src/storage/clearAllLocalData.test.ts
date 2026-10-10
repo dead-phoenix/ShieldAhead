@@ -3,6 +3,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import { storageKeys } from '../app/config/product'
 import { readOfflineDataset, saveOfflineDataset } from '../data/offline/offlineDatasetStore'
 import { clearAllLocalData } from './clearAllLocalData'
+import { readSavedPlaces, savePlace } from './savedPlacesStorage'
 
 const originalIndexedDb = Object.getOwnPropertyDescriptor(window, 'indexedDB')
 
@@ -36,18 +37,30 @@ describe('clearAllLocalData', () => {
     window.localStorage.setItem(storageKeys.siteUnlocked, 'true')
     window.localStorage.setItem('another-site.setting', 'kept')
     window.sessionStorage.setItem('shieldahead.map.session.v1', '{}')
-    await saveOfflineDataset('wifi', '3453', {
+    window.sessionStorage.setItem(storageKeys.supportCacheTried, new Date().toISOString())
+    savePlace({
+      key: 'wifi:library',
+      kind: 'wifi',
+      record: { id: 'library', placeType: 'wifi', name: 'Harcourt Library', dataUpdatedAt: '2026-09-01T00:00:00.000Z' },
+    })
+    const emptyDataset = {
       records: [],
       metadata: { version: '1', generatedAt: '', sourceName: '', coverageAreas: [], limitations: [] },
-    })
+    }
+    await saveOfflineDataset('wifi', '3453', emptyDataset)
+    await saveOfflineDataset('support', '3453', emptyDataset, { areaLabel: 'Harcourt 3453', dataSource: 'api' })
 
     await clearAllLocalData()
 
     seeded.forEach((key) => expect(window.localStorage.getItem(key), key).toBeNull())
+    expect(window.localStorage.getItem(storageKeys.savedPlaces)).toBeNull()
+    expect(readSavedPlaces()).toEqual([])
     expect(window.localStorage.getItem(storageKeys.siteUnlocked)).toBe('true')
     expect(window.localStorage.getItem('another-site.setting')).toBe('kept')
     expect(window.sessionStorage.getItem('shieldahead.map.session.v1')).toBeNull()
+    expect(window.sessionStorage.getItem(storageKeys.supportCacheTried)).toBeNull()
     expect(await window.indexedDB.databases()).toEqual([])
     expect(await readOfflineDataset('wifi', '3453')).toBeNull()
+    expect(await readOfflineDataset('support', '3453')).toBeNull()
   })
 })

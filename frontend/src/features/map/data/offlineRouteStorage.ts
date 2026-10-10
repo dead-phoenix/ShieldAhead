@@ -1,4 +1,5 @@
 import type { DirectionsProfile, RoutePoint, RoutePreview } from '../../../data/api/directionsApi'
+import { haversineKm } from '../../../shared/utils/geo'
 
 export interface SavedOfflineRoute {
   destinationId: string
@@ -16,6 +17,12 @@ const STORAGE_KEY = 'shieldahead.map.offlineRoutes.v1'
 // Small cap — this is for "the handful of routes someone actually planned
 // before losing signal," not a general route history.
 const MAX_SAVED_ROUTES = 5
+/** The origin label DirectionsPanel sets for a GPS start; routes from it are never saved. */
+export const CURRENT_LOCATION_LABEL = 'Your current location'
+// The routing service snaps a start point to a road within 350 m, so a saved
+// route whose first point is further than this from its stored origin was
+// recalculated from a live position (a reroute) rather than from that origin.
+const REROUTED_START_KM = 0.5
 
 function isRoutePoint(value: unknown): value is RoutePoint {
   if (typeof value !== 'object' || value === null) return false
@@ -48,21 +55,53 @@ function readAll(): SavedOfflineRoute[] {
   }
 }
 
+/** True when the route started at the device's live position: either the
+ * "Use my location" origin, or a reroute whose first point is away from the stored origin. */
+export function routeStartedFromGps(entry: Pick<SavedOfflineRoute, 'origin' | 'originLabel' | 'route'>): boolean {
+  if (entry.originLabel === CURRENT_LOCATION_LABEL) return true
+  const first = entry.route.coordinates?.[0]
+  if (!first) return false
+  const [longitude, latitude] = first
+  return haversineKm(
+    { lat: entry.origin.latitude, lng: entry.origin.longitude },
+    { lat: latitude, lng: longitude },
+  ) > REROUTED_START_KM
+}
+
 /** Saves a calculated route so it can still be opened with no network —
  * e.g. a route to the nearest hospital or wifi point, planned while online,
  * still usable if signal is lost later. Keyed by destination, so planning
- * routes to a few different places keeps each of them available. */
-export function saveOfflineRoute(entry: Omit<SavedOfflineRoute, 'savedAt'>): void {
+ * routes to a few different places keeps each of them available. Routes that
+ * start at the device's live position are refused. */
+export function saveOfflineRoute(entry: Omit<SavedOfflineRoute, 'savedAt'>): boolean {
+  if (routeStartedFromGps(entry)) return false
   try {
     const existing = readAll().filter((saved) => saved.destinationId !== entry.destinationId)
     const next = [{ ...entry, savedAt: new Date().toISOString() }, ...existing].slice(0, MAX_SAVED_ROUTES)
     window.localStorage.setItem(STORAGE_KEY, JSON.stringify(next))
+    return true
   } catch {
     // Saving for offline use is a bonus on top of the live route — a full
     // or blocked storage quota shouldn't stop the route being used now.
+    return false
   }
 }
 
 export function readOfflineRoute(destinationId: string): SavedOfflineRoute | undefined {
   return readAll().find((saved) => saved.destinationId === destinationId)
+}
+
+/** One-time clean-up of routes saved before GPS starts were refused. Returns how many were removed. */
+export function removeGpsStartedRoutes(): number {
+  const all = readAll()
+  const kept = all.filter((saved) => !routeStartedFromGps(saved))
+  const removed = all.length - kept.length
+  if (removed === 0) return 0
+  try {
+    if (kept.length === 0) window.localStorage.removeItem(STORAGE_KEY)
+    else window.localStorage.setItem(STORAGE_KEY, JSON.stringify(kept))
+  } catch {
+    return 0
+  }
+  return removed
 }

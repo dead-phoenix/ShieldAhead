@@ -13,7 +13,10 @@ import {
   WifiHigh,
 } from '@phosphor-icons/react'
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties, type FormEvent } from 'react'
-import { useSearchParams } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
+import { appRoutes } from '../../../app/config/product'
+import { SavePlaceButton } from '../../saved-places/components/SavePlaceButton'
+import { savedPlaceFromMapPlace } from '../../saved-places/savedPlaceRecords'
 import { EmptyState } from '../../../shared/components/EmptyState'
 import { LoadingState } from '../../../shared/components/LoadingState'
 import { StatusBanner } from '../../../shared/components/StatusBanner'
@@ -558,6 +561,7 @@ export function MapPage() {
           <p>{mapPlaceKindPresentation[selectedPlace.kind].singularLabel}</p>
           <p className="unified-map-detail__summary-address"><MapPin aria-hidden="true" size={15} /> {placeAddress(selectedPlace)}</p>
         </div>
+        <SavePlaceButton place={savedPlaceFromMapPlace(selectedPlace)} />
       </div>
       <div className="unified-map-detail__actions">
         {mapPlaceHasCoordinates(selectedPlace) ? (
@@ -782,9 +786,10 @@ export function MapPage() {
             </>
           ) : (
             <div className="map-unavailable" role="status">
-              <strong>Map unavailable while offline</strong>
-              <p>Your saved place list remains available for this area.</p>
-              <button className="button button--quiet" type="button" onClick={() => setMobileView('list')}>View saved list</button>
+              <strong>The map needs an internet connection</strong>
+              <p>See your saved places and nearby support services.</p>
+              <Link className="button button--quiet" to={appRoutes.saved}>See saved places</Link>
+              <button className="button button--quiet" type="button" onClick={() => setMobileView('list')}>Show the list</button>
             </div>
           )}
         </div>

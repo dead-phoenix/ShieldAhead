@@ -1,4 +1,4 @@
-import { ArrowLeft, CloudSlash, LockKey, SlidersHorizontal, UserCircle } from '@phosphor-icons/react'
+import { ArrowLeft, CloudSlash, DeviceMobile, LockKey, SlidersHorizontal, UserCircle } from '@phosphor-icons/react'
 import { Link } from 'react-router-dom'
 import { appRoutes } from '../../../app/config/product'
 import { LocalOnlyNote } from '../../../shared/components/LocalOnlyNote'
@@ -18,6 +18,11 @@ const privacyPoints = [
     icon: SlidersHorizontal,
     title: 'You are in control',
     copy: 'Every optional category can be skipped or declined without blocking setup.',
+  },
+  {
+    icon: DeviceMobile,
+    title: 'What stays on this device',
+    copy: 'My area, household notes, your crisis pack, checklist ticks, the nearby services list, the 20 nearest support services for My area, and places you save with the heart. Delete everything in Profile removes them all.',
   },
 ]
 

@@ -1,0 +1,97 @@
+.save-place-button {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 2.75rem;
+  min-width: 44px;
+  height: 2.75rem;
+  min-height: 44px;
+  padding: 0;
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  background: var(--color-surface-opaque, #fff);
+  color: var(--color-text);
+  cursor: pointer;
+}
+
+.save-place-button:hover {
+  border-color: var(--color-accent);
+}
+
+.save-place-button.is-saved {
+  border-color: var(--color-danger);
+  color: var(--color-danger);
+}
+
+.save-place-status {
+  flex-basis: 100%;
+  grid-column: 1 / -1;
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: var(--text-sm);
+}
+
+.unified-map-detail__heading:has(> .save-place-button) {
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: start;
+}
+
+.page-heading--saveable {
+  flex-wrap: wrap;
+}
+
+.page-heading--saveable > div:first-child {
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+.saved-places-page section + section {
+  margin-top: 2rem;
+}
+
+.saved-places-page h2 {
+  font-size: var(--text-lg, 1.25rem);
+}
+
+.saved-place-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 0.5rem 0.75rem;
+  align-items: center;
+  padding: 0.85rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+}
+
+.saved-place-row a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.saved-place-row a strong {
+  text-decoration: underline;
+  text-underline-offset: 0.15em;
+}
+
+.saved-place-row small {
+  display: block;
+  margin-top: 0.15rem;
+  color: var(--color-text-muted);
+  font-size: var(--text-xs);
+}
+
+.support-cache-status {
+  display: grid;
+  gap: 0.5rem;
+  justify-items: start;
+}
+
+.support-cache-status p {
+  margin: 0;
+}
+
+.saved-place-notice {
+  margin-top: 1rem;
+}

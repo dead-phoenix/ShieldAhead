@@ -1,6 +1,7 @@
 import os
 import sys
 from pathlib import Path
+from psycopg2.extras import execute_values
 from sqlalchemy import create_engine, text
 
 #  PostgreSQL persistence (Neon)
@@ -311,43 +312,61 @@ def load_wifi_records_from_db():
         return []
 
 
+def _insert_many(conn, sql, rows, template=None):
+    """Multi-row INSERT in pages of 1000. One statement per row costs a network
+    round trip each, which against a remote database takes minutes for a
+    few thousand rows and outlives the server's connection."""
+    if not rows:
+        return
+    cursor = conn.connection.cursor()
+    try:
+        execute_values(cursor, sql, rows, template=template, page_size=1000)
+    finally:
+        cursor.close()
+
+
 def save_wifi_records_to_db(records):
     """Replaces the full table on every refresh — the wifi source is
     always refetched in full, so a record's absence from this refresh
-    means it's genuinely no longer active, not just unseen this time."""
+    means it's genuinely no longer active, not just unseen this time.
+    Returns True only when the rows were written."""
     if not db_available() or not records:
-        return
+        return False
+    rows = {}
+    for r in records:
+        if not r.get("id"):
+            continue
+        rows[r["id"]] = (
+            r.get("id"),
+            r.get("name"),
+            r.get("address"),
+            r.get("suburb"),
+            r.get("postcode"),
+            r.get("latitude"),
+            r.get("longitude"),
+            r.get("openingHours"),
+            r.get("accessConditions") or [],
+            r.get("verificationStatus"),
+            r.get("dataUpdatedAt"),
+        )
     try:
         with _engine.begin() as conn:
             conn.execute(text("DELETE FROM wifi_locations"))
-            for r in records:
-                if not r.get("id"):
-                    continue
-                conn.execute(
-                    text("""
-                        INSERT INTO wifi_locations
-                            (id, name, address, suburb, postcode, latitude, longitude,
-                             opening_hours, access_conditions, verification_status, data_updated_at)
-                        VALUES
-                            (:id, :name, :address, :suburb, :postcode, :latitude, :longitude,
-                             :opening_hours, :access_conditions, :verification_status, :data_updated_at)
-                    """),
-                    {
-                        "id": r.get("id"),
-                        "name": r.get("name"),
-                        "address": r.get("address"),
-                        "suburb": r.get("suburb"),
-                        "postcode": r.get("postcode"),
-                        "latitude": r.get("latitude"),
-                        "longitude": r.get("longitude"),
-                        "opening_hours": r.get("openingHours"),
-                        "access_conditions": r.get("accessConditions") or [],
-                        "verification_status": r.get("verificationStatus"),
-                        "data_updated_at": r.get("dataUpdatedAt"),
-                    },
-                )
+            _insert_many(
+                conn,
+                """
+                INSERT INTO wifi_locations
+                    (id, name, address, suburb, postcode, latitude, longitude,
+                     opening_hours, access_conditions, verification_status, data_updated_at)
+                VALUES %s
+                """,
+                list(rows.values()),
+                template="(%s, %s, %s, %s, %s, %s, %s, %s, %s::text[], %s, %s)",
+            )
+        return True
     except Exception as e:
         _flask_app().logger.error(f"Postgres write failed for wifi_locations: {e}")
+        return False
 
 
 def _charity_row_to_dict(row):
@@ -481,15 +500,15 @@ def _upsert_suburb_lookup(conn, records):
         suburb = r.get("suburb")
         if postcode and suburb:
             pairs[postcode] = suburb
-    for postcode, suburb in pairs.items():
-        conn.execute(
-            text("""
-                INSERT INTO suburb_lookup (postcode, suburb)
-                VALUES (:postcode, :suburb)
-                ON CONFLICT (postcode) DO UPDATE SET suburb = EXCLUDED.suburb
-            """),
-            {"postcode": postcode, "suburb": suburb},
-        )
+    _insert_many(
+        conn,
+        """
+        INSERT INTO suburb_lookup (postcode, suburb)
+        VALUES %s
+        ON CONFLICT (postcode) DO UPDATE SET suburb = EXCLUDED.suburb
+        """,
+        list(pairs.items()),
+    )
 
 
 def _emergency_facility_row_to_dict(row, tags_by_facility):
@@ -543,47 +562,51 @@ def save_emergency_facilities_to_db(records):
     latitude, longitude, phone, tags, dataUpdatedAt}. facilityType must
     match a facility_types.type_name; tags is a list of free-text labels
     (Vicmap's theme1/theme2) stored in the junction table, not an array
-    column.
+    column. Returns True only when the rows were written.
     """
     if not db_available() or not records:
-        return
+        return False
     try:
         with _engine.begin() as conn:
             _upsert_suburb_lookup(conn, records)
             type_ids = _facility_type_id_map(conn)
-            conn.execute(text("DELETE FROM emergency_facilities"))  # cascades to emergency_facility_tags
+            facility_rows = {}
+            tag_rows = set()
             for r in records:
                 facility_id = r.get("id")
                 facility_type_id = type_ids.get(r.get("facilityType"))
                 if not facility_id or not facility_type_id:
                     continue
-                conn.execute(
-                    text("""
-                        INSERT INTO emergency_facilities
-                            (id, name, facility_type_id, address, postcode, latitude, longitude, phone, data_updated_at)
-                        VALUES
-                            (:id, :name, :facility_type_id, :address, :postcode, :latitude, :longitude, :phone, :data_updated_at)
-                    """),
-                    {
-                        "id": facility_id,
-                        "name": r.get("name"),
-                        "facility_type_id": facility_type_id,
-                        "address": r.get("address"),
-                        "postcode": r.get("postcode"),
-                        "latitude": r.get("latitude"),
-                        "longitude": r.get("longitude"),
-                        "phone": r.get("phone"),
-                        "data_updated_at": r.get("dataUpdatedAt"),
-                    },
+                facility_rows[facility_id] = (
+                    facility_id,
+                    r.get("name"),
+                    facility_type_id,
+                    r.get("address"),
+                    r.get("postcode"),
+                    r.get("latitude"),
+                    r.get("longitude"),
+                    r.get("phone"),
+                    r.get("dataUpdatedAt"),
                 )
                 for tag in r.get("tags") or []:
-                    conn.execute(
-                        text("""
-                            INSERT INTO emergency_facility_tags (facility_id, tag)
-                            VALUES (:facility_id, :tag)
-                            ON CONFLICT DO NOTHING
-                        """),
-                        {"facility_id": facility_id, "tag": tag},
-                    )
+                    if tag:
+                        tag_rows.add((facility_id, tag))
+            conn.execute(text("DELETE FROM emergency_facilities"))  # cascades to emergency_facility_tags
+            _insert_many(
+                conn,
+                """
+                INSERT INTO emergency_facilities
+                    (id, name, facility_type_id, address, postcode, latitude, longitude, phone, data_updated_at)
+                VALUES %s
+                """,
+                list(facility_rows.values()),
+            )
+            _insert_many(
+                conn,
+                "INSERT INTO emergency_facility_tags (facility_id, tag) VALUES %s ON CONFLICT DO NOTHING",
+                sorted(tag_rows),
+            )
+        return True
     except Exception as e:
         _flask_app().logger.error(f"Postgres write failed for emergency_facilities: {e}")
+        return False

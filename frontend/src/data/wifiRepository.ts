@@ -1,6 +1,5 @@
 import { createApiWifiRepository } from './api/apiWifiRepository'
 import { createOfflineAwareRepository } from './offline/offlineAwareRepository'
-import { isOfflineDatasetSelected } from './offline/offlineDatasetStore'
 import type { WifiRepository } from './repositories'
 
 export function getWifiRepository(postcode: string): WifiRepository {
@@ -17,6 +16,5 @@ export function getWifiRepository(postcode: string): WifiRepository {
     kind: 'wifi',
     postcode,
     onlineRepository,
-    shouldSave: () => isOfflineDatasetSelected('wifi'),
   })
 }

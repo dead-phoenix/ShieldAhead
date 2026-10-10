@@ -132,15 +132,3 @@ export function getOfflinePreferences(): OfflinePreferences {
 export function saveOfflinePreferences(preferences: OfflinePreferences): boolean {
   return writeStoredValue(storageKeys.offlinePreferences, preferences)
 }
-
-export function getUsualWifiSpot(): string | null {
-  return window.localStorage.getItem(storageKeys.usualWifiSpot)
-}
-
-export function saveUsualWifiSpot(id: string): void {
-  window.localStorage.setItem(storageKeys.usualWifiSpot, id)
-}
-
-export function clearUsualWifiSpot(): void {
-  window.localStorage.removeItem(storageKeys.usualWifiSpot)
-}

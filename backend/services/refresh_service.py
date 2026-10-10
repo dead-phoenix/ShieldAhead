@@ -36,6 +36,17 @@ def _flask_app():
     return app
 
 
+def _persist_in_background(save_records, records, meta_key, timestamp, freshness_status, removed_ids):
+    """Writes to Postgres after the in-memory cache is updated, so no request
+    (or refresh lock) waits on the database. The refresh time is recorded
+    only when the rows were written; otherwise the next start retries."""
+    def _run():
+        if save_records(records):
+            save_cache_meta(meta_key, timestamp, freshness_status, removed_ids)
+
+    threading.Thread(target=_run, daemon=True).start()
+
+
 def store_charity_cache(postcode, records, timestamp, freshness_status, removed_ids):
     _charity_cache[str(postcode).strip()] = {
         "data": records,
@@ -98,8 +109,9 @@ def refresh_wifi(blocking=True):
             _cache["data"] = all_records
             _cache["timestamp"] = now
             _cache["freshness_status"] = freshness_status
-            save_wifi_records_to_db(all_records)
-            save_cache_meta("wifi", now, freshness_status, _cache["removed_ids"])
+            _persist_in_background(
+                save_wifi_records_to_db, all_records, "wifi", now, freshness_status, list(_cache["removed_ids"]),
+            )
 
         return all_records, wifi_error, public_error
     except Exception as e:
@@ -133,8 +145,9 @@ def refresh_emergency_facilities(blocking=True):
             _emergency_facility_cache["data"] = records
             _emergency_facility_cache["timestamp"] = now
             _emergency_facility_cache["freshness_status"] = freshness_status
-            save_emergency_facilities_to_db(records)
-            save_cache_meta("emergency_facilities", now, freshness_status, [])
+            _persist_in_background(
+                save_emergency_facilities_to_db, records, "emergency_facilities", now, freshness_status, [],
+            )
 
         return records, None
     finally:

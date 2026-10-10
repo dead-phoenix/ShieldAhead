@@ -15,13 +15,9 @@ function verificationRank(location: WifiLocation): number {
 
 export function sortWifiLocations(
   records: WifiLocation[],
-  usualSpotId: string | null,
   sortMode: WifiSortMode = 'nearest-first',
 ): WifiLocation[] {
   return [...records].sort((left, right) => {
-    if (left.id === usualSpotId) return -1
-    if (right.id === usualSpotId) return 1
-
     if (sortMode === 'confirmed-first') {
       const verificationDifference = verificationRank(left) - verificationRank(right)
       if (verificationDifference !== 0) return verificationDifference
@@ -37,9 +33,8 @@ export function sortWifiLocations(
 
 export function selectWifiLocationsForList(
   records: WifiLocation[],
-  usualSpotId: string | null,
   sortMode: WifiSortMode = 'nearest-first',
   limit = WIFI_LIST_LIMIT,
 ): WifiLocation[] {
-  return sortWifiLocations(records, usualSpotId, sortMode).slice(0, limit)
+  return sortWifiLocations(records, sortMode).slice(0, limit)
 }

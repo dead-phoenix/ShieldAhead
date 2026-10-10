@@ -13,6 +13,7 @@ import { Link, NavLink, Outlet, useLocation } from 'react-router-dom'
 import { appRoutes, productConfig } from '../../app/config/product'
 import { readNearbySnapshot } from '../../data/offline/nearbySnapshot'
 import { useNearbySnapshotRefresh } from '../../data/offline/useNearbySnapshotRefresh'
+import { useSupportAreaCacheRefresh } from '../../data/offline/useSupportAreaCache'
 import { hasCompletedSetup } from '../../storage/onboardingDraftStorage'
 import { GetTheAppButton } from '../components/GetTheAppButton'
 import { useConnectivity } from '../hooks/useConnectivity'
@@ -28,6 +29,7 @@ const primaryNavigation = [
 
 export function AppShell() {
   useNearbySnapshotRefresh()
+  useSupportAreaCacheRefresh()
   const { isOnline } = useConnectivity()
   const { hasUpdate, reload } = useServiceWorkerUpdate()
   const { pathname } = useLocation()

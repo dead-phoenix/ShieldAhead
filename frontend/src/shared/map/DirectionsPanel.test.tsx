@@ -90,6 +90,29 @@ describe('Directions panel', () => {
       expect(screen.getByRole('button', { name: /Saved for offline use/ })).toBeVisible()
     })
 
+    it('does not offer to save a route that starts at the current location', async () => {
+      Object.defineProperty(globalThis.navigator, 'geolocation', {
+        configurable: true,
+        value: {
+          watchPosition: vi.fn(),
+          clearWatch: vi.fn(),
+          getCurrentPosition: vi.fn((success: PositionCallback) => success({
+            coords: { latitude: -36.76, longitude: 144.27, accuracy: 5 },
+          } as GeolocationPosition)),
+        },
+      })
+      render(
+        <DirectionsPanel destination={destination} destinationId="dest-1" onRouteChange={vi.fn()} onRequestMapStart={vi.fn()} />,
+      )
+
+      fireEvent.click(screen.getByRole('button', { name: /Use my location/ }))
+
+      expect(await screen.findByText('15 min')).toBeVisible()
+      expect(screen.getByText('Routes that start at your current location are not saved.')).toBeVisible()
+      expect(screen.queryByRole('button', { name: /Save for offline use/ })).not.toBeInTheDocument()
+      expect(readOfflineRoute('dest-1')).toBeUndefined()
+    })
+
     it('shows a previously saved route with no network call when offline and nothing else is restored', async () => {
       saveOfflineRoute({
         destinationId: 'dest-1',
@@ -98,7 +121,7 @@ describe('Directions panel', () => {
         destinationLongitude: destination.longitude,
         profile: 'foot-walking',
         origin: { latitude: -36.76, longitude: 144.27 },
-        originLabel: 'Your current location',
+        originLabel: 'Selected map point',
         route: {
           distanceMeters: 1500,
           durationSeconds: 900,

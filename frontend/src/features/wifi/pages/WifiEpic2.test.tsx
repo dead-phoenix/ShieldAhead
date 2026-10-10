@@ -1,8 +1,8 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { fireEvent, render, screen } from '@testing-library/react'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
-import { describe, expect, it, vi } from 'vitest'
-import { storageKeys } from '../../../app/config/product'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { getMockWifiRepository } from '../../../data/mock/mockRepositories'
+import { getSavedPlace, savePlace } from '../../../storage/savedPlacesStorage'
 import { WifiDetailPage } from './WifiDetailPage'
 import { WifiListPage } from './WifiListPage'
 
@@ -116,30 +116,61 @@ describe('Epic 2 Wi-Fi states', () => {
     expect(screen.getByText('Access conditions not confirmed')).toBeVisible()
   })
 
-  it('clears a usual spot that was removed during refresh', async () => {
-    window.localStorage.setItem(storageKeys.usualWifiSpot, 'example-harcourt')
-    renderList('/wifi', 'removed-usual')
-
-    expect(await screen.findByText('Your usual spot is no longer listed')).toBeVisible()
-    await waitFor(() => {
-      expect(window.localStorage.getItem(storageKeys.usualWifiSpot)).toBeNull()
-    })
-  })
-
-  it('lets the user remove a usual spot from its details', async () => {
-    window.localStorage.setItem(storageKeys.usualWifiSpot, 'example-castlemaine')
+  it('saves a Wi-Fi place with the heart without sending anything', async () => {
+    const fetchSpy = vi.spyOn(globalThis, 'fetch')
     renderDetail('/wifi/example-castlemaine', 'default')
 
-    const removeButton = await screen.findByRole('button', {
-      name: 'Remove as usual spot',
-    })
-    fireEvent.click(removeButton)
+    const heart = await screen.findByRole('button', { name: /^Save .* for offline use$/ })
+    expect(heart).toHaveAttribute('aria-pressed', 'false')
+    fireEvent.click(heart)
 
-    expect(window.localStorage.getItem(storageKeys.usualWifiSpot)).toBeNull()
-    expect(screen.getByText(/It will now be sorted by distance/i)).toBeVisible()
-    expect(screen.getByRole('button', { name: 'Mark as usual spot' })).toHaveAttribute(
-      'aria-pressed',
-      'false',
-    )
+    expect(screen.getByRole('button', { name: /^Remove .* from saved places$/ })).toHaveAttribute('aria-pressed', 'true')
+    expect(getSavedPlace('wifi:example-castlemaine')?.record.id).toBe('example-castlemaine')
+    expect(fetchSpy).not.toHaveBeenCalled()
+    fetchSpy.mockRestore()
+  })
+
+  describe('offline', () => {
+    function renderOfflineDetail(path: string) {
+      repositoryMocks.getWifiRepository.mockReturnValue({
+        list: () => Promise.reject(new Error('No saved information is available for this postcode.')),
+      })
+      return render(
+        <MemoryRouter initialEntries={[path]}>
+          <Routes>
+            <Route path="/wifi/:id" element={<WifiDetailPage />} />
+          </Routes>
+        </MemoryRouter>,
+      )
+    }
+
+    beforeEach(() => {
+      Object.defineProperty(window.navigator, 'onLine', { configurable: true, value: false })
+    })
+
+    afterEach(() => {
+      Object.defineProperty(window.navigator, 'onLine', { configurable: true, value: true })
+    })
+
+    it('shows a saved Wi-Fi place from the device', async () => {
+      savePlace({
+        key: 'wifi:example-castlemaine',
+        kind: 'wifi',
+        record: { id: 'example-castlemaine', placeType: 'wifi', name: 'Saved library Wi-Fi', suburb: 'Castlemaine', dataUpdatedAt: '2026-09-01T00:00:00.000Z' },
+      })
+      renderOfflineDetail('/wifi/example-castlemaine')
+
+      expect(await screen.findByRole('heading', { name: 'Saved library Wi-Fi' })).toBeVisible()
+      expect(screen.getByText(/Details may have changed\. Check before you go\./)).toBeVisible()
+      expect(screen.getByText('Distance not saved with this place')).toBeVisible()
+      expect(screen.getByRole('button', { name: /Open in maps/ })).toBeDisabled()
+    })
+
+    it('explains when an unsaved Wi-Fi place is not on this device', async () => {
+      renderOfflineDetail('/wifi/example-castlemaine')
+
+      expect(await screen.findByText("This place isn't saved on this device")).toBeVisible()
+      expect(screen.queryByRole('alert')).not.toBeInTheDocument()
+    })
   })
 })

@@ -7,6 +7,7 @@ import {
   getOfflineDatasetSummaries,
   readOfflineDataset,
   removeOfflineDataset,
+  saveOfflineDataset,
 } from './offlineDatasetStore'
 
 const dataset: DatasetResult<WifiLocation> = {
@@ -34,48 +35,42 @@ describe('offline-aware repository', () => {
     })
   })
 
-  it('saves a downloaded dataset and reads it after the app goes offline', async () => {
+  it('does not save a downloaded dataset', async () => {
     const onlineRepository = { list: vi.fn().mockResolvedValue(dataset) }
-    const online = createOfflineAwareRepository<WifiLocation>({
+    const result = await createOfflineAwareRepository<WifiLocation>({
       kind: 'wifi',
       postcode: '3453',
       onlineRepository,
-      shouldSave: () => true,
       isOnline: () => true,
-    })
-    await online.list()
+    }).list()
 
-    const offline = createOfflineAwareRepository<WifiLocation>({
+    expect(result.metadata.dataOrigin).toBe('network')
+    expect(await readOfflineDataset('wifi', '3453')).toBeNull()
+  })
+
+  it('reads a saved copy when the app is offline', async () => {
+    await saveOfflineDataset('wifi', '3453', dataset)
+    const onlineRepository = { list: vi.fn().mockResolvedValue(dataset) }
+    const result = await createOfflineAwareRepository<WifiLocation>({
       kind: 'wifi',
       postcode: '3453',
       onlineRepository,
-      shouldSave: () => true,
       isOnline: () => false,
-    })
-    const result = await offline.list()
+    }).list()
 
     expect(result.records[0].name).toBe('Library Wi-Fi')
     expect(result.metadata.dataOrigin).toBe('cache')
     expect(result.metadata.cachedAt).toBeTruthy()
-    expect(onlineRepository.list).toHaveBeenCalledTimes(1)
+    expect(onlineRepository.list).not.toHaveBeenCalled()
   })
 
   it('falls back to the saved copy when an online refresh fails', async () => {
-    const successfulRepository = { list: vi.fn().mockResolvedValue(dataset) }
-    await createOfflineAwareRepository<WifiLocation>({
-      kind: 'wifi',
-      postcode: '3453',
-      onlineRepository: successfulRepository,
-      shouldSave: () => true,
-      isOnline: () => true,
-    }).list()
-
+    await saveOfflineDataset('wifi', '3453', dataset)
     const failingRepository = { list: vi.fn().mockRejectedValue(new Error('Server unavailable.')) }
     const result = await createOfflineAwareRepository<WifiLocation>({
       kind: 'wifi',
       postcode: '3453',
       onlineRepository: failingRepository,
-      shouldSave: () => true,
       isOnline: () => true,
     }).list()
 
@@ -84,36 +79,19 @@ describe('offline-aware repository', () => {
     expect(result.metadata.refreshError).toBe('Server unavailable.')
   })
 
-  it('does not expose cached data after the user turns saving off', async () => {
-    const onlineRepository = { list: vi.fn().mockResolvedValue(dataset) }
-    await createOfflineAwareRepository<WifiLocation>({
-      kind: 'wifi',
-      postcode: '3453',
-      onlineRepository,
-      shouldSave: () => true,
-      isOnline: () => true,
-    }).list()
-
-    const repository = createOfflineAwareRepository<WifiLocation>({
-      kind: 'wifi',
-      postcode: '3453',
-      onlineRepository,
-      shouldSave: () => false,
-      isOnline: () => false,
-    })
-
-    await expect(repository.list()).rejects.toThrow('not selected for offline use')
-  })
-
-  it('reports record counts and removes stored datasets', async () => {
+  it('explains when nothing is saved for this postcode offline', async () => {
     const repository = createOfflineAwareRepository<WifiLocation>({
       kind: 'wifi',
       postcode: '3453',
       onlineRepository: { list: vi.fn().mockResolvedValue(dataset) },
-      shouldSave: () => true,
-      isOnline: () => true,
+      isOnline: () => false,
     })
-    await repository.list()
+
+    await expect(repository.list()).rejects.toThrow('No saved information is available for this postcode.')
+  })
+
+  it('reports record counts and removes stored datasets', async () => {
+    await saveOfflineDataset('wifi', '3453', dataset)
 
     expect((await getOfflineDatasetSummaries('3453')).wifi?.recordCount).toBe(1)
     await removeOfflineDataset('wifi', '3453')

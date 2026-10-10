@@ -1,6 +1,5 @@
 import { createApiSupportServiceRepository } from './api/apiSupportServiceRepository'
 import { createOfflineAwareRepository } from './offline/offlineAwareRepository'
-import { isOfflineDatasetSelected } from './offline/offlineDatasetStore'
 import type { SupportServiceRepository } from './repositories'
 
 export function getSupportServiceRepository(postcode: string): SupportServiceRepository {
@@ -17,6 +16,5 @@ export function getSupportServiceRepository(postcode: string): SupportServiceRep
     kind: 'support',
     postcode,
     onlineRepository,
-    shouldSave: () => isOfflineDatasetSelected('support'),
   })
 }

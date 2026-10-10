@@ -33,6 +33,8 @@ export const appRoutes = {
   offlineInformation: '/settings/offline-information',
   myArea: '/settings/my-area',
   deleteProfile: '/settings/delete-profile',
+  saved: '/saved',
+  savedPlace: (key: string) => `/saved/place/${encodeURIComponent(key)}`,
 } as const
 
 export const storageKeys = {
@@ -40,7 +42,9 @@ export const storageKeys = {
   householdProfile: 'shieldahead.household-profile.v1',
   consent: 'shieldahead.consent.v1',
   offlinePreferences: 'shieldahead.offline-preferences.v1',
+  /** Retired: read once by migrateUsualWifiSpot, then removed. */
   usualWifiSpot: 'shieldahead.usual-wifi-spot.v1',
+  savedPlaces: 'shieldahead.saved-places.v1',
   searchLocation: 'shieldahead.search-location.v1',
   myArea: 'shieldahead.my-area.v1',
   crisisChecklist: 'shieldahead.crisis-checklist.v1',
@@ -49,4 +53,6 @@ export const storageKeys = {
   nearbySnapshot: 'shieldahead.nearby-snapshot.v1',
   /** sessionStorage: set once the background nearby refresh has been tried in this session. */
   nearbyRefreshTried: 'shieldahead.nearby-refresh-tried.v1',
+  /** sessionStorage: set once the background support-list save has been tried in this session. */
+  supportCacheTried: 'shieldahead.support-cache-tried.v1',
 } as const

@@ -40,15 +40,8 @@ const fartherConfirmed: WifiLocation = {
 }
 
 describe('sortWifiLocations', () => {
-  it('pins the usual spot above a nearer record', () => {
-    expect(sortWifiLocations([near, far], 'far').map(({ id }) => id)).toEqual([
-      'far',
-      'near',
-    ])
-  })
-
-  it('returns to distance order after the usual spot is removed', () => {
-    expect(sortWifiLocations([far, near], null).map(({ id }) => id)).toEqual([
+  it('orders records by distance', () => {
+    expect(sortWifiLocations([far, near]).map(({ id }) => id)).toEqual([
       'near',
       'far',
     ])
@@ -56,17 +49,13 @@ describe('sortWifiLocations', () => {
 
   it('ranks nearer likely listings above farther confirmed listings', () => {
     expect(
-      sortWifiLocations([nearbyLikely, fartherConfirmed], null).map(({ id }) => id),
+      sortWifiLocations([nearbyLikely, fartherConfirmed]).map(({ id }) => id),
     ).toEqual(['nearby-likely', 'farther-confirmed'])
   })
 
   it('can prioritise confirmed listings before nearer likely listings', () => {
     expect(
-      sortWifiLocations(
-        [nearbyLikely, fartherConfirmed],
-        null,
-        'confirmed-first',
-      ).map(({ id }) => id),
+      sortWifiLocations([nearbyLikely, fartherConfirmed], 'confirmed-first').map(({ id }) => id),
     ).toEqual(['farther-confirmed', 'nearby-likely'])
   })
 
@@ -74,7 +63,7 @@ describe('sortWifiLocations', () => {
     const nearerConfirmed = { ...fartherConfirmed, id: 'nearer-confirmed', distanceKm: 18 }
 
     expect(
-      sortWifiLocations([fartherConfirmed, nearerConfirmed], null).map(({ id }) => id),
+      sortWifiLocations([fartherConfirmed, nearerConfirmed]).map(({ id }) => id),
     ).toEqual(['nearer-confirmed', 'farther-confirmed'])
   })
 })
@@ -87,8 +76,8 @@ describe('selectWifiLocationsForList', () => {
       distanceKm: index + 1,
     }))
 
-    expect(selectWifiLocationsForList(records, null)).toHaveLength(WIFI_LIST_LIMIT)
-    expect(selectWifiLocationsForList(records, null).map(({ id }) => id)).toEqual(
+    expect(selectWifiLocationsForList(records)).toHaveLength(WIFI_LIST_LIMIT)
+    expect(selectWifiLocationsForList(records).map(({ id }) => id)).toEqual(
       records.slice(0, WIFI_LIST_LIMIT).map(({ id }) => id),
     )
   })

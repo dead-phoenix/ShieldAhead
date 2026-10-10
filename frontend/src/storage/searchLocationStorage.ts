@@ -47,7 +47,7 @@ export function saveSearchLocation(location: SearchLocation): boolean {
       label: location.label.trim() || postcode,
       selectedAt: new Date().toISOString(),
     }))
-    void preloadNearbyData(postcode)
+    void preloadNearbyData(postcode, { includeSupport: postcode !== getMyArea()?.postcode })
     return true
   } catch {
     return false

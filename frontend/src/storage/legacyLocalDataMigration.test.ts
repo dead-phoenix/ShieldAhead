@@ -109,7 +109,10 @@ describe('legacy local data migration', () => {
     saveMyArea({ postcode: '3453' })
     saveMyArea({ postcode: '3550' })
 
-    expect(vi.mocked(preloadNearbyData).mock.calls).toEqual([['3453'], ['3550']])
+    expect(vi.mocked(preloadNearbyData).mock.calls).toEqual([
+      ['3453', { includeSupport: false }],
+      ['3550', { includeSupport: false }],
+    ])
   })
 
   it('rejects an invalid My area postcode', () => {
