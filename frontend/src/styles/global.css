@@ -3523,9 +3523,17 @@ input[type='checkbox'] {
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
   background: var(--color-surface);
+  overflow: hidden;
 }
 
-.crisis-query-search > label { font-weight: 700; }
+.crisis-query-search > label {
+  margin: calc(var(--space-4) * -1) calc(var(--space-4) * -1) 0;
+  padding: var(--space-3) var(--space-4);
+  background: var(--color-accent);
+  color: var(--color-on-primary);
+  text-align: center;
+  font-weight: 700;
+}
 
 .crisis-query-search__row { display: flex; flex-wrap: wrap; gap: var(--space-3); }
 
@@ -3661,6 +3669,12 @@ input[type='checkbox'] {
 }
 
 .crisis-detail-hero > div:first-child { flex: 1 1 32rem; }
+
+.crisis-detail-hero__action {
+  display: flex;
+  justify-content: center;
+  margin-top: var(--space-3);
+}
 
 .crisis-helplines {
   display: grid;

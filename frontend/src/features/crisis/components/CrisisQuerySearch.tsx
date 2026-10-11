@@ -71,7 +71,7 @@ export function CrisisQuerySearch({ variant = 'crisis' }: { variant?: 'crisis' |
 
   return (
     <form className={`crisis-query-search${variant === 'home' ? ' crisis-query-search--home' : ''}`} onSubmit={handleSearch}>
-      <label htmlFor="crisis-query-input">{variant === 'home' ? 'Ask a question or where you want to go' : 'Ask a question, e.g. &quot;How should I prepare for bushfire&quot;'}</label>
+      <label htmlFor="crisis-query-input">{variant === 'home' ? 'Ask a question or where you want to go' : 'Ask a question, e.g. "How should I prepare for bushfire"'}</label>
       <div className="crisis-query-search__row">
         <input
           id="crisis-query-input"
