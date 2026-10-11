@@ -35,6 +35,24 @@
   object-fit: cover;
   object-position: center 55%;
   filter: saturate(1.15) contrast(1.05);
+  opacity: 0;
+  transition: opacity 1.6s ease-in-out;
+}
+
+.home-hero__photo:first-child {
+  /* Visible immediately, before JS picks an active photo on mount, and as
+     the plain fallback if images are blocked or scripting is unavailable. */
+  opacity: 1;
+}
+
+.home-hero__photo.is-active {
+  opacity: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .home-hero__photo {
+    transition: none;
+  }
 }
 
 .home-hero > :not(.home-hero__photo) {

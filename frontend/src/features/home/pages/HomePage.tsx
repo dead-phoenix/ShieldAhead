@@ -11,6 +11,33 @@ const HomeStaticMap = lazy(async () => {
   return { default: module.HomeStaticMap }
 })
 
+const HERO_PHOTOS = [
+  '/images/victorian-coastline.jpg',
+  '/images/wildflower-grassland.jpg',
+  '/images/canola-field.jpg',
+  '/images/outback-scrub.jpg',
+]
+const HERO_PHOTO_INTERVAL_MS = 6000
+
+/** Cycles through HERO_PHOTOS on a timer, crossfaded in CSS by toggling
+ * which image has the is-active class. Stays on the first photo for
+ * anyone who prefers reduced motion, rather than auto-playing regardless. */
+function useHeroPhotoIndex(): number {
+  const [index, setIndex] = useState(0)
+
+  useEffect(() => {
+    if (HERO_PHOTOS.length <= 1) return
+    if (typeof window.matchMedia === 'function' && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
+    const timer = window.setInterval(
+      () => setIndex((current) => (current + 1) % HERO_PHOTOS.length),
+      HERO_PHOTO_INTERVAL_MS,
+    )
+    return () => window.clearInterval(timer)
+  }, [])
+
+  return index
+}
+
 const hazardPictures = [
   {
     kind: 'bushfire' as const,
@@ -70,14 +97,19 @@ function HomeMapPreview() {
 }
 
 export function HomePage() {
+  const activePhotoIndex = useHeroPhotoIndex()
   return (
     <div className="landing-page landing-page--focused home-page">
       <section className="home-hero" aria-labelledby="home-title">
-        <img
-          className="home-hero__photo"
-          src="/images/victorian-coastline.jpg"
-          alt=""
-        />
+        {HERO_PHOTOS.map((photo, index) => (
+          <img
+            className={`home-hero__photo${index === activePhotoIndex ? ' is-active' : ''}`}
+            key={photo}
+            src={photo}
+            alt=""
+            aria-hidden="true"
+          />
+        ))}
         <h1 id="home-title">
           Shield Ahead.
           <br />

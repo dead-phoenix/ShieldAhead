@@ -1,6 +1,6 @@
-import { fireEvent, render, screen } from '@testing-library/react'
+import { act, fireEvent, render, screen } from '@testing-library/react'
 import { MemoryRouter, useLocation } from 'react-router-dom'
-import { describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import { HomePage } from './HomePage'
 
 function LocationProbe() {
@@ -18,6 +18,48 @@ function renderHome() {
 }
 
 describe('home landing page', () => {
+  afterEach(() => {
+    vi.useRealTimers()
+    vi.unstubAllGlobals()
+  })
+
+  it('shows the first hero photo active, then crossfades to the next one on a timer', () => {
+    vi.useFakeTimers()
+    const { container } = renderHome()
+    const photos = () => [...container.querySelectorAll('.home-hero__photo')]
+
+    expect(photos()).toHaveLength(4)
+    expect(photos()[0]).toHaveClass('is-active')
+    expect(photos()[1]).not.toHaveClass('is-active')
+
+    act(() => { vi.advanceTimersByTime(6000) })
+
+    expect(photos()[0]).not.toHaveClass('is-active')
+    expect(photos()[1]).toHaveClass('is-active')
+  })
+
+  it('wraps back to the first photo after the last one', () => {
+    vi.useFakeTimers()
+    const { container } = renderHome()
+    const photos = () => [...container.querySelectorAll('.home-hero__photo')]
+
+    act(() => { vi.advanceTimersByTime(6000 * 4) })
+
+    expect(photos()[0]).toHaveClass('is-active')
+  })
+
+  it('stays on the first photo when the device prefers reduced motion', () => {
+    vi.useFakeTimers()
+    vi.stubGlobal('matchMedia', vi.fn().mockReturnValue({ matches: true }))
+    const { container } = renderHome()
+
+    act(() => { vi.advanceTimersByTime(6000 * 3) })
+
+    const photos = [...container.querySelectorAll('.home-hero__photo')]
+    expect(photos[0]).toHaveClass('is-active')
+  })
+
+
   it('introduces preparation, a static map, and the main destinations', () => {
     renderHome()
 
