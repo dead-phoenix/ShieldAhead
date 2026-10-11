@@ -2,6 +2,7 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { storageKeys } from '../../../app/config/product'
+import { savePlace } from '../../../storage/savedPlacesStorage'
 import { searchLocations } from '../data/locationSearchApi'
 import type { MapPlaceResult } from '../model/mapTypes'
 import { MapPage } from './MapPage'
@@ -54,7 +55,24 @@ describe('unified Map page', () => {
     window.sessionStorage.clear()
     Object.defineProperty(window.navigator, 'onLine', { configurable: true, value: true })
     window.localStorage.setItem(storageKeys.searchLocation, JSON.stringify({ postcode: '3453', label: 'Harcourt 3453' }))
+    window.localStorage.removeItem(storageKeys.savedPlaces)
     delete mapResult.places.find((place) => place.id === 'support:s1')?.phone
+  })
+
+  it('always links to the saved places list, above the search area, with a count once something is saved', async () => {
+    render(<MemoryRouter initialEntries={['/map']}><MapPage /></MemoryRouter>)
+    await screen.findByText('Library Wi-Fi')
+
+    const link = screen.getByRole('link', { name: 'My list' })
+    expect(link).toHaveAttribute('href', '/saved')
+    expect(screen.getByText('Search area').compareDocumentPosition(link) & Node.DOCUMENT_POSITION_PRECEDING).toBeTruthy()
+
+    savePlace({
+      key: 'support:s1', kind: 'support',
+      record: { id: 's1', placeType: 'support', name: 'Community House', dataUpdatedAt: '2026-09-30T00:00:00.000Z' },
+    })
+
+    expect(await screen.findByRole('link', { name: 'My list (1)' })).toBeVisible()
   })
 
   it('keeps the list and map on the same filtered result set', async () => {

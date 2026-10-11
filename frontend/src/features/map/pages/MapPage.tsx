@@ -4,6 +4,7 @@ import {
   Crosshair,
   Fire,
   HandHeart,
+  Heart,
   Hospital,
   MagnifyingGlass,
   MapPin,
@@ -17,6 +18,7 @@ import { Link, useSearchParams } from 'react-router-dom'
 import { appRoutes } from '../../../app/config/product'
 import { SavePlaceButton } from '../../saved-places/components/SavePlaceButton'
 import { savedPlaceFromMapPlace } from '../../saved-places/savedPlaceRecords'
+import { useSavedPlaces } from '../../saved-places/useSavedPlaces'
 import { EmptyState } from '../../../shared/components/EmptyState'
 import { LoadingState } from '../../../shared/components/LoadingState'
 import { StatusBanner } from '../../../shared/components/StatusBanner'
@@ -178,6 +180,7 @@ export function MapPage() {
   const panelDragStartHeightRef = useRef<number | undefined>(undefined)
   const [panelDragHeight, setPanelDragHeight] = useState<number | undefined>(undefined)
   const isOnline = useOnlineStatus()
+  const savedPlaces = useSavedPlaces()
 
   useEffect(() => {
     saveMapSessionState({
@@ -680,6 +683,10 @@ export function MapPage() {
               <h1 id="unified-map-title">Support</h1>
               <p>Find public Wi-Fi and community support near your chosen area.</p>
             </div>
+            <Link className="button button--quiet unified-map-saved-link" to={appRoutes.saved}>
+              <Heart aria-hidden="true" size={18} weight={savedPlaces.length > 0 ? 'fill' : 'regular'} />
+              My list{savedPlaces.length > 0 ? ` (${savedPlaces.length})` : ''}
+            </Link>
             <form className="unified-map-search" onSubmit={(event) => void handleSearch(event)}>
               <label htmlFor="map-area-search">Search area</label>
               <div>

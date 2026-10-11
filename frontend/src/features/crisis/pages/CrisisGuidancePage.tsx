@@ -2,7 +2,19 @@ import { ArrowLeft, ArrowSquareOut, CalendarBlank, ShieldWarning } from '@phosph
 import { useState } from 'react'
 import { Navigate, Link, useLocation, useParams } from 'react-router-dom'
 import { appRoutes } from '../../../app/config/product'
-import { getCrisisContent, type CrisisGuidanceStage } from '../crisisContent'
+import { getCrisisContent, type CrisisGuidanceItem, type CrisisGuidanceStage } from '../crisisContent'
+
+/** Several items in one stage often cite the same official page — de-duplicated
+ * by URL so it's listed once at the bottom of the stage, not after every item. */
+function stageSources(items: CrisisGuidanceItem[]): Pick<CrisisGuidanceItem, 'sourceName' | 'sourceUrl' | 'officialDetailsUrl'>[] {
+  const seen = new Map<string, Pick<CrisisGuidanceItem, 'sourceName' | 'sourceUrl' | 'officialDetailsUrl'>>()
+  for (const item of items) {
+    if (!seen.has(item.sourceUrl)) {
+      seen.set(item.sourceUrl, { sourceName: item.sourceName, sourceUrl: item.sourceUrl, officialDetailsUrl: item.officialDetailsUrl })
+    }
+  }
+  return [...seen.values()]
+}
 
 export function CrisisGuidancePage() {
   const { kind } = useParams()
@@ -16,6 +28,7 @@ export function CrisisGuidancePage() {
   if (!content) return <Navigate replace to={appRoutes.crisis} />
 
   const activeStage = content.guidance.find((stage) => stage.id === activeStageId) ?? content.guidance[0]
+  const sources = stageSources(activeStage.items)
 
   return <section className="content-page crisis-page crisis-guidance-page" aria-labelledby="crisis-guidance-title">
     <Link className="page-back-link" to={appRoutes.crisisDetail(content.kind)}><ArrowLeft aria-hidden="true" size={18} /> Back to {content.title}</Link>
@@ -63,12 +76,19 @@ export function CrisisGuidancePage() {
               <h3>{item.title}</h3>
               <p>{item.summary}</p>
               {item.steps && <ul>{item.steps.map((step) => <li key={step}>{step}</li>)}</ul>}
-              <div className="crisis-guidance-item__sources">
-                <a href={item.sourceUrl} rel="noreferrer" target="_blank">Source: {item.sourceName} <ArrowSquareOut aria-hidden="true" size={15} /></a>
-                {item.officialDetailsUrl && <a href={item.officialDetailsUrl} rel="noreferrer" target="_blank">For official details, check VICSES <ArrowSquareOut aria-hidden="true" size={15} /></a>}
-              </div>
             </article>
           ))}
+        </div>
+        <div className="crisis-guidance-stage__sources">
+          <h3>Sources</h3>
+          <ul>
+            {sources.map((source) => (
+              <li key={source.sourceUrl}>
+                <a href={source.sourceUrl} rel="noreferrer" target="_blank">{source.sourceName} <ArrowSquareOut aria-hidden="true" size={15} /></a>
+                {source.officialDetailsUrl && <a href={source.officialDetailsUrl} rel="noreferrer" target="_blank">For official details, check VICSES <ArrowSquareOut aria-hidden="true" size={15} /></a>}
+              </li>
+            ))}
+          </ul>
         </div>
       </div>
     </section>

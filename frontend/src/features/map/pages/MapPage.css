@@ -17,6 +17,10 @@
   gap: var(--space-1);
 }
 
+.unified-map-saved-link {
+  width: fit-content;
+}
+
 .unified-map-intro h1 {
   font-family: var(--font-display);
   font-size: var(--text-2xl);

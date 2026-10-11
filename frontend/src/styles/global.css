@@ -3845,8 +3845,15 @@ input[type='checkbox'] {
 .crisis-guidance-item h3 { font-size: var(--text-base); }
 .crisis-guidance-item p { margin-top: var(--space-1); color: var(--color-text-secondary); }
 .crisis-guidance-item ul { display: grid; gap: var(--space-1); margin-top: var(--space-2); padding-inline-start: var(--space-5); color: var(--color-text-secondary); font-size: var(--text-sm); }
-.crisis-guidance-item__sources { display: flex; flex-wrap: wrap; gap: var(--space-3); margin-top: var(--space-3); }
-.crisis-guidance-item__sources a {
+
+.crisis-guidance-stage__sources {
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--color-border-soft);
+}
+.crisis-guidance-stage__sources h3 { font-size: var(--text-sm); color: var(--color-text-muted); }
+.crisis-guidance-stage__sources ul { display: flex; flex-wrap: wrap; gap: var(--space-3); margin-top: var(--space-2); padding: 0; list-style: none; }
+.crisis-guidance-stage__sources li { display: flex; flex-wrap: wrap; gap: var(--space-3); }
+.crisis-guidance-stage__sources a {
   display: inline-flex;
   align-items: center;
   gap: var(--space-1);
