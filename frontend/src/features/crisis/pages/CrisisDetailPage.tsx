@@ -33,20 +33,6 @@ export function CrisisDetailPage() {
     <Link className="page-back-link" to={appRoutes.crisis}><ArrowLeft aria-hidden="true" size={18} /> Back to Crisis</Link>
     <header className="crisis-detail-hero">
       <div><span className="crisis-local-label"><CloudCheck aria-hidden="true" size={18} /> Checklist saved on this device</span><h1 id="crisis-detail-title">{content.title}</h1><p>{content.summary}</p><Link className="button button--quiet" to={appRoutes.crisisGuidance(content.kind)}>View preparation guidance <ArrowRight aria-hidden="true" size={18} weight="bold" /></Link></div>
-      {helplines.length > 0 && <aside className="crisis-helpline-card" aria-labelledby="helplines-title">
-        <h2 id="helplines-title"><Phone aria-hidden="true" size={22} weight="fill" /> Helpline numbers</h2>
-        <ul>
-          {helplines.map((helpline) => <li key={helpline.id}>
-            <div>
-              <strong>{helpline.name}</strong>
-              {helpline.description && <p>{helpline.description}</p>}
-              <span>{helpline.serviceType}{helpline.availability ? ` · ${helpline.availability}` : ''}{helpline.coverageArea ? ` · ${helpline.coverageArea}` : ''}</span>
-            </div>
-            <a href={`tel:${helpline.phone.replace(/\s+/g, '')}`}>{helpline.phone}</a>
-          </li>)}
-        </ul>
-        {helplineSource && <p className="crisis-helpline-card__source"><Info aria-hidden="true" size={16} /> Source: <a href={helplineSource.url} rel="noreferrer" target="_blank">{helplineSource.label} <ArrowSquareOut aria-hidden="true" size={14} /></a></p>}
-      </aside>}
     </header>
     <section className="crisis-checklist" aria-labelledby="checklist-title">
       <div className="crisis-checklist__summary"><div><h2 id="checklist-title">{householdChecklistTitles[content.kind]}</h2><p>This checklist belongs only to this hazard page.</p></div><strong>{completed} of {itemIds.length} complete</strong></div>
@@ -80,5 +66,19 @@ export function CrisisDetailPage() {
       </div>
       <p className="crisis-checklist__privacy"><Info aria-hidden="true" size={18} /> Your checklist progress stays in this browser on this device.</p>
     </section>
+    {helplines.length > 0 && <section className="crisis-helplines" aria-labelledby="helplines-title">
+      <h2 id="helplines-title"><Phone aria-hidden="true" size={22} weight="fill" /> Helpline numbers</h2>
+      <ul className="crisis-helplines__grid">
+        {helplines.map((helpline) => <li className="crisis-helplines__card" key={helpline.id}>
+          <div className="crisis-helplines__card-heading"><strong>{helpline.name}</strong></div>
+          <div className="crisis-helplines__card-body">
+            {helpline.description && <p>{helpline.description}</p>}
+            <span>{helpline.serviceType}{helpline.availability ? ` · ${helpline.availability}` : ''}{helpline.coverageArea ? ` · ${helpline.coverageArea}` : ''}</span>
+            <a href={`tel:${helpline.phone.replace(/\s+/g, '')}`}>{helpline.phone}</a>
+          </div>
+        </li>)}
+      </ul>
+      {helplineSource && <p className="crisis-helplines__source"><Info aria-hidden="true" size={16} /> Source: <a href={helplineSource.url} rel="noreferrer" target="_blank">{helplineSource.label} <ArrowSquareOut aria-hidden="true" size={14} /></a></p>}
+    </section>}
   </section>
 }
