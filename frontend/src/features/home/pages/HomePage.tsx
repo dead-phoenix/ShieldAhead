@@ -75,7 +75,7 @@ export function HomePage() {
       <section className="home-hero" aria-labelledby="home-title">
         <img
           className="home-hero__photo"
-          src="/images/flinders-street-station.jpg"
+          src="/images/victorian-coastline.jpg"
           alt=""
         />
         <h1 id="home-title">

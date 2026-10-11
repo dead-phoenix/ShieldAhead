@@ -33,15 +33,8 @@
   width: 100%;
   height: 100%;
   object-fit: cover;
-  object-position: center 38%;
-}
-
-.home-hero::before {
-  position: absolute;
-  inset: 0;
-  z-index: 1;
-  background: radial-gradient(ellipse at center, rgba(251, 248, 241, 0.86) 0%, rgba(251, 248, 241, 0.55) 38%, rgba(11, 24, 48, 0.12) 100%);
-  content: '';
+  object-position: center 55%;
+  filter: saturate(1.15) contrast(1.05);
 }
 
 .home-hero > :not(.home-hero__photo) {
@@ -63,8 +56,8 @@
   margin: -1.5rem calc(50% - 50vw) 1rem;
   padding: 5rem 1.5rem 4rem;
   background:
-    linear-gradient(180deg, rgba(11, 24, 48, 0.62) 0%, rgba(11, 24, 48, 0.35) 55%, rgba(11, 24, 48, 0.6) 100%),
-    url('/images/flinders-street-station.jpg') center 40% / cover no-repeat;
+    linear-gradient(180deg, rgba(11, 24, 48, 0.68) 0%, rgba(11, 24, 48, 0.42) 50%, rgba(11, 24, 48, 0.66) 100%),
+    url('/images/victorian-coastline.jpg') center 55% / cover no-repeat;
 }
 
 @media (min-width: 56rem) {
@@ -241,10 +234,7 @@
 }
 
 .home-page .crisis-query-search--home > label {
-  color: #fff;
-  font-size: 0.95rem;
-  text-align: center;
-  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.45);
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.22);
 }
 
 .home-page .crisis-query-search--home .crisis-query-search__row {
