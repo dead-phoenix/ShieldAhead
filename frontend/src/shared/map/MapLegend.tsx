@@ -1,4 +1,4 @@
-interface MapLegendItem {
+export interface MapLegendItem {
   label: string
   variant: 'confirmed' | 'likely' | 'support' | 'hospital' | 'police' | 'fire' | 'ambulance'
 }

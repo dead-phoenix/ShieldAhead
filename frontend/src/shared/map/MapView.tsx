@@ -156,6 +156,11 @@ export function MapView({ ariaLabel, markers, selectedIds = [], onSelect, onRetu
   const [attempt, setAttempt] = useState(0)
   const initialViewportRef = useRef(initialViewport)
   const skipInitialMarkerFitRef = useRef(Boolean(initialViewport))
+  // A restored search pin shouldn't force the camera back onto it on
+  // load — the restored viewport already reflects wherever the user
+  // actually left the map (which may have been panned away from the pin
+  // since searching), and re-centring on mount would silently undo that.
+  const skipInitialSearchRecentreRef = useRef(Boolean(initialViewport))
 
   useEffect(() => {
     onSelectRef.current = onSelect
@@ -277,7 +282,11 @@ export function MapView({ ariaLabel, markers, selectedIds = [], onSelect, onRetu
         .addTo(map)
     })
 
-    if (skipInitialMarkerFitRef.current && !focusSelectedMarker) {
+    if (markers.length === 0) {
+      // Nothing to fit yet (data hasn't loaded) — leave the skip-fit flag
+      // alone so it's still there once real markers actually arrive,
+      // instead of being spent on this empty pre-load render.
+    } else if (skipInitialMarkerFitRef.current && !focusSelectedMarker) {
       skipInitialMarkerFitRef.current = false
     } else if (markers.length === 1) {
       skipInitialMarkerFitRef.current = false
@@ -346,7 +355,11 @@ export function MapView({ ariaLabel, markers, selectedIds = [], onSelect, onRetu
     marker.togglePopup()
     searchMarkerRef.current = marker
 
-    map.easeTo({ center: [searchMarker.longitude, searchMarker.latitude], zoom: 15, duration: 350 })
+    if (skipInitialSearchRecentreRef.current) {
+      skipInitialSearchRecentreRef.current = false
+    } else {
+      map.easeTo({ center: [searchMarker.longitude, searchMarker.latitude], zoom: 15, duration: 350 })
+    }
 
     return () => {
       marker.remove()

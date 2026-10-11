@@ -19,13 +19,14 @@ import { appRoutes } from '../../../app/config/product'
 import { SavePlaceButton } from '../../saved-places/components/SavePlaceButton'
 import { savedPlaceFromMapPlace } from '../../saved-places/savedPlaceRecords'
 import { useSavedPlaces } from '../../saved-places/useSavedPlaces'
+import { useCurrentPosition, type PositionErrorReason } from '../../nearby/useCurrentPosition'
 import { EmptyState } from '../../../shared/components/EmptyState'
 import { LoadingState } from '../../../shared/components/LoadingState'
 import { StatusBanner } from '../../../shared/components/StatusBanner'
 import { useOnlineStatus } from '../../../shared/hooks/useOnlineStatus'
 import { LazyMapView } from '../../../shared/map/LazyMapView'
 import { ListMapToggle, type ResultsView } from '../../../shared/map/ListMapToggle'
-import { MapLegend } from '../../../shared/map/MapLegend'
+import { MapLegend, type MapLegendItem } from '../../../shared/map/MapLegend'
 import { DirectionsPanel, type DirectionsPanelState } from '../../../shared/map/DirectionsPanel'
 import {
   getSearchLocation,
@@ -70,6 +71,13 @@ function sortPlaces(places: MapPlace[]): MapPlace[] {
   return [...places].sort((left, right) =>
     (left.distanceKm ?? Number.POSITIVE_INFINITY)
     - (right.distanceKm ?? Number.POSITIVE_INFINITY))
+}
+
+const LOCATE_ME_ERRORS: Record<PositionErrorReason, string> = {
+  denied: 'Location access is blocked. Enter an address, suburb, or postcode instead.',
+  timeout: 'Your location could not be found in time. Try again, or enter a postcode instead.',
+  unavailable: 'Your location could not be found. Try again, or enter a postcode instead.',
+  unsupported: 'This device cannot share its location. Enter an address, suburb, or postcode instead.',
 }
 
 const MAP_RESULT_LIMIT = 30
@@ -164,7 +172,7 @@ export function MapPage() {
   const [panelSize, setPanelSize] = useState<MobilePanelSize>(restoredSession?.panelSize ?? 'half')
   const [movedMapCenter, setMovedMapCenter] = useState<RoutePoint>()
   const [mapViewport, setMapViewport] = useState<MapViewport | undefined>(restoredSession?.viewport)
-  const [searchPoint, setSearchPoint] = useState<SearchMarkerPoint | undefined>()
+  const [searchPoint, setSearchPoint] = useState<SearchMarkerPoint | undefined>(restoredSession?.searchPoint)
   const [routePreview, setRoutePreview] = useState<RoutePreview | undefined>(restoredSession?.directions?.route)
   const [directionsState, setDirectionsState] = useState<DirectionsPanelState | undefined>(restoredSession?.directions)
   const [selectedMapStart, setSelectedMapStart] = useState<RoutePoint>()
@@ -181,6 +189,7 @@ export function MapPage() {
   const [panelDragHeight, setPanelDragHeight] = useState<number | undefined>(undefined)
   const isOnline = useOnlineStatus()
   const savedPlaces = useSavedPlaces()
+  const myLocation = useCurrentPosition()
 
   useEffect(() => {
     saveMapSessionState({
@@ -193,9 +202,10 @@ export function MapPage() {
       panelSize,
       listScrollTop: listScrollTopRef.current,
       viewport: mapViewport,
+      searchPoint,
       directions: directionsState,
     })
-  }, [area, directionsState, mapViewport, mobileView, panelMode, panelSize, query, selectedKinds, selectedPlaceId])
+  }, [area, directionsState, mapViewport, mobileView, panelMode, panelSize, query, searchPoint, selectedKinds, selectedPlaceId])
 
   const repository = useMemo(
     () => getMapPlaceRepository({ postcode: area.postcode }),
@@ -251,13 +261,24 @@ export function MapPage() {
     [displayedSelectedPlaceId],
   )
   const allSelected = selectedKinds.length === enabledMapPlaceKinds.length
-  const legendItems = useMemo(
-    () => (allSelected ? enabledMapPlaceKinds : selectedKinds).map((kind) => ({
-      label: kind === 'support' ? 'Charity' : mapPlaceKindPresentation[kind].label,
-      variant: legendVariantByKind[kind],
-    })),
-    [allSelected, selectedKinds],
-  )
+  const legendItems = useMemo(() => {
+    const kinds = allSelected ? enabledMapPlaceKinds : selectedKinds
+    return kinds.flatMap((kind): MapLegendItem[] => {
+      if (kind !== 'wifi') {
+        return [{ label: kind === 'support' ? 'Charity' : mapPlaceKindPresentation[kind].label, variant: legendVariantByKind[kind] }]
+      }
+      // The legend otherwise always called Wi-Fi "confirmed" regardless of
+      // what was actually on screen — show each status that's genuinely
+      // present among the visible pins, not a fixed assumption.
+      const wifiPlaces = visiblePlaces.filter((place) => place.kind === 'wifi')
+      const hasConfirmed = wifiPlaces.some((place) => place.verificationStatus === 'confirmed')
+      const hasLikely = wifiPlaces.some((place) => place.verificationStatus === 'likely')
+      const items: MapLegendItem[] = []
+      if (hasConfirmed || !hasLikely) items.push({ label: 'Free Wi-Fi', variant: 'confirmed' })
+      if (hasLikely) items.push({ label: 'Free Wi-Fi (likely, not confirmed)', variant: 'likely' })
+      return items
+    })
+  }, [allSelected, selectedKinds, visiblePlaces])
 
   useEffect(() => {
     if (isLoading || !result || !selectedPlaceId || selectedPlace) return
@@ -441,6 +462,22 @@ export function MapPage() {
     } finally {
       setIsSearching(false)
     }
+  }
+
+  function locateMe() {
+    setSearchError('')
+    myLocation.request((point) => {
+      void (async () => {
+        setIsSearching(true)
+        try {
+          applyArea(await resolveCoordinates(point.lat, point.lng))
+        } catch (reason) {
+          setSearchError(reason instanceof Error ? reason.message : 'We could not use your location. Enter a postcode instead.')
+        } finally {
+          setIsSearching(false)
+        }
+      })()
+    })
   }
 
   function selectPlace(id: string) {
@@ -658,7 +695,11 @@ export function MapPage() {
               <span className="record-row__icon"><PlaceIcon kind={place.kind} /></span>
               <span>
                 <strong>{place.name}</strong>
-                <small>{mapPlaceKindPresentation[place.kind].singularLabel}</small>
+                <small className={place.kind === 'wifi' && place.verificationStatus === 'likely' ? 'unified-map-place__unconfirmed' : undefined}>
+                  {place.kind === 'wifi' && place.verificationStatus === 'likely'
+                    ? 'Free Wi-Fi location — likely, not confirmed'
+                    : mapPlaceKindPresentation[place.kind].singularLabel}
+                </small>
                 <small><MapPin aria-hidden="true" size={15} /> {placeAddress(place)}{place.distanceKm === undefined ? '' : ` · ${place.distanceKm} km`}</small>
                 {place.accessPoints ? <small>{place.accessPoints.length} access points</small> : null}
                 {!mapPlaceHasCoordinates(place) ? <small className="unified-map-place__map-note">Not shown on map — coordinates not provided</small> : null}
@@ -710,11 +751,25 @@ export function MapPage() {
                   aria-expanded={searchResults.length > 0}
                   aria-invalid={Boolean(searchError)}
                 />
+                <button
+                  aria-label={myLocation.state.status === 'locating' ? 'Finding your location…' : 'Use my current location'}
+                  className="button button--quiet unified-map-locate"
+                  disabled={myLocation.state.status === 'locating' || isSearching}
+                  onClick={locateMe}
+                  title="Use my current location"
+                  type="button"
+                >
+                  <Crosshair aria-hidden="true" size={18} />
+                </button>
                 <button className="button button--primary" type="submit" disabled={isSearching}>
                   {isSearching ? 'Searching…' : 'Search'}
                 </button>
               </div>
-              {searchError ? <p className="field-error" role="alert">{searchError}</p> : null}
+              {searchError ? (
+                <p className="field-error" role="alert">{searchError}</p>
+              ) : myLocation.state.status === 'error' ? (
+                <p className="field-error" role="alert">{LOCATE_ME_ERRORS[myLocation.state.reason]}</p>
+              ) : null}
               {searchResults.length > 0 ? (
                 <div className="unified-map-suggestions" id="map-area-suggestions" role="listbox" aria-label="Matching places">
                   {searchResults.map((location) => (

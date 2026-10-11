@@ -2165,6 +2165,10 @@ input[type='checkbox'] {
   background: var(--color-ink);
 }
 
+.map-marker--confirmed {
+  background: #0ea5e9;
+}
+
 .map-marker--likely {
   background: var(--color-warning-text);
 }
@@ -2301,6 +2305,10 @@ input[type='checkbox'] {
   border-radius: 50%;
   background: var(--color-accent);
   box-shadow: 0 0 0 1px var(--color-border);
+}
+
+.map-legend__symbol--confirmed {
+  background: #0ea5e9;
 }
 
 .map-legend__symbol--likely {

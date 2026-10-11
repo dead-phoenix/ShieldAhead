@@ -1,6 +1,6 @@
 import type { DirectionsPanelState } from '../../../shared/map/DirectionsPanel'
 import type { ResultsView } from '../../../shared/map/ListMapToggle'
-import type { MapViewport } from '../../../shared/map/MapView'
+import type { MapViewport, SearchMarkerPoint } from '../../../shared/map/MapView'
 import type { SearchLocation } from '../../../storage/searchLocationStorage'
 import type { MapPlaceKind } from './mapTypes'
 
@@ -17,6 +17,7 @@ export interface MapSessionState {
   panelSize: MobilePanelSize
   listScrollTop: number
   viewport?: MapViewport
+  searchPoint?: SearchMarkerPoint
   directions?: DirectionsPanelState
 }
 
@@ -39,6 +40,7 @@ export function readMapSessionState(): MapSessionState | null {
       panelSize: value.panelSize === 'compact' || value.panelSize === 'full' ? value.panelSize : 'half',
       listScrollTop: typeof value.listScrollTop === 'number' ? value.listScrollTop : 0,
       viewport: value.viewport,
+      searchPoint: value.searchPoint,
       directions: value.directions,
     }
   } catch {

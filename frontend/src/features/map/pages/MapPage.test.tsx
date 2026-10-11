@@ -1,9 +1,9 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { storageKeys } from '../../../app/config/product'
 import { savePlace } from '../../../storage/savedPlacesStorage'
-import { searchLocations } from '../data/locationSearchApi'
+import { resolveCoordinates, searchLocations } from '../data/locationSearchApi'
 import type { MapPlaceResult } from '../model/mapTypes'
 import { MapPage } from './MapPage'
 
@@ -12,7 +12,7 @@ const mapResult: MapPlaceResult = {
     {
       id: 'wifi:w1', sourceId: 'w1', source: 'wifi', kind: 'wifi', name: 'Library Wi-Fi',
       postcode: '3453', suburb: 'Harcourt', latitude: -36.99, longitude: 144.26,
-      dataUpdatedAt: '2026-09-30T00:00:00.000Z', dataOrigin: 'network',
+      dataUpdatedAt: '2026-09-30T00:00:00.000Z', dataOrigin: 'network', verificationStatus: 'confirmed',
     },
     {
       id: 'support:s1', sourceId: 's1', source: 'support', kind: 'support', name: 'Community House',
@@ -50,6 +50,20 @@ vi.mock('../../../shared/map/LazyMapView', () => ({
   LazyMapView: ({ markers }: { markers: unknown[] }) => <div data-testid="map-marker-count">{markers.length}</div>,
 }))
 
+type GeolocationOutcome = { point: { lat: number; lng: number } } | { errorCode: 1 | 2 | 3 }
+
+function mockGeolocation(outcome: GeolocationOutcome) {
+  const getCurrentPosition = vi.fn((success: PositionCallback, failure?: PositionErrorCallback | null) => {
+    if ('point' in outcome) {
+      success({ coords: { latitude: outcome.point.lat, longitude: outcome.point.lng, accuracy: 20 } } as GeolocationPosition)
+    } else {
+      failure?.({ code: outcome.errorCode, PERMISSION_DENIED: 1, POSITION_UNAVAILABLE: 2, TIMEOUT: 3, message: '' } as GeolocationPositionError)
+    }
+  })
+  Object.defineProperty(window.navigator, 'geolocation', { configurable: true, value: { getCurrentPosition } })
+  return getCurrentPosition
+}
+
 describe('unified Map page', () => {
   beforeEach(() => {
     window.sessionStorage.clear()
@@ -57,6 +71,54 @@ describe('unified Map page', () => {
     window.localStorage.setItem(storageKeys.searchLocation, JSON.stringify({ postcode: '3453', label: 'Harcourt 3453' }))
     window.localStorage.removeItem(storageKeys.savedPlaces)
     delete mapResult.places.find((place) => place.id === 'support:s1')?.phone
+    vi.mocked(resolveCoordinates).mockReset()
+  })
+
+  it('searches using the device location when "Use my current location" is pressed', async () => {
+    mockGeolocation({ point: { lat: -36.76, lng: 144.28 } })
+    vi.mocked(resolveCoordinates).mockResolvedValue({ postcode: '3550', label: 'Bendigo 3550', latitude: -36.76, longitude: 144.28 })
+    render(<MemoryRouter initialEntries={['/map']}><MapPage /></MemoryRouter>)
+    await screen.findByText('Library Wi-Fi')
+
+    fireEvent.click(screen.getByRole('button', { name: 'Use my current location' }))
+
+    expect(resolveCoordinates).toHaveBeenCalledWith(-36.76, 144.28)
+    await waitFor(() => expect(screen.getByRole('combobox')).toHaveValue('Bendigo 3550'))
+  })
+
+  it('shows a message instead of searching when location access is denied', async () => {
+    mockGeolocation({ errorCode: 1 })
+    render(<MemoryRouter initialEntries={['/map']}><MapPage /></MemoryRouter>)
+    await screen.findByText('Library Wi-Fi')
+
+    fireEvent.click(screen.getByRole('button', { name: 'Use my current location' }))
+
+    expect(await screen.findByRole('alert')).toHaveTextContent('Location access is blocked. Enter an address, suburb, or postcode instead.')
+    expect(resolveCoordinates).not.toHaveBeenCalled()
+  })
+
+  it('distinguishes confirmed from likely Wi-Fi in the results list and the map key', async () => {
+    const originalLength = mapResult.places.length
+    mapResult.places.push({
+      id: 'wifi:w2', sourceId: 'w2', source: 'wifi', kind: 'wifi', name: 'Community Hall Wi-Fi',
+      postcode: '3453', suburb: 'Harcourt', latitude: -36.985, longitude: 144.255,
+      dataUpdatedAt: '2026-09-30T00:00:00.000Z', dataOrigin: 'network', verificationStatus: 'likely',
+    })
+    try {
+      render(<MemoryRouter initialEntries={['/map']}><MapPage /></MemoryRouter>)
+      await screen.findByText('Library Wi-Fi')
+
+      const libraryRow = screen.getByText('Library Wi-Fi').closest('button')!
+      expect(within(libraryRow).getByText('Free Wi-Fi location')).toBeVisible()
+      const hallRow = screen.getByText('Community Hall Wi-Fi').closest('button')!
+      expect(within(hallRow).getByText('Free Wi-Fi location — likely, not confirmed')).toBeVisible()
+
+      const legend = screen.getByRole('list', { name: 'Map key' })
+      expect(within(legend).getByText('Free Wi-Fi')).toBeVisible()
+      expect(within(legend).getByText('Free Wi-Fi (likely, not confirmed)')).toBeVisible()
+    } finally {
+      mapResult.places.length = originalLength
+    }
   })
 
   it('always links to the saved places list, above the search area, with a count once something is saved', async () => {

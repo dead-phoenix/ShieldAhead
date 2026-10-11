@@ -48,13 +48,20 @@
 
 .unified-map-search > div:first-of-type {
   display: grid;
-  grid-template-columns: auto minmax(0, 1fr) auto;
+  grid-template-columns: auto minmax(0, 1fr) auto auto;
   gap: var(--space-2);
   align-items: center;
   padding-left: var(--space-3);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
   background: var(--color-surface);
+}
+
+.unified-map-locate {
+  width: 2.75rem;
+  min-height: 2.75rem;
+  padding: 0;
+  justify-content: center;
 }
 
 .unified-map-search input {
@@ -290,7 +297,8 @@
   font-size: var(--text-xs);
 }
 
-.unified-map-place .unified-map-place__map-note {
+.unified-map-place .unified-map-place__map-note,
+.unified-map-place .unified-map-place__unconfirmed {
   color: var(--color-warning-text);
   font-weight: 700;
 }
@@ -563,7 +571,7 @@
   }
 
   .unified-map-search > div:first-of-type {
-    grid-template-columns: auto minmax(0, 1fr) auto;
+    grid-template-columns: auto minmax(0, 1fr) auto auto;
   }
 
   .unified-map-search .button {
