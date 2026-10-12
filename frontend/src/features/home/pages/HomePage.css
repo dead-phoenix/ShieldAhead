@@ -23,7 +23,7 @@
   min-height: 32rem;
   margin-top: 0.5rem;
   padding: 6.5rem 1.75rem;
-  border-radius: 1.75rem;
+  border-radius: 0;
 }
 
 .home-hero__photo {
@@ -69,9 +69,10 @@
 .home-hero {
   justify-self: stretch;
   width: auto;
-  min-height: clamp(30rem, 82vh, 46rem);
+  /* Fills the viewport below the sticky header (3.5rem + 1px border on mobile). */
+  min-height: calc(100dvh - 3.5rem - 1px);
   align-content: center;
-  margin: -1.5rem calc(50% - 50vw) 1rem;
+  margin: -1.5rem calc(50% - 50vw) 0;
   padding: 5rem 1.5rem 4rem;
   background:
     linear-gradient(180deg, rgba(11, 24, 48, 0.68) 0%, rgba(11, 24, 48, 0.42) 50%, rgba(11, 24, 48, 0.66) 100%),
@@ -80,6 +81,7 @@
 
 @media (min-width: 56rem) {
   .home-hero {
+    min-height: calc(100dvh - 4.75rem - 1px);
     margin-top: -5rem;
     padding-top: 8rem;
   }
