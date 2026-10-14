@@ -321,9 +321,23 @@
   font-weight: 700;
 }
 
+/* Side-by-side columns instead of one long stack, so a hazard's full list of
+   tasks and sub-steps has twice the room to fit on one printed page before
+   the fixed-height print sheet (see EmergencyPackPage.css) clips the rest. */
+.pack-checklist-groups {
+  column-count: 2;
+  column-gap: calc(var(--pt) * 24);
+}
+
 .pack-task-group {
   display: grid;
   gap: calc(var(--pt) * 6);
+  margin-bottom: calc(var(--pt) * 12);
+  break-inside: avoid;
+}
+
+.pack-task-group:last-child {
+  margin-bottom: 0;
 }
 
 .pack-tick-list {
@@ -377,6 +391,7 @@
   grid-template-columns: calc(var(--pt) * 12) minmax(0, 1fr);
   gap: calc(var(--pt) * 8);
   align-items: start;
+  break-inside: avoid;
 }
 
 .pack-tick-box {
