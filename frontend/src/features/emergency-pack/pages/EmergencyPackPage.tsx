@@ -20,6 +20,7 @@ import {
   type EmergencyPackPreferences,
   type EmergencyPackSnapshot,
 } from '../emergencyPackStorage'
+import { useCrisisPackMap, waitForStreetMapDecode } from '../useCrisisPackMap'
 import './EmergencyPackPage.css'
 
 type ContentToggleKey = 'includeHelplines' | 'includeWifi' | 'includeCharities'
@@ -56,6 +57,7 @@ export function EmergencyPackPage() {
   const [notice, setNotice] = useState('')
   const [isAreaEditorOpen, setIsAreaEditorOpen] = useState(false)
   const [isReadyAfterAreaSave, setIsReadyAfterAreaSave] = useState(false)
+  const [hasRefreshed, setHasRefreshed] = useState(false)
 
   useEffect(() => {
     const previousTitle = document.title
@@ -101,6 +103,7 @@ export function EmergencyPackPage() {
             : next.savedAt
               ? 'You are offline. This pack shows the last copy saved on this device.'
               : 'You are offline. Connect once to save helplines, checklists, and nearby places on this device.')
+          setHasRefreshed(true)
         }
         return
       }
@@ -149,6 +152,7 @@ export function EmergencyPackPage() {
       setSnapshot(next)
       setNotice(problems.length > 0 ? problems[0] : '')
       setIsLoading(false)
+      setHasRefreshed(true)
     }
 
     void load()
@@ -162,6 +166,12 @@ export function EmergencyPackPage() {
     () => buildCrisisPack({ preferences, snapshot, nearby: { snapshot: nearbySnapshot, myArea } }),
     [preferences, snapshot, nearbySnapshot, myArea],
   )
+  const mapPoints = useMemo(() => {
+    const getHelp = pack.pages.find((page) => page.kind === 'get-help')
+    return getHelp?.kind === 'get-help' ? getHelp.placesMap?.points ?? [] : []
+  }, [pack])
+  // Waits for the auto-save so the street map is drawn for the refreshed places, not the old copy.
+  const streetMap = useCrisisPackMap(mapPoints, { isOnline, canRender: hasRefreshed && !isLoading })
 
   function updatePreferences(next: EmergencyPackPreferences) {
     const current = readEmergencyPack()
@@ -188,7 +198,12 @@ export function EmergencyPackPage() {
       return
     }
     setIsReadyAfterAreaSave(false)
-    window.print()
+    const streetMapUrl = streetMap.streetMap?.url
+    if (streetMapUrl) {
+      void waitForStreetMapDecode(streetMapUrl).then(() => window.print())
+    } else {
+      window.print()
+    }
   }
 
   const isReady = isReadyAfterAreaSave && !isLoading
@@ -254,8 +269,9 @@ export function EmergencyPackPage() {
       {isReady ? <p className="inline-status" role="status">Your pack is built for {areaLabel}.</p> : null}
       {notice ? <p className="inline-status" role="status">{notice}</p> : null}
       {isLoading ? <LoadingState label="Updating saved information" /> : null}
+      {streetMap.status === 'rendering' ? <p className="inline-status" role="status">Preparing street map…</p> : null}
 
-      <CrisisPackPreview pack={pack} />
+      <CrisisPackPreview pack={pack} streetMap={streetMap} />
     </section>
   )
 }

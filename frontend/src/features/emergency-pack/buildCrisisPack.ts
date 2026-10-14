@@ -4,6 +4,13 @@ import type { OfflineServiceCategory } from '../../data/offlineData'
 import { householdChecklistTitles, pinnedHelplines, type CrisisKind } from '../crisis/crisisContent'
 import { formatDistanceKm, formatNearbyDate, nearbyCategoryTitles, nearbyCopy, serviceDetail } from '../nearby/nearbyCopy'
 import { readCrisisChecklist } from '../crisis/crisisChecklistStorage'
+import {
+  NO_MAP_LOCATION,
+  crisisPackMapLabel,
+  packPlaceMapPosition,
+  type CrisisPackMapKind,
+  type CrisisPackMapPoint,
+} from './crisisPackMapPoints'
 import { clampPlaceText, distinctPlaces, packDisplayName, packPlaceAddress } from './crisisPackPlaceText'
 import { bundledPackChecklist } from './crisisPackSnapshot'
 import { crisisPackSources, type CrisisPackSource } from './crisisPackSources'
@@ -27,12 +34,36 @@ export interface CrisisPackPlace {
   detail?: string
 }
 
+export interface CrisisPackLabelledPlace extends CrisisPackPlace {
+  /** "W1", "C3": the same label as this place's marker on the page 1 map. */
+  markerLabel: string
+  /** Set when the place is not drawn on the map. */
+  mapNote?: string
+}
+
 export interface CrisisPackPlaceColumn {
   id: 'wifi' | 'charities'
   title: string
-  places: CrisisPackPlace[]
+  places: CrisisPackLabelledPlace[]
   /** Shown instead of the list when there are no places to print. */
   message?: string
+}
+
+export const placeColumnMapKind: Record<CrisisPackPlaceColumn['id'], CrisisPackMapKind> = {
+  wifi: 'wifi',
+  charities: 'charity',
+}
+
+export interface CrisisPackPlacesMap {
+  /** Every saved place with a map location, whatever the toggles, so the map area does not change with them. */
+  points: CrisisPackMapPoint[]
+  /** Kinds whose markers are drawn, following the Wi-Fi spots and Charities toggles. */
+  visibleKinds: CrisisPackMapKind[]
+  caption: string
+  /** Shown instead of the map when the rest of the page leaves too little room for it. */
+  noRoomNote: string
+  /** Shown instead of the map when none of the listed places has a map location. */
+  noPointsNote: string
 }
 
 export interface CrisisPackTaskStep {
@@ -72,6 +103,7 @@ export interface CrisisPackGetHelpPage extends CrisisPackPageBase {
   helplinesTitle: string
   helplines?: CrisisPackHelpline[]
   placeColumns: CrisisPackPlaceColumn[]
+  placesMap?: CrisisPackPlacesMap
   freshnessNote?: string
 }
 
@@ -181,12 +213,18 @@ function packHelplines(snapshot: EmergencyPackSnapshot): CrisisPackHelpline[] {
   ]
 }
 
-function toCrisisPackPlace(place: PackPlace): CrisisPackPlace {
+function listedPlaces(places: PackPlace[], savedAt: string | undefined): PackPlace[] {
+  return savedAt ? distinctPlaces(places).slice(0, NEARBY_PLACE_LIMIT) : []
+}
+
+function toCrisisPackPlace(place: PackPlace, kind: CrisisPackMapKind, index: number): CrisisPackLabelledPlace {
   const detail = packPlaceAddress(place)
   return {
     id: place.id,
     name: clampPlaceText(packDisplayName(place.name)),
     ...(detail ? { detail: clampPlaceText(detail) } : {}),
+    markerLabel: crisisPackMapLabel(kind, index),
+    ...(packPlaceMapPosition(place, kind) ? {} : { mapNote: NO_MAP_LOCATION }),
   }
 }
 
@@ -197,10 +235,42 @@ function placeColumn(
   savedAt: string | undefined,
 ): CrisisPackPlaceColumn {
   if (!savedAt) return { id, title, places: [], message: 'Not available offline' }
-  const limited = distinctPlaces(places).slice(0, NEARBY_PLACE_LIMIT).map(toCrisisPackPlace)
+  const kind = placeColumnMapKind[id]
+  const limited = listedPlaces(places, savedAt).map((place, index) => toCrisisPackPlace(place, kind, index))
   return limited.length > 0
     ? { id, title, places: limited }
     : { id, title, places: [], message: 'None listed near this area' }
+}
+
+function mapPoints(places: PackPlace[], kind: CrisisPackMapKind, savedAt: string | undefined): CrisisPackMapPoint[] {
+  return listedPlaces(places, savedAt).flatMap((place, index) => {
+    const position = packPlaceMapPosition(place, kind)
+    return position ? [{ id: place.id, kind, label: crisisPackMapLabel(kind, index), ...position }] : []
+  })
+}
+
+function placesMap(snapshot: EmergencyPackSnapshot, preferences: EmergencyPackPreferences): CrisisPackPlacesMap {
+  return {
+    points: [
+      ...mapPoints(snapshot.wifi, 'wifi', snapshot.placesSavedAt.wifi),
+      ...mapPoints(snapshot.support, 'charity', snapshot.placesSavedAt.support),
+    ],
+    visibleKinds: [
+      ...(preferences.includeWifi ? ['wifi' as const] : []),
+      ...(preferences.includeCharities ? ['charity' as const] : []),
+    ],
+    caption: 'Simplified map (no streets)',
+    noRoomNote: 'Map left out: there is no room for it on this page.',
+    noPointsNote: 'None of these places has a map location.',
+  }
+}
+
+export const STREET_MAP_UNAVAILABLE_NOTE = 'Street map unavailable. Simplified map shown.'
+
+/** Caption for a street map picture, e.g. "Street map made 14 October 2026". */
+export function streetMapCaption(createdAt: string): string {
+  const madeOn = formatPackDate(createdAt)
+  return madeOn ? `Street map made ${madeOn}` : 'Street map'
 }
 
 function areaLine(snapshot: EmergencyPackSnapshot): string | undefined {
@@ -233,6 +303,7 @@ function getHelpPage(input: BuildCrisisPackInput): UnnumberedPage | null {
     helplinesTitle: 'Helplines',
     helplines: preferences.includeHelplines ? packHelplines(snapshot) : undefined,
     placeColumns,
+    ...(placeColumns.length > 0 ? { placesMap: placesMap(snapshot, preferences) } : {}),
     freshnessNote: placeColumns.length > 0 ? freshnessNote(snapshot) : undefined,
   }
 }

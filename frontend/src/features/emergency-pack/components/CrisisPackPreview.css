@@ -201,6 +201,116 @@
   font-size: calc(var(--pt) * 8);
 }
 
+.pack-place-column ol.pack-place-list--labelled {
+  padding-inline-start: 0;
+  list-style: none;
+}
+
+.pack-place-list--labelled li {
+  display: grid;
+  grid-template-columns: calc(var(--pt) * 18) minmax(0, 1fr);
+  gap: calc(var(--pt) * 6);
+  align-items: start;
+  padding-inline-start: 0;
+}
+
+/* 18pt glyph puts its "W1"/"C1" text at about 7.2pt on A4. */
+.pack-place__marker {
+  display: block;
+  width: calc(var(--pt) * 18);
+  height: calc(var(--pt) * 18);
+}
+
+.pack-place__text {
+  display: grid;
+  min-width: 0;
+}
+
+.pack-place__map-note {
+  color: var(--pack-muted);
+  font-size: calc(var(--pt) * 8);
+  font-style: italic;
+}
+
+/* Page 1 hands all leftover height on the sheet to the map slot. */
+.pack-places-area--with-map {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+}
+
+/* A size container, so the room check below runs in the browser's own layout
+   for both the preview and window.print(), without JavaScript measuring. */
+.pack-places-map-slot {
+  container: pack-map / size;
+  flex: 1 1 0;
+  min-height: calc(var(--pt) * 14);
+}
+
+/* Inside the slot, cqi refers to the slot (the 507.28pt content width), not the page. */
+.pack-places-map-slot > * {
+  --pt: calc(100cqi / 507.28);
+}
+
+.pack-places-map {
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--pt) * 4);
+  height: 100%;
+  margin: 0;
+  break-inside: avoid;
+}
+
+.pack-places-map__svg {
+  display: block;
+  flex: 1;
+  width: 100%;
+  min-height: 0;
+}
+
+.pack-places-map__caption {
+  display: flex;
+  flex-wrap: wrap;
+  gap: calc(var(--pt) * 4) calc(var(--pt) * 12);
+  align-items: center;
+  color: var(--pack-muted);
+  font-size: calc(var(--pt) * 8);
+}
+
+.pack-places-map__legend-item {
+  display: inline-flex;
+  gap: calc(var(--pt) * 4);
+  align-items: center;
+}
+
+.pack-places-map__legend-glyph {
+  width: calc(var(--pt) * 10);
+  height: calc(var(--pt) * 10);
+}
+
+.pack-places-map__note,
+.pack-places-map__no-room {
+  color: var(--pack-muted);
+  font-size: calc(var(--pt) * 8);
+}
+
+.pack-places-map__no-room {
+  display: none;
+}
+
+/* Wider than 3:1 means less than about 169pt of height: too small to read, so
+   the map is left out and the one-line note is shown instead. */
+@container pack-map (aspect-ratio > 3) {
+  .pack-places-map {
+    display: none;
+  }
+
+  .pack-places-map__no-room {
+    display: block;
+  }
+}
+
 .pack-nearby__emergency {
   font-size: calc(var(--pt) * 12);
 }

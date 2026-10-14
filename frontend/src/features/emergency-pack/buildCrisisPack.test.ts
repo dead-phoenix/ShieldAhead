@@ -143,9 +143,59 @@ describe('buildCrisisPack', () => {
       }),
     })
     expect((pack.pages[0] as CrisisPackGetHelpPage).placeColumns[0].places).toEqual([
-      { id: 'a', name: 'Library at the Dock', detail: '401 Docklands Dr, Docklands VIC 3008' },
-      { id: 'c', name: 'Pop-up hotspot' },
+      { id: 'a', name: 'Library at the Dock', detail: '401 Docklands Dr, Docklands VIC 3008', markerLabel: 'W1', mapNote: 'No map location' },
+      { id: 'c', name: 'Pop-up hotspot', markerLabel: 'W2', mapNote: 'No map location' },
     ])
+  })
+
+  it('labels places W1-W5 and C1-C5 and notes the ones that cannot go on the map', () => {
+    const at = (latitude: number, longitude: number) => ({ latitude, longitude })
+    const pack = buildCrisisPack({
+      preferences: { ...allOff, includeWifi: true, includeCharities: true },
+      snapshot: snapshot({
+        wifi: [{ ...place('w1'), ...at(-36.99, 144.26) }, place('w2')],
+        support: [
+          { ...place('s1'), address: 'PO Box 220, Strathdale, VIC, 3550', ...at(-36.76, 144.29) },
+          { ...place('s2'), ...at(-37.0, 144.27) },
+          { id: 's3', name: 'Offline list charity', suburb: 'Harcourt', postcode: '3453', ...at(-37.01, 144.25) },
+        ],
+      }),
+    })
+    const getHelp = pack.pages[0] as CrisisPackGetHelpPage
+    expect(getHelp.placeColumns.map((column) => column.places.map((item) => [item.markerLabel, item.mapNote ?? '']))).toEqual([
+      [['W1', ''], ['W2', 'No map location']],
+      [['C1', 'No map location'], ['C2', ''], ['C3', 'No map location']],
+    ])
+    expect(getHelp.placesMap?.points).toEqual([
+      { id: 'w1', kind: 'wifi', label: 'W1', latitude: -36.99, longitude: 144.26 },
+      { id: 's2', kind: 'charity', label: 'C2', latitude: -37.0, longitude: 144.27 },
+    ])
+    expect(getHelp.placesMap?.visibleKinds).toEqual(['wifi', 'charity'])
+  })
+
+  it('keeps every saved place in the map points when a place toggle is off, and only shows the included kinds', () => {
+    const pack = buildCrisisPack({
+      preferences: { ...allOff, includeCharities: true },
+      snapshot: snapshot({
+        wifi: [{ ...place('w1'), latitude: -36.99, longitude: 144.26 }],
+        support: [{ ...place('s1'), latitude: -37.0, longitude: 144.27 }],
+      }),
+    })
+    const getHelp = pack.pages[0] as CrisisPackGetHelpPage
+    expect(getHelp.placeColumns.map((column) => column.id)).toEqual(['charities'])
+    expect(getHelp.placesMap?.points.map((point) => point.label)).toEqual(['W1', 'C1'])
+    expect(getHelp.placesMap?.visibleKinds).toEqual(['charity'])
+  })
+
+  it('has no map when no place column is printed, and no points for lists that were never loaded', () => {
+    const helplinesOnly = buildCrisisPack({ preferences: { ...allOff, includeHelplines: true }, snapshot: snapshot() })
+    expect((helplinesOnly.pages[0] as CrisisPackGetHelpPage).placesMap).toBeUndefined()
+
+    const neverLoaded = buildCrisisPack({
+      preferences: { ...allOff, includeWifi: true },
+      snapshot: snapshot({ placesSavedAt: {}, wifi: [{ ...place('w1'), latitude: -36.99, longitude: 144.26 }] }),
+    })
+    expect((neverLoaded.pages[0] as CrisisPackGetHelpPage).placesMap?.points).toEqual([])
   })
 
   it('adds a "Near" area line when places are included and the saved area names a suburb', () => {

@@ -1,6 +1,9 @@
-import type { CrisisPackGetHelpPage } from '../buildCrisisPack'
+import { placeColumnMapKind, type CrisisPackGetHelpPage } from '../buildCrisisPack'
+import type { CrisisPackStreetMapState } from '../useCrisisPackMap'
+import { PackMarkerGlyph, PackPlacesMap } from './PackPlacesMap'
 
-export function PackGetHelpPage({ page }: { page: CrisisPackGetHelpPage }) {
+export function PackGetHelpPage({ page, streetMap }: { page: CrisisPackGetHelpPage; streetMap?: CrisisPackStreetMapState }) {
+  const hasPlaces = page.placeColumns.some((column) => column.places.length > 0)
   return (
     <>
       <header className="pack-page__header">
@@ -25,7 +28,7 @@ export function PackGetHelpPage({ page }: { page: CrisisPackGetHelpPage }) {
       ) : null}
 
       {page.placeColumns.length > 0 ? (
-        <div className="pack-places-area">
+        <div className={page.placesMap && hasPlaces ? 'pack-places-area pack-places-area--with-map' : 'pack-places-area'}>
           <div className={`pack-place-columns pack-place-columns--${page.placeColumns.length}`}>
             {page.placeColumns.map((column) => (
               <section className="pack-place-column" key={column.id}>
@@ -33,11 +36,15 @@ export function PackGetHelpPage({ page }: { page: CrisisPackGetHelpPage }) {
                 {column.message ? (
                   <p className="pack-place-column__message">{column.message}</p>
                 ) : (
-                  <ol>
+                  <ol className="pack-place-list--labelled">
                     {column.places.map((place) => (
                       <li key={place.id}>
-                        <span className="pack-place__name">{place.name}</span>
-                        {place.detail ? <span className="pack-place__detail">{place.detail}</span> : null}
+                        <PackMarkerGlyph className="pack-place__marker" kind={placeColumnMapKind[column.id]} label={place.markerLabel} />
+                        <span className="pack-place__text">
+                          <span className="pack-place__name">{place.name}</span>
+                          {place.detail ? <span className="pack-place__detail">{place.detail}</span> : null}
+                          {place.mapNote ? <span className="pack-place__map-note">{place.mapNote}</span> : null}
+                        </span>
                       </li>
                     ))}
                   </ol>
@@ -45,6 +52,13 @@ export function PackGetHelpPage({ page }: { page: CrisisPackGetHelpPage }) {
               </section>
             ))}
           </div>
+          {page.placesMap && hasPlaces ? (
+            <PackPlacesMap
+              map={page.placesMap}
+              streetMap={streetMap?.streetMap}
+              streetMapFailed={streetMap?.status === 'failed'}
+            />
+          ) : null}
           {page.freshnessNote ? <p className="pack-freshness-note">{page.freshnessNote}</p> : null}
         </div>
       ) : null}

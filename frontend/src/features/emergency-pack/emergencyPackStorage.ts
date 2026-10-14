@@ -9,6 +9,8 @@ export interface PackPlace {
   suburb?: string
   postcode?: string
   phone?: string
+  latitude?: number
+  longitude?: number
 }
 
 interface LegacyPackPlace extends PackPlace {
@@ -116,10 +118,24 @@ function optionalTimestamp(value: unknown): string | undefined {
   return typeof value === 'string' ? value : undefined
 }
 
+function finiteNumber(value: unknown): number | undefined {
+  return typeof value === 'number' && Number.isFinite(value) ? value : undefined
+}
+
 function normalizePlace(place: LegacyPackPlace): PackPlace {
   if (place.address || place.suburb || typeof place.detail !== 'string') {
     const { id, name, address, suburb, postcode, phone } = place
-    return { id, name, address, suburb, postcode, phone }
+    const latitude = finiteNumber(place.latitude)
+    const longitude = finiteNumber(place.longitude)
+    return {
+      id,
+      name,
+      address,
+      suburb,
+      postcode,
+      phone,
+      ...(latitude !== undefined && longitude !== undefined ? { latitude, longitude } : {}),
+    }
   }
   const legacyAddress = place.detail.split(' · ')[0].trim()
   return {

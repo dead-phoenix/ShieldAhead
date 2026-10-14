@@ -1,5 +1,6 @@
 import { storageKeys } from '../app/config/product'
 import { deleteOfflineDatabase } from '../data/offline/offlineDatasetStore'
+import { deleteCrisisPackDatabase } from '../features/emergency-pack/crisisPackMapStorage'
 
 const APP_STORAGE_PREFIX = 'shieldahead.'
 
@@ -15,8 +16,8 @@ function removeAppKeys(storage: Storage, keep: ReadonlySet<string>) {
 /**
  * Removes everything ShieldAhead keeps on this device except the site-unlocked
  * flag: profile, consent, setup draft, My area, search location, checklist
- * ticks, crisis pack, saved routes, map session, offline preferences and the
- * downloaded offline datasets.
+ * ticks, crisis pack and its street map picture, saved routes, map session,
+ * offline preferences and the downloaded offline datasets.
  */
 export async function clearAllLocalData(): Promise<void> {
   try {
@@ -29,5 +30,5 @@ export async function clearAllLocalData(): Promise<void> {
   } catch {
     // As above.
   }
-  await deleteOfflineDatabase()
+  await Promise.all([deleteOfflineDatabase(), deleteCrisisPackDatabase()])
 }

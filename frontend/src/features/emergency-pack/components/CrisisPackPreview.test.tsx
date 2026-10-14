@@ -64,14 +64,41 @@ describe('Crisis pack preview', () => {
     const wifi = within(page).getByRole('heading', { name: 'Wi-Fi spots' }).closest('section') as HTMLElement
     const rows = within(wifi).getAllByRole('listitem')
     expect(rows.map((row) => row.textContent)).toEqual([
-      'Library at the Dock107 Victoria Harbour Prom, Docklands 3008',
-      'Pop-up hotspot',
+      'W1Library at the Dock107 Victoria Harbour Prom, Docklands 3008No map location',
+      'W2Pop-up hotspotNo map location',
     ])
+    expect(within(rows[0]).getByRole('img', { name: 'W1' })).toBeInTheDocument()
 
     expect(within(page).getByText('Near Docklands 3008')).toBeInTheDocument()
     const charities = within(page).getByRole('heading', { name: 'Charities near you' }).closest('section') as HTMLElement
     expect(within(charities).getByText('Not available offline')).toBeInTheDocument()
     expect(within(page).getByText(/Details were correct when this pack was saved on 5 October 2026/)).toBeInTheDocument()
+  })
+
+  it('draws the simplified map under the place lists on page 1 when a place has a map location', () => {
+    const pack = buildCrisisPack({
+      preferences: everything,
+      snapshot: {
+        ...emptyEmergencyPackSnapshot(),
+        savedAt: '2026-10-05T00:00:00.000Z',
+        placesSavedAt: { wifi: '2026-10-05T00:00:00.000Z', support: '2026-10-05T00:00:00.000Z' },
+        wifi: [{ id: 'w1', name: 'Library', address: '1 High St', latitude: -36.998, longitude: 144.263 }],
+        support: [{ id: 's1', name: 'Food bank', address: 'PO Box 9, Harcourt', latitude: -36.99, longitude: 144.26 }],
+      },
+    })
+    render(<CrisisPackPreview pack={pack} />)
+    const page = screen.getByRole('region', { name: /^Page 1 of \d: Get help/ })
+    expect(within(page).getByRole('img', { name: 'Map of saved places: W1' })).toBeInTheDocument()
+    expect(within(page).getByText('Simplified map (no streets)')).toBeInTheDocument()
+    const charities = within(page).getByRole('heading', { name: 'Charities near you' }).closest('section') as HTMLElement
+    expect(within(charities).getByText('No map location')).toBeInTheDocument()
+  })
+
+  it('leaves out the map when no place column has places', () => {
+    renderPreview({ ...everything, includeWifi: false })
+    const page = screen.getByRole('region', { name: /^Page 1 of \d: Get help/ })
+    expect(within(page).queryByRole('img', { name: /^Map of saved places/ })).not.toBeInTheDocument()
+    expect(within(page).queryByText('None of these places has a map location.')).not.toBeInTheDocument()
   })
 
   it('renders the crisis page checklist groups with tick boxes and prints sources only where they exist', () => {

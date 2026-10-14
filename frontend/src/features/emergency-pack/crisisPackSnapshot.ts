@@ -14,6 +14,8 @@ function toPackPlace(place: MapPlace): PackPlace {
     suburb: place.suburb,
     postcode: place.postcode,
     phone: place.phone,
+    latitude: place.latitude,
+    longitude: place.longitude,
   }
 }
 

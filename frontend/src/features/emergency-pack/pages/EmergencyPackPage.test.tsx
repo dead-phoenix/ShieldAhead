@@ -1,14 +1,19 @@
-import { fireEvent, render, screen, within } from '@testing-library/react'
+import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { storageKeys } from '../../../app/config/product'
 import { buildNearbySnapshot } from '../../../data/offline/nearbySnapshot'
 import { fixtureBundle } from '../../../test/nearbyFixtures'
+import type { CrisisPackMapPoint } from '../crisisPackMapPoints'
 import { EmergencyPackPage } from './EmergencyPackPage'
+
+const mapMocks = vi.hoisted(() => ({ wifiHasCoordinates: false, render: vi.fn() }))
+
+vi.mock('../renderCrisisPackMap', () => ({ renderCrisisPackMap: mapMocks.render }))
 
 vi.mock('../../map/data/mapPlaceRepository', () => ({
   getMapPlaceRepository: () => ({
-    findNearby: vi.fn().mockResolvedValue({
+    findNearby: vi.fn().mockImplementation(async () => ({
       places: [
         ...[1, 2, 3, 4, 5, 9].map((distanceKm) => ({
           id: `wifi:${distanceKm}`,
@@ -19,6 +24,7 @@ vi.mock('../../map/data/mapPlaceRepository', () => ({
           postcode: '3453',
           suburb: 'Harcourt',
           distanceKm,
+          ...(mapMocks.wifiHasCoordinates ? { latitude: -36.99 - distanceKm / 1000, longitude: 144.26 } : {}),
           dataUpdatedAt: '2026-09-30T00:00:00.000Z',
           dataOrigin: 'network',
         })),
@@ -41,7 +47,7 @@ vi.mock('../../map/data/mapPlaceRepository', () => ({
       generatedAt: '2026-09-30T00:00:00.000Z',
       limitations: [],
       dataOrigin: 'network',
-    }),
+    })),
   }),
 }))
 
@@ -75,6 +81,11 @@ function pageRegions() {
 }
 
 describe('Crisis pack page', () => {
+  afterEach(() => {
+    mapMocks.wifiHasCoordinates = false
+    mapMocks.render.mockReset()
+  })
+
   beforeEach(() => {
     window.localStorage.clear()
     Object.defineProperty(window.navigator, 'onLine', { configurable: true, value: true })
@@ -258,5 +269,49 @@ describe('Crisis pack page', () => {
     expect(screen.queryByRole('button', { name: /print/i })).not.toBeInTheDocument()
     fireEvent.click(download)
     expect(print).toHaveBeenCalledTimes(1)
+  })
+
+  it('draws the street map after the pack is saved and waits for it to decode before printing', async () => {
+    mapMocks.wifiHasCoordinates = true
+    mapMocks.render.mockImplementation(async (points: CrisisPackMapPoint[]) => ({
+      image: new Blob(['png'], { type: 'image/png' }),
+      width: 1014,
+      height: 634,
+      pixelRatio: 2,
+      positions: points.map((point, index) => ({ key: `${point.kind}:${point.id}`, x: 120 + index * 90, y: 300 })),
+      metersPerPixel: 3.8,
+      zoom: 14,
+      centerLatitude: -37,
+      attribution: '© OpenFreeMap © OpenMapTiles © OpenStreetMap contributors',
+    }))
+    URL.createObjectURL = vi.fn(() => 'blob:street-map')
+    URL.revokeObjectURL = vi.fn()
+    let finishDecode = () => undefined as void
+    Object.defineProperty(HTMLImageElement.prototype, 'decode', {
+      configurable: true,
+      value: () => new Promise<void>((resolve) => {
+        finishDecode = resolve
+      }),
+    })
+    const print = vi.spyOn(window, 'print').mockImplementation(() => undefined)
+    print.mockClear()
+
+    renderPage()
+    await within(preview()).findByText('Wi-Fi 1')
+    const page = within(preview()).getByRole('region', { name: /^Page 1 of \d+: Get help/ })
+    await waitFor(() => expect(page.querySelector('image')).toHaveAttribute('href', 'blob:street-map'))
+    expect(mapMocks.render).toHaveBeenCalledTimes(1)
+    expect((mapMocks.render.mock.calls[0][0] as CrisisPackMapPoint[]).map((point) => point.label)).toEqual(['W1', 'W2', 'W3', 'W4', 'W5'])
+    const today = new Intl.DateTimeFormat('en-AU', { dateStyle: 'long' }).format(new Date())
+    expect(within(page).getByText(`Street map made ${today}`)).toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Download crisis pack as PDF' }))
+    await act(async () => undefined)
+    expect(print).not.toHaveBeenCalled()
+    await act(async () => finishDecode())
+    await waitFor(() => expect(print).toHaveBeenCalledTimes(1))
+
+    Reflect.deleteProperty(HTMLImageElement.prototype, 'decode')
+    print.mockRestore()
   })
 })

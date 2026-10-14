@@ -2,6 +2,7 @@ import { IDBFactory } from 'fake-indexeddb'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import { storageKeys } from '../app/config/product'
 import { readOfflineDataset, saveOfflineDataset } from '../data/offline/offlineDatasetStore'
+import { readCrisisPackMapSnapshot, saveCrisisPackMapSnapshot } from '../features/emergency-pack/crisisPackMapStorage'
 import { clearAllLocalData } from './clearAllLocalData'
 import { readSavedPlaces, savePlace } from './savedPlacesStorage'
 
@@ -49,6 +50,22 @@ describe('clearAllLocalData', () => {
     }
     await saveOfflineDataset('wifi', '3453', emptyDataset)
     await saveOfflineDataset('support', '3453', emptyDataset, { areaLabel: 'Harcourt 3453', dataSource: 'api' })
+    await saveCrisisPackMapSnapshot({
+      placesKey: 'style|wifi:library@-36.990000,144.260000',
+      styleUrl: 'style',
+      createdAt: '2026-10-14T00:00:00.000Z',
+      attribution: '© OpenStreetMap contributors',
+      width: 1014,
+      height: 634,
+      pixelRatio: 2,
+      imageType: 'image/png',
+      imageBytes: new Uint8Array([137, 80, 78, 71]).buffer,
+      positions: [{ key: 'wifi:library', x: 507, y: 317 }],
+      metersPerPixel: 3.8,
+      zoom: 14,
+      centerLatitude: -36.99,
+    })
+    expect(await readCrisisPackMapSnapshot()).not.toBeNull()
 
     await clearAllLocalData()
 
@@ -62,5 +79,6 @@ describe('clearAllLocalData', () => {
     expect(await window.indexedDB.databases()).toEqual([])
     expect(await readOfflineDataset('wifi', '3453')).toBeNull()
     expect(await readOfflineDataset('support', '3453')).toBeNull()
+    expect(await readCrisisPackMapSnapshot()).toBeNull()
   })
 })
