@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
+import { saveCrisisChecklist } from '../crisis/crisisChecklistStorage'
 import { bundledChecklistGroups } from '../crisis/useCrisisApiContent'
 import { buildCrisisPack, type CrisisPackChecklistPage, type CrisisPackGetHelpPage } from './buildCrisisPack'
 import { crisisGuidelines } from './emergencyPackContent'
@@ -65,10 +66,27 @@ describe('buildCrisisPack', () => {
     expect(flood.groups).toEqual(bundledChecklistGroups('flood').map((group) => ({
       id: group.id,
       title: group.title,
-      tasks: group.items.map((item) => ({ id: `${group.id}.${item.id}`, title: item.label, description: item.description })),
+      tasks: group.items.map((item) => ({
+        id: `${group.id}.${item.id}`,
+        title: item.label,
+        done: false,
+        steps: item.steps.map((step, index) => ({ id: `${group.id}.${item.id}.step-${index}`, label: step, done: false })),
+      })),
     })))
     expect(flood.sources).toEqual([{ label: 'Example flood source', url: 'https://example.org/flood' }])
     expect(pack).toMatchSnapshot()
+  })
+
+  it('ticks a checklist task in the pack once every one of its steps is checked on the live hazard page', () => {
+    const [group] = bundledChecklistGroups('flood')
+    const [doneItem, otherItem] = group.items
+    saveCrisisChecklist('flood', Object.fromEntries(doneItem.steps.map((_, index) => [`${group.id}.${doneItem.id}.step-${index}`, true])))
+
+    const pack = buildCrisisPack({ preferences: { ...allOff, crises: ['flood'] }, snapshot: snapshot() })
+    const flood = pack.pages[0] as CrisisPackChecklistPage
+    const tasks = flood.groups[0].tasks
+    expect(tasks.find((task) => task.id === `${group.id}.${doneItem.id}`)?.done).toBe(true)
+    expect(tasks.find((task) => task.id === `${group.id}.${otherItem.id}`)?.done).toBe(false)
   })
 
   it("puts the dos and don'ts on the checklist page", () => {
@@ -178,11 +196,20 @@ describe('buildCrisisPack', () => {
     const pack = buildCrisisPack({
       preferences: { ...allOff, crises: ['bushfire'] },
       snapshot: snapshot({
-        checklists: { bushfire: [{ id: 'new-group', title: 'New', items: [{ id: 'new-item', task: 'A brand new task' }] }] },
+        checklists: { bushfire: [{ id: 'new-group', title: 'New', items: [{ id: 'new-item', task: 'A brand new task', steps: ['Do it'] }] }] },
       }),
     })
     expect((pack.pages[0] as CrisisPackChecklistPage).groups).toEqual([
-      { id: 'new-group', title: 'New', tasks: [{ id: 'new-group.new-item', title: 'A brand new task' }] },
+      {
+        id: 'new-group',
+        title: 'New',
+        tasks: [{
+          id: 'new-group.new-item',
+          title: 'A brand new task',
+          done: false,
+          steps: [{ id: 'new-group.new-item.step-0', label: 'Do it', done: false }],
+        }],
+      },
     ])
   })
 })

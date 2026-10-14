@@ -1,5 +1,5 @@
 {
-  "_comment": "Pre-crisis checklist items shown on each crisis page, grouped by crisisType. categoryId/itemId are used by the frontend to save checklist tick state in localStorage keyed as `${categoryId}.${itemId}`. GET /api/checklist loads this file into memory once at process start (see services/crisis_content_service.py).",
+  "_comment": "Pre-crisis checklist items shown on each crisis page, grouped by crisisType. categoryId/itemId are used by the frontend to save checklist tick state in localStorage keyed as `${categoryId}.${itemId}.step-${index}`. steps are individually-checkable sub-items, not prose — description keeps the original full-sentence summary (used only as a fallback if steps is ever empty). GET /api/checklist loads this file into memory once at process start (see services/crisis_content_service.py).",
   "groups": [
     {
       "crisisType": "bushfire",
@@ -11,7 +11,10 @@
           "task": "Write down your bushfire plan",
           "description": "Note what will make you leave early, your main and backup routes, and who does what.",
           "steps": [
-            "Note what will make you leave early, your main and backup routes, and who does what."
+            "Your leave-early trigger",
+            "Main route",
+            "Backup route",
+            "Who does what"
           ]
         },
         {
@@ -19,7 +22,9 @@
           "task": "Choose where you'll go",
           "description": "Pick a lower-risk place, confirm you can stay there, and share the address with everyone.",
           "steps": [
-            "Pick a lower-risk place, confirm you can stay there, and share the address with everyone."
+            "A lower-risk place to go",
+            "Confirm you can stay there",
+            "Share the address with everyone"
           ]
         },
         {
@@ -27,8 +32,14 @@
           "task": "Pack an emergency kit",
           "description": "Include water, a torch, batteries, first-aid items, a charged power bank, medication and food. Keep it where everyone can grab it.",
           "steps": [
-            "Include water, a torch, batteries, first-aid items, a charged power bank, medication and food.",
-            "Keep it where everyone can grab it."
+            "Water",
+            "Torch",
+            "Batteries",
+            "First-aid items",
+            "Charged power bank",
+            "Medication",
+            "Food",
+            "Keep the kit somewhere everyone can grab it"
           ]
         },
         {
@@ -36,8 +47,11 @@
           "task": "Gather your important documents",
           "description": "Collect ID, insurance details and prescriptions. Keep copies in a waterproof bag and tell someone where they are.",
           "steps": [
-            "Collect ID, insurance details and prescriptions.",
-            "Keep copies in a waterproof bag and tell someone where they are."
+            "ID",
+            "Insurance details",
+            "Prescriptions",
+            "Copies in a waterproof bag",
+            "Tell someone where they are"
           ]
         }
       ]
@@ -52,7 +66,10 @@
           "task": "Name a helper for each child or dependant",
           "description": "Pack their medication, clothes and comfort items, and practise leaving together.",
           "steps": [
-            "Pack their medication, clothes and comfort items, and practise leaving together."
+            "Their medication",
+            "Clothes",
+            "Comfort items",
+            "Practise leaving together"
           ]
         },
         {
@@ -60,7 +77,10 @@
           "task": "Get your pets ready to travel",
           "description": "Keep a carrier or lead handy and pack food, water and medication.",
           "steps": [
-            "Keep a carrier or lead handy and pack food, water and medication."
+            "Carrier or lead",
+            "Food",
+            "Water",
+            "Medication"
           ]
         }
       ]
@@ -75,7 +95,10 @@
           "task": "Plan for medication and access needs",
           "description": "List the medication and equipment that must come with you, and arrange help for mobility or communication needs.",
           "steps": [
-            "List the medication and equipment that must come with you, and arrange help for mobility or communication needs."
+            "List medication that must come with you",
+            "List equipment that must come with you",
+            "Arrange help for mobility needs",
+            "Arrange help for communication needs"
           ]
         },
         {
@@ -83,8 +106,11 @@
           "task": "Write down key phone numbers on paper",
           "description": "Include household, carer and support-service contacts. Keep a copy in your kit and give one to another person.",
           "steps": [
-            "Include household, carer and support-service contacts.",
-            "Keep a copy in your kit and give one to another person."
+            "Household contacts",
+            "Carer contacts",
+            "Support-service contacts",
+            "Keep a copy in your kit",
+            "Give a copy to another person"
           ]
         }
       ]
@@ -99,8 +125,10 @@
           "task": "Check your local flood risk",
           "description": "Find out if your home and usual routes are flood-prone. Choose a safer place on higher ground and write down a route that avoids low-lying roads and crossings.",
           "steps": [
-            "Find out if your home and usual routes are flood-prone.",
-            "Choose a safer place on higher ground and write down a route that avoids low-lying roads and crossings."
+            "Find out if your home is flood-prone",
+            "Find out if your usual routes are flood-prone",
+            "Choose a safer place on higher ground",
+            "Write down a route that avoids low-lying roads and crossings"
           ]
         },
         {
@@ -108,8 +136,10 @@
           "task": "Write down your household contact plan",
           "description": "Pick one contact in your household and one outside the area, and note their phone numbers. Agree on a meeting spot in case phones don't work.",
           "steps": [
-            "Pick one contact in your household and one outside the area, and note their phone numbers.",
-            "Agree on a meeting spot in case phones don't work."
+            "One contact in your household",
+            "One contact outside the area",
+            "Note their phone numbers",
+            "Agree on a meeting spot in case phones don't work"
           ]
         },
         {
@@ -117,8 +147,14 @@
           "task": "Pack an emergency kit",
           "description": "Include water, a torch, batteries, a charged power bank, medication, first-aid items and food. Store it above likely flood level.",
           "steps": [
-            "Include water, a torch, batteries, a charged power bank, medication, first-aid items and food.",
-            "Store it above likely flood level."
+            "Water",
+            "Torch",
+            "Batteries",
+            "Charged power bank",
+            "Medication",
+            "First-aid items",
+            "Food",
+            "Store the kit above likely flood level"
           ]
         },
         {
@@ -126,8 +162,11 @@
           "task": "Plan which items to move higher",
           "description": "List the documents, medicines and valuables to lift out of reach of water. Choose where they'll go and have waterproof bags or containers ready.",
           "steps": [
-            "List the documents, medicines and valuables to lift out of reach of water.",
-            "Choose where they'll go and have waterproof bags or containers ready."
+            "List documents to lift",
+            "List medicines to lift",
+            "List valuables to lift",
+            "Choose where they'll go",
+            "Waterproof bags or containers ready"
           ]
         }
       ]
@@ -142,8 +181,10 @@
           "task": "Name a helper for each child or dependant",
           "description": "Pack their medication, clothes and comfort items. Explain the safer place in calm, simple words.",
           "steps": [
-            "Pack their medication, clothes and comfort items.",
-            "Explain the safer place in calm, simple words."
+            "Their medication",
+            "Clothes",
+            "Comfort items",
+            "Explain the safer place in calm, simple words"
           ]
         },
         {
@@ -151,8 +192,11 @@
           "task": "Get your pets ready to move",
           "description": "Keep a carrier or lead handy and pack food, water and medication. Find a safer destination that accepts pets.",
           "steps": [
-            "Keep a carrier or lead handy and pack food, water and medication.",
-            "Find a safer destination that accepts pets."
+            "Carrier or lead",
+            "Food",
+            "Water",
+            "Medication",
+            "Find a safer destination that accepts pets"
           ]
         }
       ]
@@ -167,8 +211,11 @@
           "task": "Plan for medication and access needs",
           "description": "Keep medication and prescriptions ready to grab, and arrange help for mobility or communication needs. Store key instructions in a waterproof bag.",
           "steps": [
-            "Keep medication and prescriptions ready to grab, and arrange help for mobility or communication needs.",
-            "Store key instructions in a waterproof bag."
+            "Medication ready to grab",
+            "Prescriptions ready to grab",
+            "Arrange help for mobility needs",
+            "Arrange help for communication needs",
+            "Store key instructions in a waterproof bag"
           ]
         },
         {
@@ -176,8 +223,10 @@
           "task": "Write down emergency numbers on paper",
           "description": "Include VICSES 132 500 and your household contacts, and keep a copy in your kit. Call Triple Zero (000) for life-threatening danger.",
           "steps": [
-            "Include VICSES 132 500 and your household contacts, and keep a copy in your kit.",
-            "Call Triple Zero (000) for life-threatening danger."
+            "VICSES — 132 500",
+            "Household contacts",
+            "Keep a copy in your kit",
+            "Call Triple Zero (000) for life-threatening danger"
           ]
         }
       ]
@@ -192,8 +241,10 @@
           "task": "Set aside 72 hours of supplies",
           "description": "Store drinking water and non-perishable food for at least three days. Add a battery-powered radio if you have one, and replace expired items regularly.",
           "steps": [
-            "Store drinking water and non-perishable food for at least three days.",
-            "Add a battery-powered radio if you have one, and replace expired items regularly."
+            "Drinking water for at least three days",
+            "Non-perishable food for at least three days",
+            "Battery-powered radio if you have one",
+            "Replace expired items regularly"
           ]
         },
         {
@@ -201,7 +252,9 @@
           "task": "Put backup lighting somewhere easy to find",
           "description": "Place torches or battery lights in known spots, check they work, and keep spare batteries nearby.",
           "steps": [
-            "Place torches or battery lights in known spots, check they work, and keep spare batteries nearby."
+            "Torches or battery lights in known spots",
+            "Check they work",
+            "Spare batteries nearby"
           ]
         },
         {
@@ -209,7 +262,10 @@
           "task": "Charge your phone and power bank",
           "description": "Fully charge both, check the cable fits your phone, and keep them together where you can reach them.",
           "steps": [
-            "Fully charge both, check the cable fits your phone, and keep them together where you can reach them."
+            "Fully charge your phone",
+            "Fully charge your power bank",
+            "Check the cable fits your phone",
+            "Keep them together where you can reach them"
           ]
         },
         {
@@ -217,7 +273,10 @@
           "task": "Write down your energy distributor's details",
           "description": "Find the name and faults number on your energy bill, write it on paper, and keep it with your household plan.",
           "steps": [
-            "Find the name and faults number on your energy bill, write it on paper, and keep it with your household plan."
+            "Find the name on your energy bill",
+            "Find the faults number on your energy bill",
+            "Write it on paper",
+            "Keep it with your household plan"
           ]
         }
       ]
@@ -232,8 +291,12 @@
           "task": "Prepare supplies for children and dependants",
           "description": "Pack food, clothing, comfort items, medication and care instructions. Plan activities that don't need electricity.",
           "steps": [
-            "Pack food, clothing, comfort items, medication and care instructions.",
-            "Plan activities that don't need electricity."
+            "Food",
+            "Clothing",
+            "Comfort items",
+            "Medication",
+            "Care instructions",
+            "Plan activities that don't need electricity"
           ]
         },
         {
@@ -241,7 +304,10 @@
           "task": "Prepare supplies for pets",
           "description": "Set aside enough food and water, check their medication, and keep a carrier or lead accessible in case you need to leave.",
           "steps": [
-            "Set aside enough food and water, check their medication, and keep a carrier or lead accessible in case you need to leave."
+            "Food",
+            "Water",
+            "Check their medication",
+            "Carrier or lead accessible"
           ]
         }
       ]
@@ -256,8 +322,10 @@
           "task": "Make a backup plan for powered medical equipment",
           "description": "Write down each device and how long its battery lasts. Ask the equipment provider what to do in a long outage, and keep their number on paper.",
           "steps": [
-            "Write down each device and how long its battery lasts.",
-            "Ask the equipment provider what to do in a long outage, and keep their number on paper."
+            "Write down each device",
+            "Write down how long its battery lasts",
+            "Ask the equipment provider what to do in a long outage",
+            "Keep their number on paper"
           ]
         },
         {
@@ -265,8 +333,9 @@
           "task": "Ask how to protect refrigerated medicine",
           "description": "Ask a pharmacist or healthcare professional how long your medicine can stay unrefrigerated. Write down their instructions and any backup storage plan.",
           "steps": [
-            "Ask a pharmacist or healthcare professional how long your medicine can stay unrefrigerated.",
-            "Write down their instructions and any backup storage plan."
+            "Ask how long your medicine can stay unrefrigerated",
+            "Write down their instructions",
+            "Write down any backup storage plan"
           ]
         }
       ]

@@ -11,23 +11,131 @@ exports[`buildCrisisPack > orders all three checklists bushfire, flood, power ou
           "id": "household-plan",
           "tasks": [
             {
-              "description": "Note what will make you leave early, your main and backup routes, and who does what.",
+              "done": false,
               "id": "household-plan.plan-reviewed",
+              "steps": [
+                {
+                  "done": false,
+                  "id": "household-plan.plan-reviewed.step-0",
+                  "label": "Your leave-early trigger",
+                },
+                {
+                  "done": false,
+                  "id": "household-plan.plan-reviewed.step-1",
+                  "label": "Main route",
+                },
+                {
+                  "done": false,
+                  "id": "household-plan.plan-reviewed.step-2",
+                  "label": "Backup route",
+                },
+                {
+                  "done": false,
+                  "id": "household-plan.plan-reviewed.step-3",
+                  "label": "Who does what",
+                },
+              ],
               "title": "Write down your bushfire plan",
             },
             {
-              "description": "Pick a lower-risk place, confirm you can stay there, and share the address with everyone.",
+              "done": false,
               "id": "household-plan.leave-destination",
+              "steps": [
+                {
+                  "done": false,
+                  "id": "household-plan.leave-destination.step-0",
+                  "label": "A lower-risk place to go",
+                },
+                {
+                  "done": false,
+                  "id": "household-plan.leave-destination.step-1",
+                  "label": "Confirm you can stay there",
+                },
+                {
+                  "done": false,
+                  "id": "household-plan.leave-destination.step-2",
+                  "label": "Share the address with everyone",
+                },
+              ],
               "title": "Choose where you'll go",
             },
             {
-              "description": "Include water, a torch, batteries, first-aid items, a charged power bank, medication and food. Keep it where everyone can grab it.",
+              "done": false,
               "id": "household-plan.kit-ready",
+              "steps": [
+                {
+                  "done": false,
+                  "id": "household-plan.kit-ready.step-0",
+                  "label": "Water",
+                },
+                {
+                  "done": false,
+                  "id": "household-plan.kit-ready.step-1",
+                  "label": "Torch",
+                },
+                {
+                  "done": false,
+                  "id": "household-plan.kit-ready.step-2",
+                  "label": "Batteries",
+                },
+                {
+                  "done": false,
+                  "id": "household-plan.kit-ready.step-3",
+                  "label": "First-aid items",
+                },
+                {
+                  "done": false,
+                  "id": "household-plan.kit-ready.step-4",
+                  "label": "Charged power bank",
+                },
+                {
+                  "done": false,
+                  "id": "household-plan.kit-ready.step-5",
+                  "label": "Medication",
+                },
+                {
+                  "done": false,
+                  "id": "household-plan.kit-ready.step-6",
+                  "label": "Food",
+                },
+                {
+                  "done": false,
+                  "id": "household-plan.kit-ready.step-7",
+                  "label": "Keep the kit somewhere everyone can grab it",
+                },
+              ],
               "title": "Pack an emergency kit",
             },
             {
-              "description": "Collect ID, insurance details and prescriptions. Keep copies in a waterproof bag and tell someone where they are.",
+              "done": false,
               "id": "household-plan.documents-ready",
+              "steps": [
+                {
+                  "done": false,
+                  "id": "household-plan.documents-ready.step-0",
+                  "label": "ID",
+                },
+                {
+                  "done": false,
+                  "id": "household-plan.documents-ready.step-1",
+                  "label": "Insurance details",
+                },
+                {
+                  "done": false,
+                  "id": "household-plan.documents-ready.step-2",
+                  "label": "Prescriptions",
+                },
+                {
+                  "done": false,
+                  "id": "household-plan.documents-ready.step-3",
+                  "label": "Copies in a waterproof bag",
+                },
+                {
+                  "done": false,
+                  "id": "household-plan.documents-ready.step-4",
+                  "label": "Tell someone where they are",
+                },
+              ],
               "title": "Gather your important documents",
             },
           ],
@@ -37,13 +145,57 @@ exports[`buildCrisisPack > orders all three checklists bushfire, flood, power ou
           "id": "children-pets",
           "tasks": [
             {
-              "description": "Pack their medication, clothes and comfort items, and practise leaving together.",
+              "done": false,
               "id": "children-pets.dependants-plan",
+              "steps": [
+                {
+                  "done": false,
+                  "id": "children-pets.dependants-plan.step-0",
+                  "label": "Their medication",
+                },
+                {
+                  "done": false,
+                  "id": "children-pets.dependants-plan.step-1",
+                  "label": "Clothes",
+                },
+                {
+                  "done": false,
+                  "id": "children-pets.dependants-plan.step-2",
+                  "label": "Comfort items",
+                },
+                {
+                  "done": false,
+                  "id": "children-pets.dependants-plan.step-3",
+                  "label": "Practise leaving together",
+                },
+              ],
               "title": "Name a helper for each child or dependant",
             },
             {
-              "description": "Keep a carrier or lead handy and pack food, water and medication.",
+              "done": false,
               "id": "children-pets.pet-plan",
+              "steps": [
+                {
+                  "done": false,
+                  "id": "children-pets.pet-plan.step-0",
+                  "label": "Carrier or lead",
+                },
+                {
+                  "done": false,
+                  "id": "children-pets.pet-plan.step-1",
+                  "label": "Food",
+                },
+                {
+                  "done": false,
+                  "id": "children-pets.pet-plan.step-2",
+                  "label": "Water",
+                },
+                {
+                  "done": false,
+                  "id": "children-pets.pet-plan.step-3",
+                  "label": "Medication",
+                },
+              ],
               "title": "Get your pets ready to travel",
             },
           ],
@@ -53,13 +205,62 @@ exports[`buildCrisisPack > orders all three checklists bushfire, flood, power ou
           "id": "health-access",
           "tasks": [
             {
-              "description": "List the medication and equipment that must come with you, and arrange help for mobility or communication needs.",
+              "done": false,
               "id": "health-access.health-needs",
+              "steps": [
+                {
+                  "done": false,
+                  "id": "health-access.health-needs.step-0",
+                  "label": "List medication that must come with you",
+                },
+                {
+                  "done": false,
+                  "id": "health-access.health-needs.step-1",
+                  "label": "List equipment that must come with you",
+                },
+                {
+                  "done": false,
+                  "id": "health-access.health-needs.step-2",
+                  "label": "Arrange help for mobility needs",
+                },
+                {
+                  "done": false,
+                  "id": "health-access.health-needs.step-3",
+                  "label": "Arrange help for communication needs",
+                },
+              ],
               "title": "Plan for medication and access needs",
             },
             {
-              "description": "Include household, carer and support-service contacts. Keep a copy in your kit and give one to another person.",
+              "done": false,
               "id": "health-access.contacts-ready",
+              "steps": [
+                {
+                  "done": false,
+                  "id": "health-access.contacts-ready.step-0",
+                  "label": "Household contacts",
+                },
+                {
+                  "done": false,
+                  "id": "health-access.contacts-ready.step-1",
+                  "label": "Carer contacts",
+                },
+                {
+                  "done": false,
+                  "id": "health-access.contacts-ready.step-2",
+                  "label": "Support-service contacts",
+                },
+                {
+                  "done": false,
+                  "id": "health-access.contacts-ready.step-3",
+                  "label": "Keep a copy in your kit",
+                },
+                {
+                  "done": false,
+                  "id": "health-access.contacts-ready.step-4",
+                  "label": "Give a copy to another person",
+                },
+              ],
               "title": "Write down key phone numbers on paper",
             },
           ],
@@ -98,23 +299,136 @@ exports[`buildCrisisPack > orders all three checklists bushfire, flood, power ou
           "id": "household-plan",
           "tasks": [
             {
-              "description": "Find out if your home and usual routes are flood-prone. Choose a safer place on higher ground and write down a route that avoids low-lying roads and crossings.",
+              "done": false,
               "id": "household-plan.local-information",
+              "steps": [
+                {
+                  "done": false,
+                  "id": "household-plan.local-information.step-0",
+                  "label": "Find out if your home is flood-prone",
+                },
+                {
+                  "done": false,
+                  "id": "household-plan.local-information.step-1",
+                  "label": "Find out if your usual routes are flood-prone",
+                },
+                {
+                  "done": false,
+                  "id": "household-plan.local-information.step-2",
+                  "label": "Choose a safer place on higher ground",
+                },
+                {
+                  "done": false,
+                  "id": "household-plan.local-information.step-3",
+                  "label": "Write down a route that avoids low-lying roads and crossings",
+                },
+              ],
               "title": "Check your local flood risk",
             },
             {
-              "description": "Pick one contact in your household and one outside the area, and note their phone numbers. Agree on a meeting spot in case phones don't work.",
+              "done": false,
               "id": "household-plan.contact-plan",
+              "steps": [
+                {
+                  "done": false,
+                  "id": "household-plan.contact-plan.step-0",
+                  "label": "One contact in your household",
+                },
+                {
+                  "done": false,
+                  "id": "household-plan.contact-plan.step-1",
+                  "label": "One contact outside the area",
+                },
+                {
+                  "done": false,
+                  "id": "household-plan.contact-plan.step-2",
+                  "label": "Note their phone numbers",
+                },
+                {
+                  "done": false,
+                  "id": "household-plan.contact-plan.step-3",
+                  "label": "Agree on a meeting spot in case phones don't work",
+                },
+              ],
               "title": "Write down your household contact plan",
             },
             {
-              "description": "Include water, a torch, batteries, a charged power bank, medication, first-aid items and food. Store it above likely flood level.",
+              "done": false,
               "id": "household-plan.kit-ready",
+              "steps": [
+                {
+                  "done": false,
+                  "id": "household-plan.kit-ready.step-0",
+                  "label": "Water",
+                },
+                {
+                  "done": false,
+                  "id": "household-plan.kit-ready.step-1",
+                  "label": "Torch",
+                },
+                {
+                  "done": false,
+                  "id": "household-plan.kit-ready.step-2",
+                  "label": "Batteries",
+                },
+                {
+                  "done": false,
+                  "id": "household-plan.kit-ready.step-3",
+                  "label": "Charged power bank",
+                },
+                {
+                  "done": false,
+                  "id": "household-plan.kit-ready.step-4",
+                  "label": "Medication",
+                },
+                {
+                  "done": false,
+                  "id": "household-plan.kit-ready.step-5",
+                  "label": "First-aid items",
+                },
+                {
+                  "done": false,
+                  "id": "household-plan.kit-ready.step-6",
+                  "label": "Food",
+                },
+                {
+                  "done": false,
+                  "id": "household-plan.kit-ready.step-7",
+                  "label": "Store the kit above likely flood level",
+                },
+              ],
               "title": "Pack an emergency kit",
             },
             {
-              "description": "List the documents, medicines and valuables to lift out of reach of water. Choose where they'll go and have waterproof bags or containers ready.",
+              "done": false,
               "id": "household-plan.items-lifted",
+              "steps": [
+                {
+                  "done": false,
+                  "id": "household-plan.items-lifted.step-0",
+                  "label": "List documents to lift",
+                },
+                {
+                  "done": false,
+                  "id": "household-plan.items-lifted.step-1",
+                  "label": "List medicines to lift",
+                },
+                {
+                  "done": false,
+                  "id": "household-plan.items-lifted.step-2",
+                  "label": "List valuables to lift",
+                },
+                {
+                  "done": false,
+                  "id": "household-plan.items-lifted.step-3",
+                  "label": "Choose where they'll go",
+                },
+                {
+                  "done": false,
+                  "id": "household-plan.items-lifted.step-4",
+                  "label": "Waterproof bags or containers ready",
+                },
+              ],
               "title": "Plan which items to move higher",
             },
           ],
@@ -124,13 +438,62 @@ exports[`buildCrisisPack > orders all three checklists bushfire, flood, power ou
           "id": "children-pets",
           "tasks": [
             {
-              "description": "Pack their medication, clothes and comfort items. Explain the safer place in calm, simple words.",
+              "done": false,
               "id": "children-pets.dependants-plan",
+              "steps": [
+                {
+                  "done": false,
+                  "id": "children-pets.dependants-plan.step-0",
+                  "label": "Their medication",
+                },
+                {
+                  "done": false,
+                  "id": "children-pets.dependants-plan.step-1",
+                  "label": "Clothes",
+                },
+                {
+                  "done": false,
+                  "id": "children-pets.dependants-plan.step-2",
+                  "label": "Comfort items",
+                },
+                {
+                  "done": false,
+                  "id": "children-pets.dependants-plan.step-3",
+                  "label": "Explain the safer place in calm, simple words",
+                },
+              ],
               "title": "Name a helper for each child or dependant",
             },
             {
-              "description": "Keep a carrier or lead handy and pack food, water and medication. Find a safer destination that accepts pets.",
+              "done": false,
               "id": "children-pets.pet-plan",
+              "steps": [
+                {
+                  "done": false,
+                  "id": "children-pets.pet-plan.step-0",
+                  "label": "Carrier or lead",
+                },
+                {
+                  "done": false,
+                  "id": "children-pets.pet-plan.step-1",
+                  "label": "Food",
+                },
+                {
+                  "done": false,
+                  "id": "children-pets.pet-plan.step-2",
+                  "label": "Water",
+                },
+                {
+                  "done": false,
+                  "id": "children-pets.pet-plan.step-3",
+                  "label": "Medication",
+                },
+                {
+                  "done": false,
+                  "id": "children-pets.pet-plan.step-4",
+                  "label": "Find a safer destination that accepts pets",
+                },
+              ],
               "title": "Get your pets ready to move",
             },
           ],
@@ -140,13 +503,62 @@ exports[`buildCrisisPack > orders all three checklists bushfire, flood, power ou
           "id": "health-access",
           "tasks": [
             {
-              "description": "Keep medication and prescriptions ready to grab, and arrange help for mobility or communication needs. Store key instructions in a waterproof bag.",
+              "done": false,
               "id": "health-access.medicine-plan",
+              "steps": [
+                {
+                  "done": false,
+                  "id": "health-access.medicine-plan.step-0",
+                  "label": "Medication ready to grab",
+                },
+                {
+                  "done": false,
+                  "id": "health-access.medicine-plan.step-1",
+                  "label": "Prescriptions ready to grab",
+                },
+                {
+                  "done": false,
+                  "id": "health-access.medicine-plan.step-2",
+                  "label": "Arrange help for mobility needs",
+                },
+                {
+                  "done": false,
+                  "id": "health-access.medicine-plan.step-3",
+                  "label": "Arrange help for communication needs",
+                },
+                {
+                  "done": false,
+                  "id": "health-access.medicine-plan.step-4",
+                  "label": "Store key instructions in a waterproof bag",
+                },
+              ],
               "title": "Plan for medication and access needs",
             },
             {
-              "description": "Include VICSES 132 500 and your household contacts, and keep a copy in your kit. Call Triple Zero (000) for life-threatening danger.",
+              "done": false,
               "id": "health-access.contacts-ready",
+              "steps": [
+                {
+                  "done": false,
+                  "id": "health-access.contacts-ready.step-0",
+                  "label": "VICSES — 132 500",
+                },
+                {
+                  "done": false,
+                  "id": "health-access.contacts-ready.step-1",
+                  "label": "Household contacts",
+                },
+                {
+                  "done": false,
+                  "id": "health-access.contacts-ready.step-2",
+                  "label": "Keep a copy in your kit",
+                },
+                {
+                  "done": false,
+                  "id": "health-access.contacts-ready.step-3",
+                  "label": "Call Triple Zero (000) for life-threatening danger",
+                },
+              ],
               "title": "Write down emergency numbers on paper",
             },
           ],
@@ -190,23 +602,106 @@ exports[`buildCrisisPack > orders all three checklists bushfire, flood, power ou
           "id": "household-plan",
           "tasks": [
             {
-              "description": "Store drinking water and non-perishable food for at least three days. Add a battery-powered radio if you have one, and replace expired items regularly.",
+              "done": false,
               "id": "household-plan.outage-plan",
+              "steps": [
+                {
+                  "done": false,
+                  "id": "household-plan.outage-plan.step-0",
+                  "label": "Drinking water for at least three days",
+                },
+                {
+                  "done": false,
+                  "id": "household-plan.outage-plan.step-1",
+                  "label": "Non-perishable food for at least three days",
+                },
+                {
+                  "done": false,
+                  "id": "household-plan.outage-plan.step-2",
+                  "label": "Battery-powered radio if you have one",
+                },
+                {
+                  "done": false,
+                  "id": "household-plan.outage-plan.step-3",
+                  "label": "Replace expired items regularly",
+                },
+              ],
               "title": "Set aside 72 hours of supplies",
             },
             {
-              "description": "Place torches or battery lights in known spots, check they work, and keep spare batteries nearby.",
+              "done": false,
               "id": "household-plan.lighting-plan",
+              "steps": [
+                {
+                  "done": false,
+                  "id": "household-plan.lighting-plan.step-0",
+                  "label": "Torches or battery lights in known spots",
+                },
+                {
+                  "done": false,
+                  "id": "household-plan.lighting-plan.step-1",
+                  "label": "Check they work",
+                },
+                {
+                  "done": false,
+                  "id": "household-plan.lighting-plan.step-2",
+                  "label": "Spare batteries nearby",
+                },
+              ],
               "title": "Put backup lighting somewhere easy to find",
             },
             {
-              "description": "Fully charge both, check the cable fits your phone, and keep them together where you can reach them.",
+              "done": false,
               "id": "household-plan.power-bank",
+              "steps": [
+                {
+                  "done": false,
+                  "id": "household-plan.power-bank.step-0",
+                  "label": "Fully charge your phone",
+                },
+                {
+                  "done": false,
+                  "id": "household-plan.power-bank.step-1",
+                  "label": "Fully charge your power bank",
+                },
+                {
+                  "done": false,
+                  "id": "household-plan.power-bank.step-2",
+                  "label": "Check the cable fits your phone",
+                },
+                {
+                  "done": false,
+                  "id": "household-plan.power-bank.step-3",
+                  "label": "Keep them together where you can reach them",
+                },
+              ],
               "title": "Charge your phone and power bank",
             },
             {
-              "description": "Find the name and faults number on your energy bill, write it on paper, and keep it with your household plan.",
+              "done": false,
               "id": "household-plan.distributor-ready",
+              "steps": [
+                {
+                  "done": false,
+                  "id": "household-plan.distributor-ready.step-0",
+                  "label": "Find the name on your energy bill",
+                },
+                {
+                  "done": false,
+                  "id": "household-plan.distributor-ready.step-1",
+                  "label": "Find the faults number on your energy bill",
+                },
+                {
+                  "done": false,
+                  "id": "household-plan.distributor-ready.step-2",
+                  "label": "Write it on paper",
+                },
+                {
+                  "done": false,
+                  "id": "household-plan.distributor-ready.step-3",
+                  "label": "Keep it with your household plan",
+                },
+              ],
               "title": "Write down your energy distributor's details",
             },
           ],
@@ -216,13 +711,67 @@ exports[`buildCrisisPack > orders all three checklists bushfire, flood, power ou
           "id": "children-pets",
           "tasks": [
             {
-              "description": "Pack food, clothing, comfort items, medication and care instructions. Plan activities that don't need electricity.",
+              "done": false,
               "id": "children-pets.dependants-plan",
+              "steps": [
+                {
+                  "done": false,
+                  "id": "children-pets.dependants-plan.step-0",
+                  "label": "Food",
+                },
+                {
+                  "done": false,
+                  "id": "children-pets.dependants-plan.step-1",
+                  "label": "Clothing",
+                },
+                {
+                  "done": false,
+                  "id": "children-pets.dependants-plan.step-2",
+                  "label": "Comfort items",
+                },
+                {
+                  "done": false,
+                  "id": "children-pets.dependants-plan.step-3",
+                  "label": "Medication",
+                },
+                {
+                  "done": false,
+                  "id": "children-pets.dependants-plan.step-4",
+                  "label": "Care instructions",
+                },
+                {
+                  "done": false,
+                  "id": "children-pets.dependants-plan.step-5",
+                  "label": "Plan activities that don't need electricity",
+                },
+              ],
               "title": "Prepare supplies for children and dependants",
             },
             {
-              "description": "Set aside enough food and water, check their medication, and keep a carrier or lead accessible in case you need to leave.",
+              "done": false,
               "id": "children-pets.pet-plan",
+              "steps": [
+                {
+                  "done": false,
+                  "id": "children-pets.pet-plan.step-0",
+                  "label": "Food",
+                },
+                {
+                  "done": false,
+                  "id": "children-pets.pet-plan.step-1",
+                  "label": "Water",
+                },
+                {
+                  "done": false,
+                  "id": "children-pets.pet-plan.step-2",
+                  "label": "Check their medication",
+                },
+                {
+                  "done": false,
+                  "id": "children-pets.pet-plan.step-3",
+                  "label": "Carrier or lead accessible",
+                },
+              ],
               "title": "Prepare supplies for pets",
             },
           ],
@@ -232,13 +781,52 @@ exports[`buildCrisisPack > orders all three checklists bushfire, flood, power ou
           "id": "health-access",
           "tasks": [
             {
-              "description": "Write down each device and how long its battery lasts. Ask the equipment provider what to do in a long outage, and keep their number on paper.",
+              "done": false,
               "id": "health-access.powered-equipment",
+              "steps": [
+                {
+                  "done": false,
+                  "id": "health-access.powered-equipment.step-0",
+                  "label": "Write down each device",
+                },
+                {
+                  "done": false,
+                  "id": "health-access.powered-equipment.step-1",
+                  "label": "Write down how long its battery lasts",
+                },
+                {
+                  "done": false,
+                  "id": "health-access.powered-equipment.step-2",
+                  "label": "Ask the equipment provider what to do in a long outage",
+                },
+                {
+                  "done": false,
+                  "id": "health-access.powered-equipment.step-3",
+                  "label": "Keep their number on paper",
+                },
+              ],
               "title": "Make a backup plan for powered medical equipment",
             },
             {
-              "description": "Ask a pharmacist or healthcare professional how long your medicine can stay unrefrigerated. Write down their instructions and any backup storage plan.",
+              "done": false,
               "id": "health-access.medicine-plan",
+              "steps": [
+                {
+                  "done": false,
+                  "id": "health-access.medicine-plan.step-0",
+                  "label": "Ask how long your medicine can stay unrefrigerated",
+                },
+                {
+                  "done": false,
+                  "id": "health-access.medicine-plan.step-1",
+                  "label": "Write down their instructions",
+                },
+                {
+                  "done": false,
+                  "id": "health-access.medicine-plan.step-2",
+                  "label": "Write down any backup storage plan",
+                },
+              ],
               "title": "Ask how to protect refrigerated medicine",
             },
           ],
@@ -450,23 +1038,136 @@ exports[`buildCrisisPack > renders the flood checklist exactly as the crisis pag
           "id": "household-plan",
           "tasks": [
             {
-              "description": "Find out if your home and usual routes are flood-prone. Choose a safer place on higher ground and write down a route that avoids low-lying roads and crossings.",
+              "done": false,
               "id": "household-plan.local-information",
+              "steps": [
+                {
+                  "done": false,
+                  "id": "household-plan.local-information.step-0",
+                  "label": "Find out if your home is flood-prone",
+                },
+                {
+                  "done": false,
+                  "id": "household-plan.local-information.step-1",
+                  "label": "Find out if your usual routes are flood-prone",
+                },
+                {
+                  "done": false,
+                  "id": "household-plan.local-information.step-2",
+                  "label": "Choose a safer place on higher ground",
+                },
+                {
+                  "done": false,
+                  "id": "household-plan.local-information.step-3",
+                  "label": "Write down a route that avoids low-lying roads and crossings",
+                },
+              ],
               "title": "Check your local flood risk",
             },
             {
-              "description": "Pick one contact in your household and one outside the area, and note their phone numbers. Agree on a meeting spot in case phones don't work.",
+              "done": false,
               "id": "household-plan.contact-plan",
+              "steps": [
+                {
+                  "done": false,
+                  "id": "household-plan.contact-plan.step-0",
+                  "label": "One contact in your household",
+                },
+                {
+                  "done": false,
+                  "id": "household-plan.contact-plan.step-1",
+                  "label": "One contact outside the area",
+                },
+                {
+                  "done": false,
+                  "id": "household-plan.contact-plan.step-2",
+                  "label": "Note their phone numbers",
+                },
+                {
+                  "done": false,
+                  "id": "household-plan.contact-plan.step-3",
+                  "label": "Agree on a meeting spot in case phones don't work",
+                },
+              ],
               "title": "Write down your household contact plan",
             },
             {
-              "description": "Include water, a torch, batteries, a charged power bank, medication, first-aid items and food. Store it above likely flood level.",
+              "done": false,
               "id": "household-plan.kit-ready",
+              "steps": [
+                {
+                  "done": false,
+                  "id": "household-plan.kit-ready.step-0",
+                  "label": "Water",
+                },
+                {
+                  "done": false,
+                  "id": "household-plan.kit-ready.step-1",
+                  "label": "Torch",
+                },
+                {
+                  "done": false,
+                  "id": "household-plan.kit-ready.step-2",
+                  "label": "Batteries",
+                },
+                {
+                  "done": false,
+                  "id": "household-plan.kit-ready.step-3",
+                  "label": "Charged power bank",
+                },
+                {
+                  "done": false,
+                  "id": "household-plan.kit-ready.step-4",
+                  "label": "Medication",
+                },
+                {
+                  "done": false,
+                  "id": "household-plan.kit-ready.step-5",
+                  "label": "First-aid items",
+                },
+                {
+                  "done": false,
+                  "id": "household-plan.kit-ready.step-6",
+                  "label": "Food",
+                },
+                {
+                  "done": false,
+                  "id": "household-plan.kit-ready.step-7",
+                  "label": "Store the kit above likely flood level",
+                },
+              ],
               "title": "Pack an emergency kit",
             },
             {
-              "description": "List the documents, medicines and valuables to lift out of reach of water. Choose where they'll go and have waterproof bags or containers ready.",
+              "done": false,
               "id": "household-plan.items-lifted",
+              "steps": [
+                {
+                  "done": false,
+                  "id": "household-plan.items-lifted.step-0",
+                  "label": "List documents to lift",
+                },
+                {
+                  "done": false,
+                  "id": "household-plan.items-lifted.step-1",
+                  "label": "List medicines to lift",
+                },
+                {
+                  "done": false,
+                  "id": "household-plan.items-lifted.step-2",
+                  "label": "List valuables to lift",
+                },
+                {
+                  "done": false,
+                  "id": "household-plan.items-lifted.step-3",
+                  "label": "Choose where they'll go",
+                },
+                {
+                  "done": false,
+                  "id": "household-plan.items-lifted.step-4",
+                  "label": "Waterproof bags or containers ready",
+                },
+              ],
               "title": "Plan which items to move higher",
             },
           ],
@@ -476,13 +1177,62 @@ exports[`buildCrisisPack > renders the flood checklist exactly as the crisis pag
           "id": "children-pets",
           "tasks": [
             {
-              "description": "Pack their medication, clothes and comfort items. Explain the safer place in calm, simple words.",
+              "done": false,
               "id": "children-pets.dependants-plan",
+              "steps": [
+                {
+                  "done": false,
+                  "id": "children-pets.dependants-plan.step-0",
+                  "label": "Their medication",
+                },
+                {
+                  "done": false,
+                  "id": "children-pets.dependants-plan.step-1",
+                  "label": "Clothes",
+                },
+                {
+                  "done": false,
+                  "id": "children-pets.dependants-plan.step-2",
+                  "label": "Comfort items",
+                },
+                {
+                  "done": false,
+                  "id": "children-pets.dependants-plan.step-3",
+                  "label": "Explain the safer place in calm, simple words",
+                },
+              ],
               "title": "Name a helper for each child or dependant",
             },
             {
-              "description": "Keep a carrier or lead handy and pack food, water and medication. Find a safer destination that accepts pets.",
+              "done": false,
               "id": "children-pets.pet-plan",
+              "steps": [
+                {
+                  "done": false,
+                  "id": "children-pets.pet-plan.step-0",
+                  "label": "Carrier or lead",
+                },
+                {
+                  "done": false,
+                  "id": "children-pets.pet-plan.step-1",
+                  "label": "Food",
+                },
+                {
+                  "done": false,
+                  "id": "children-pets.pet-plan.step-2",
+                  "label": "Water",
+                },
+                {
+                  "done": false,
+                  "id": "children-pets.pet-plan.step-3",
+                  "label": "Medication",
+                },
+                {
+                  "done": false,
+                  "id": "children-pets.pet-plan.step-4",
+                  "label": "Find a safer destination that accepts pets",
+                },
+              ],
               "title": "Get your pets ready to move",
             },
           ],
@@ -492,13 +1242,62 @@ exports[`buildCrisisPack > renders the flood checklist exactly as the crisis pag
           "id": "health-access",
           "tasks": [
             {
-              "description": "Keep medication and prescriptions ready to grab, and arrange help for mobility or communication needs. Store key instructions in a waterproof bag.",
+              "done": false,
               "id": "health-access.medicine-plan",
+              "steps": [
+                {
+                  "done": false,
+                  "id": "health-access.medicine-plan.step-0",
+                  "label": "Medication ready to grab",
+                },
+                {
+                  "done": false,
+                  "id": "health-access.medicine-plan.step-1",
+                  "label": "Prescriptions ready to grab",
+                },
+                {
+                  "done": false,
+                  "id": "health-access.medicine-plan.step-2",
+                  "label": "Arrange help for mobility needs",
+                },
+                {
+                  "done": false,
+                  "id": "health-access.medicine-plan.step-3",
+                  "label": "Arrange help for communication needs",
+                },
+                {
+                  "done": false,
+                  "id": "health-access.medicine-plan.step-4",
+                  "label": "Store key instructions in a waterproof bag",
+                },
+              ],
               "title": "Plan for medication and access needs",
             },
             {
-              "description": "Include VICSES 132 500 and your household contacts, and keep a copy in your kit. Call Triple Zero (000) for life-threatening danger.",
+              "done": false,
               "id": "health-access.contacts-ready",
+              "steps": [
+                {
+                  "done": false,
+                  "id": "health-access.contacts-ready.step-0",
+                  "label": "VICSES — 132 500",
+                },
+                {
+                  "done": false,
+                  "id": "health-access.contacts-ready.step-1",
+                  "label": "Household contacts",
+                },
+                {
+                  "done": false,
+                  "id": "health-access.contacts-ready.step-2",
+                  "label": "Keep a copy in your kit",
+                },
+                {
+                  "done": false,
+                  "id": "health-access.contacts-ready.step-3",
+                  "label": "Call Triple Zero (000) for life-threatening danger",
+                },
+              ],
               "title": "Write down emergency numbers on paper",
             },
           ],

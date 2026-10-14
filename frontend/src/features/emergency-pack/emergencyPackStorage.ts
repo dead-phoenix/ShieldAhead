@@ -26,6 +26,7 @@ export interface PackChecklistItem {
   id: string
   task: string
   description?: string
+  steps: string[]
 }
 
 export interface PackChecklistGroup {

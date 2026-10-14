@@ -14,10 +14,26 @@ export function PackChecklistPage({ page }: { page: CrisisPackChecklistPage }) {
           <ul className="pack-tick-list">
             {group.tasks.map((task) => (
               <li key={task.id}>
-                <span className="pack-tick-box" aria-hidden="true" />
+                <span
+                  className={task.done ? 'pack-tick-box pack-tick-box--done' : 'pack-tick-box'}
+                  aria-hidden="true"
+                />
                 <span>
                   <strong className="pack-task__title">{task.title}</strong>
                   {task.description ? <small className="pack-task__description">{task.description}</small> : null}
+                  {task.steps.length > 0 ? (
+                    <ul className="pack-tick-sublist">
+                      {task.steps.map((step) => (
+                        <li key={step.id}>
+                          <span
+                            className={step.done ? 'pack-tick-box pack-tick-box--sub pack-tick-box--done' : 'pack-tick-box pack-tick-box--sub'}
+                            aria-hidden="true"
+                          />
+                          <span>{step.label}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  ) : null}
                 </span>
               </li>
             ))}

@@ -99,8 +99,9 @@ describe('CrisisLandingPage voice input', () => {
     stubVoice()
     renderPageWithLocation()
 
-    fireEvent.change(screen.getByRole('combobox'), { target: { value: 'take me to wifi' } })
-    fireEvent.submit(screen.getByRole('combobox').closest('form')!)
+    const queryInput = screen.getByRole('combobox', { name: /Ask a question/ })
+    fireEvent.change(queryInput, { target: { value: 'take me to wifi' } })
+    fireEvent.submit(queryInput.closest('form')!)
 
     expect(screen.getByTestId('location')).toHaveTextContent('/map?category=wifi')
   })
@@ -119,8 +120,9 @@ describe('CrisisLandingPage voice input', () => {
     stubVoice()
     renderPageWithLocation()
 
-    fireEvent.change(screen.getByRole('combobox'), { target: { value: 'How should I prepare for bushfire' } })
-    fireEvent.submit(screen.getByRole('combobox').closest('form')!)
+    const queryInput = screen.getByRole('combobox', { name: /Ask a question/ })
+    fireEvent.change(queryInput, { target: { value: 'How should I prepare for bushfire' } })
+    fireEvent.submit(queryInput.closest('form')!)
 
     expect(screen.getByTestId('location')).toHaveTextContent('/crisis/bushfire/guidance')
   })

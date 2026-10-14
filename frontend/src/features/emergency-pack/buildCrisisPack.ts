@@ -3,6 +3,7 @@ import { snapshotMatchesArea, type NearbySnapshot } from '../../data/offline/nea
 import type { OfflineServiceCategory } from '../../data/offlineData'
 import { householdChecklistTitles, pinnedHelplines, type CrisisKind } from '../crisis/crisisContent'
 import { formatDistanceKm, formatNearbyDate, nearbyCategoryTitles, nearbyCopy, serviceDetail } from '../nearby/nearbyCopy'
+import { readCrisisChecklist } from '../crisis/crisisChecklistStorage'
 import { clampPlaceText, distinctPlaces, packDisplayName, packPlaceAddress } from './crisisPackPlaceText'
 import { bundledPackChecklist } from './crisisPackSnapshot'
 import { crisisPackSources, type CrisisPackSource } from './crisisPackSources'
@@ -34,10 +35,18 @@ export interface CrisisPackPlaceColumn {
   message?: string
 }
 
+export interface CrisisPackTaskStep {
+  id: string
+  label: string
+  done: boolean
+}
+
 export interface CrisisPackTask {
   id: string
   title: string
   description?: string
+  done: boolean
+  steps: CrisisPackTaskStep[]
 }
 
 export interface CrisisPackTaskGroup {
@@ -261,6 +270,7 @@ function nearbyPage(nearby: BuildCrisisPackInput['nearby']): UnnumberedPage | nu
 
 function checklistPage(kind: CrisisKind, label: string, snapshot: EmergencyPackSnapshot): UnnumberedPage {
   const groups = snapshot.checklists[kind]?.length ? snapshot.checklists[kind] : bundledPackChecklist(kind)
+  const checked = readCrisisChecklist(kind)
   return {
     kind: 'checklist',
     id: `checklist-${kind}`,
@@ -271,11 +281,20 @@ function checklistPage(kind: CrisisKind, label: string, snapshot: EmergencyPackS
     groups: groups.map((group) => ({
       id: group.id,
       title: group.title,
-      tasks: group.items.map((item) => ({
-        id: `${group.id}.${item.id}`,
-        title: item.task,
-        ...(item.description?.trim() ? { description: item.description } : {}),
-      })),
+      tasks: group.items.map((item) => {
+        const steps = (item.steps ?? []).map((step, index) => ({
+          id: `${group.id}.${item.id}.step-${index}`,
+          label: step,
+          done: Boolean(checked[`${group.id}.${item.id}.step-${index}`]),
+        }))
+        return {
+          id: `${group.id}.${item.id}`,
+          title: item.task,
+          ...(steps.length === 0 && item.description?.trim() ? { description: item.description } : {}),
+          done: steps.length > 0 && steps.every((step) => step.done),
+          steps,
+        }
+      }),
     })),
     guidelines: {
       dosTitle: 'What to do',

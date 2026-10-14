@@ -270,11 +270,54 @@
 }
 
 .pack-tick-box {
+  position: relative;
   width: calc(var(--pt) * 12);
   height: calc(var(--pt) * 12);
   margin-top: calc(var(--pt) * 1.5);
   border: calc(var(--pt) * 1.25) solid var(--pack-accent);
   border-radius: calc(var(--pt) * 1.5);
+}
+
+/* The tick is drawn with border colour, not a filled background, so it still
+   shows up when a browser's print/PDF output drops background graphics. */
+.pack-tick-box--done::after {
+  content: '';
+  position: absolute;
+  left: 25%;
+  top: 8%;
+  width: 32%;
+  height: 58%;
+  border-right: calc(var(--pt) * 1.75) solid var(--pack-accent);
+  border-bottom: calc(var(--pt) * 1.75) solid var(--pack-accent);
+  transform: rotate(40deg);
+}
+
+.pack-tick-sublist {
+  display: grid;
+  gap: calc(var(--pt) * 4);
+  margin-top: calc(var(--pt) * 4);
+  padding: 0;
+  list-style: none;
+}
+
+.pack-tick-sublist li {
+  display: grid;
+  grid-template-columns: calc(var(--pt) * 9) minmax(0, 1fr);
+  gap: calc(var(--pt) * 6);
+  align-items: start;
+  font-size: calc(var(--pt) * 9);
+}
+
+.pack-tick-box--sub {
+  width: calc(var(--pt) * 9);
+  height: calc(var(--pt) * 9);
+  margin-top: calc(var(--pt) * 1);
+  border-width: calc(var(--pt) * 1);
+}
+
+.pack-tick-box--sub.pack-tick-box--done::after {
+  border-right-width: calc(var(--pt) * 1.25);
+  border-bottom-width: calc(var(--pt) * 1.25);
 }
 
 .pack-sources {

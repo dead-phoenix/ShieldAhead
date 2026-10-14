@@ -2,6 +2,8 @@ import { lazy, Suspense, useCallback, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { appRoutes } from '../../../app/config/product'
 import { LazyLoadBoundary } from '../../../shared/components/LazyLoadBoundary'
+import { MyAreaInlineEditor } from '../../../shared/components/MyAreaInlineEditor'
+import { getMyArea } from '../../../storage/myAreaStorage'
 import { crisisContent } from '../crisisContent'
 import { CrisisQuerySearch } from '../components/CrisisQuerySearch'
 
@@ -9,6 +11,8 @@ const AccordionGallery = lazy(() => import('../../../shared/components/Accordion
 
 export function CrisisLandingPage() {
   const [activeHazard, setActiveHazard] = useState(1)
+  const [myArea, setMyArea] = useState(getMyArea)
+  const [isAreaEditorOpen, setIsAreaEditorOpen] = useState(false)
   const handleActiveHazardChange = useCallback((index: number) => setActiveHazard(index), [])
   return (
     <section className="content-page crisis-page" aria-labelledby="crisis-title">
@@ -25,6 +29,18 @@ export function CrisisLandingPage() {
       <header className="crisis-intro">
         <div><h1 id="crisis-title">Pre-crisis guidance</h1><p>Choose a hazard to review its preparation page and household checklist before an emergency occurs.</p></div>
       </header>
+      <MyAreaInlineEditor
+        myArea={myArea}
+        isEditorOpen={isAreaEditorOpen}
+        onOpenEditor={() => setIsAreaEditorOpen(true)}
+        onSaved={(saved) => {
+          setIsAreaEditorOpen(false)
+          setMyArea(saved)
+        }}
+        usesAreaText="The Support map and your downloaded Crisis pack use"
+        setAreaPrompt="Set your area so the Support map and your downloaded Crisis pack can find nearby help."
+        updateAreaPrompt="Update the area the Support map and your downloaded Crisis pack use."
+      />
       <CrisisQuerySearch />
       <LazyLoadBoundary
         fallback={

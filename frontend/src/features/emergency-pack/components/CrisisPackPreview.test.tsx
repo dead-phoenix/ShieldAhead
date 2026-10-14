@@ -80,7 +80,7 @@ describe('Crisis pack preview', () => {
     expect(within(bushfire).getByRole('heading', { name: 'Bushfire Household Checklist' })).toBeInTheDocument()
     expect(within(bushfire).getByText('Tick each one when it is done')).toBeInTheDocument()
     expect(within(bushfire).getByRole('heading', { name: 'Children and pets' })).toBeInTheDocument()
-    expect(bushfire.querySelectorAll('.pack-tick-list li')).toHaveLength(8)
+    expect(bushfire.querySelectorAll('.pack-tick-list > li')).toHaveLength(8)
     expect(within(bushfire).getByText('Write down your bushfire plan')).toBeInTheDocument()
     expect(within(bushfire).queryByRole('heading', { name: 'Sources' })).not.toBeInTheDocument()
 

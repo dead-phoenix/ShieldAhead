@@ -162,4 +162,24 @@ describe('first-run routing', () => {
     expect(await screen.findByRole('heading', { name: 'Pre-crisis guidance' })).toBeVisible()
     expect(window.location.pathname).toBe('/crisis')
   })
+
+  it('scrolls back to the top of the page on every route change', async () => {
+    window.history.replaceState({}, '', '/crisis/bushfire')
+    const fetchSpy = vi.spyOn(window, 'fetch').mockRejectedValue(new Error('offline in this test'))
+    const scrollToSpy = vi.spyOn(window, 'scrollTo').mockImplementation(() => {})
+
+    try {
+      render(<AppRouter />)
+      await screen.findByRole('heading', { name: 'Prepare for bushfire' })
+      scrollToSpy.mockClear() // only care about scroll calls from here on, not the initial mount
+
+      fireEvent.click(screen.getByRole('link', { name: /Next: Flood checklist/ }))
+
+      expect(await screen.findByRole('heading', { name: 'Prepare for flood' })).toBeVisible()
+      expect(scrollToSpy).toHaveBeenCalledWith(0, 0)
+    } finally {
+      fetchSpy.mockRestore()
+      scrollToSpy.mockRestore()
+    }
+  })
 })

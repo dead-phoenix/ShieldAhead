@@ -39,6 +39,7 @@ function RouteFocusManager() {
       return
     }
 
+    window.scrollTo(0, 0)
     window.requestAnimationFrame(() => {
       document.querySelector<HTMLElement>('#main-content')?.focus()
     })

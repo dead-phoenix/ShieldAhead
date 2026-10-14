@@ -1,15 +1,14 @@
 import { Check, DownloadSimple } from '@phosphor-icons/react'
 import { useEffect, useMemo, useState, useSyncExternalStore } from 'react'
-import { Link } from 'react-router-dom'
-import { appRoutes } from '../../../app/config/product'
+import { useSearchParams } from 'react-router-dom'
 import { fetchChecklistItems, fetchHelplines } from '../../../data/api/apiCrisisRepository'
 import { readNearbySnapshot, subscribeToNearbySnapshot } from '../../../data/offline/nearbySnapshot'
 import { LoadingState } from '../../../shared/components/LoadingState'
+import { MyAreaInlineEditor } from '../../../shared/components/MyAreaInlineEditor'
 import { useOnlineStatus } from '../../../shared/hooks/useOnlineStatus'
 import { getMyArea } from '../../../storage/myAreaStorage'
 import type { CrisisKind } from '../../crisis/crisisContent'
 import { getMapPlaceRepository } from '../../map/data/mapPlaceRepository'
-import { MyAreaForm } from '../../settings/components/MyAreaForm'
 import { CRISIS_PACK_DOCUMENT_TITLE, buildCrisisPack } from '../buildCrisisPack'
 import { CrisisPackPreview } from '../components/CrisisPackPreview'
 import { nearestPlaces, toChecklistGroups, toPackHelplines } from '../crisisPackSnapshot'
@@ -47,6 +46,7 @@ function PackToggle({ label, pressed, onToggle }: { label: string; pressed: bool
 
 export function EmergencyPackPage() {
   const isOnline = useOnlineStatus()
+  const [searchParams] = useSearchParams()
   const [myArea, setMyArea] = useState(getMyArea)
   const areaPostcode = myArea?.postcode ?? ''
   const areaLabel = myArea?.label ?? ''
@@ -54,7 +54,7 @@ export function EmergencyPackPage() {
   const [snapshot, setSnapshot] = useState<EmergencyPackSnapshot>(() => readEmergencyPack().snapshot)
   const [isLoading, setIsLoading] = useState(false)
   const [notice, setNotice] = useState('')
-  const [isAreaPromptOpen, setIsAreaPromptOpen] = useState(false)
+  const [isAreaEditorOpen, setIsAreaEditorOpen] = useState(false)
   const [isReadyAfterAreaSave, setIsReadyAfterAreaSave] = useState(false)
 
   useEffect(() => {
@@ -63,6 +63,19 @@ export function EmergencyPackPage() {
     return () => {
       document.title = previousTitle
     }
+  }, [])
+
+  // A hazard page's "Download this checklist"/"Download all" links land here with
+  // ?crisis=<kind>|all, so arriving from there switches only that checklist (or
+  // all of them) on without disturbing the Helplines/Wi-Fi/Charities toggles.
+  useEffect(() => {
+    const crisisParam = searchParams.get('crisis')
+    if (!crisisParam) return
+    const kinds = crisisPackOptions.map((option) => option.kind)
+    const crises = crisisParam === 'all' ? kinds : kinds.filter((kind) => kind === crisisParam)
+    if (crises.length === 0) return
+    updatePreferences({ ...readEmergencyPack().preferences, crises })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   useEffect(() => {
@@ -171,7 +184,7 @@ export function EmergencyPackPage() {
   // TODO(group 4): replace window.print() with client-side PDF generation, then remove the print CSS in EmergencyPackPage.css.
   function downloadPack() {
     if (!myArea) {
-      setIsAreaPromptOpen(true)
+      setIsAreaEditorOpen(true)
       return
     }
     setIsReadyAfterAreaSave(false)
@@ -188,6 +201,21 @@ export function EmergencyPackPage() {
           <p>Choose what goes in your pack, check the preview, then download it to print or keep on this device. Write your own emergency contacts by hand.</p>
         </div>
       </header>
+
+      <MyAreaInlineEditor
+        myArea={myArea}
+        isEditorOpen={isAreaEditorOpen}
+        onOpenEditor={() => setIsAreaEditorOpen(true)}
+        onSaved={(saved) => {
+          setIsAreaEditorOpen(false)
+          setIsLoading(true)
+          setIsReadyAfterAreaSave(true)
+          setMyArea(saved)
+        }}
+        usesAreaText="This pack and the Support map use"
+        setAreaPrompt="Set your area so this pack and the Support map can find nearby help."
+        updateAreaPrompt="Update the area this pack and the Support map use."
+      />
 
       <div className="emergency-pack-choices">
         <div className="emergency-pack-toggles" role="group" aria-labelledby="emergency-pack-help-label">
@@ -218,35 +246,11 @@ export function EmergencyPackPage() {
         </div>
       </div>
 
-      <p className="emergency-pack-area">
-        {myArea ? (
-          <>My area: <strong>{myArea.label}</strong> · <Link to={appRoutes.myArea}>Change</Link></>
-        ) : (
-          <>My area is not set. You will be asked for it when you download the pack.</>
-        )}
-      </p>
-
-      {isAreaPromptOpen ? (
-        <section className="emergency-pack-area-prompt" aria-labelledby="pack-area-prompt-title">
-          <h2 id="pack-area-prompt-title">Which area is this pack for?</h2>
-          <MyAreaForm
-            label="Postcode"
-            submitLabel="Save My area and build pack"
-            onSaved={(saved) => {
-              setIsAreaPromptOpen(false)
-              setIsLoading(true)
-              setIsReadyAfterAreaSave(true)
-              setMyArea(saved)
-            }}
-          />
-        </section>
-      ) : (
-        <div className="emergency-pack-toolbar">
-          <button className="button button--primary" type="button" onClick={downloadPack} disabled={isReadyAfterAreaSave && isLoading}>
-            <DownloadSimple aria-hidden="true" size={18} /> {isReady ? 'Ready. Download pack' : 'Download crisis pack as PDF'}
-          </button>
-        </div>
-      )}
+      <div className="emergency-pack-toolbar">
+        <button className="button button--primary" type="button" onClick={downloadPack} disabled={isReadyAfterAreaSave && isLoading}>
+          <DownloadSimple aria-hidden="true" size={18} /> {isReady ? 'Ready. Download pack' : 'Download crisis pack as PDF'}
+        </button>
+      </div>
       {isReady ? <p className="inline-status" role="status">Your pack is built for {areaLabel}.</p> : null}
       {notice ? <p className="inline-status" role="status">{notice}</p> : null}
       {isLoading ? <LoadingState label="Updating saved information" /> : null}

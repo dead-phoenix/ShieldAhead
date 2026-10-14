@@ -179,13 +179,14 @@ describe('Epic 5 crisis preparation pages', () => {
     expect(screen.queryByText('Content source')).not.toBeInTheDocument()
     expect(screen.queryByRole('heading', { name: 'Preparation guidance' })).not.toBeInTheDocument()
     expect(screen.queryByRole('button', { name: /guide/i })).not.toBeInTheDocument()
-    expect(await screen.findByText('0 of 8 complete')).toBeVisible()
+    expect(await screen.findByText('0 of 24 complete')).toBeVisible()
 
     expect(screen.getByText('Your next step')).toBeVisible()
     expect(screen.queryByText('How to complete this')).not.toBeInTheDocument()
 
+    // The item checkbox cascades to all 3 of its steps, not just itself.
     fireEvent.click(screen.getByRole('checkbox', { name: /Check your local flood risk/i }))
-    expect(screen.getByText('1 of 8 complete')).toBeVisible()
+    expect(screen.getByText('3 of 24 complete')).toBeVisible()
 
     unmount()
     render(<AppRouter />)

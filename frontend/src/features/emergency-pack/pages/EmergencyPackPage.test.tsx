@@ -111,18 +111,21 @@ describe('Crisis pack page', () => {
     expect(within(preview()).getByText(`Details were correct when this pack was saved on ${today}. Check before relying on them.`)).toBeVisible()
   })
 
-  it('asks which area the pack is for when My area is not set, then offers a ready download', async () => {
+  it('shows the area search inline on the page when My area is not set, then offers a ready download', async () => {
     window.localStorage.removeItem(storageKeys.myArea)
     const print = vi.spyOn(window, 'print').mockImplementation(() => undefined)
     renderPage()
-    expect(screen.getByText(/My area is not set/)).toBeVisible()
+    expect(screen.getByText('Set your area so this pack and the Support map can find nearby help.')).toBeVisible()
+    const download = screen.getByRole('button', { name: 'Download crisis pack as PDF' })
+    expect(download).toBeVisible()
 
-    fireEvent.click(screen.getByRole('button', { name: 'Download crisis pack as PDF' }))
+    fireEvent.click(download)
     expect(print).not.toHaveBeenCalled()
-    expect(screen.getByRole('heading', { name: 'Which area is this pack for?' })).toBeVisible()
+    expect(screen.getByLabelText('Address, suburb, or postcode')).toBeVisible()
+    expect(screen.getByRole('button', { name: 'Use my current location' })).toBeVisible()
 
-    fireEvent.change(screen.getByLabelText('Postcode'), { target: { value: '3453' } })
-    fireEvent.click(screen.getByRole('button', { name: 'Save My area and build pack' }))
+    fireEvent.change(screen.getByLabelText('Address, suburb, or postcode'), { target: { value: '3453' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Search' }))
 
     const ready = await screen.findByRole('button', { name: 'Ready. Download pack' })
     expect(JSON.parse(window.localStorage.getItem(storageKeys.myArea)!)).toMatchObject({ postcode: '3453', label: '3453' })
@@ -131,6 +134,25 @@ describe('Crisis pack page', () => {
     expect(print).toHaveBeenCalledTimes(1)
     expect(screen.getByRole('button', { name: 'Download crisis pack as PDF' })).toBeVisible()
     print.mockRestore()
+  })
+
+  it('lets you change My area inline without leaving the page or losing the download button', async () => {
+    renderPage()
+    await within(preview()).findByText('Wi-Fi 1')
+    expect(screen.getByText('Harcourt 3453', { selector: 'strong' })).toBeVisible()
+    expect(screen.queryByLabelText('Address, suburb, or postcode')).not.toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Change' }))
+    expect(screen.getByLabelText('Address, suburb, or postcode')).toBeVisible()
+    expect(screen.getByRole('button', { name: 'Download crisis pack as PDF' })).toBeVisible()
+  })
+
+  it('puts My area at the top of the page, before the pack toggles', async () => {
+    renderPage()
+    await within(preview()).findByText('Wi-Fi 1')
+    const headings = screen.getAllByRole('heading', { level: 2 }).map((heading) => heading.textContent)
+    expect(headings.indexOf('My area')).toBeLessThan(headings.indexOf('Get help'))
+    expect(headings.indexOf('My area')).toBeLessThan(headings.indexOf('Checklists'))
   })
 
   it('shows six pressed toggles by default and the full preview', async () => {

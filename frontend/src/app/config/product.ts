@@ -47,7 +47,7 @@ export const storageKeys = {
   savedPlaces: 'shieldahead.saved-places.v1',
   searchLocation: 'shieldahead.search-location.v1',
   myArea: 'shieldahead.my-area.v1',
-  crisisChecklist: 'shieldahead.crisis-checklist.v1',
+  crisisChecklist: 'shieldahead.crisis-checklist.v2',
   emergencyPack: 'shieldahead.emergency-pack.v1',
   siteUnlocked: 'shieldahead.site-unlocked.v1',
   nearbySnapshot: 'shieldahead.nearby-snapshot.v1',

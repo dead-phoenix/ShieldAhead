@@ -50,6 +50,7 @@ export function toChecklistGroups(records: ChecklistItemRecord[]): PackChecklist
       id: record.itemId,
       task: record.task,
       description: record.description,
+      steps: record.steps,
     })
   }
   return [...groups.values()]
@@ -59,6 +60,6 @@ export function bundledPackChecklist(kind: CrisisKind): PackChecklistGroup[] {
   return bundledChecklistGroups(kind).map((group) => ({
     id: group.id,
     title: group.title,
-    items: group.items.map((item) => ({ id: item.id, task: item.label, description: item.description })),
+    items: group.items.map((item) => ({ id: item.id, task: item.label, description: item.description, steps: item.steps })),
   }))
 }

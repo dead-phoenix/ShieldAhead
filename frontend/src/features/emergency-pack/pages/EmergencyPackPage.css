@@ -41,14 +41,6 @@
   align-items: center;
 }
 
-.emergency-pack-area {
-  margin: 0;
-}
-
-.emergency-pack-area-prompt {
-  max-width: 28rem;
-}
-
 .emergency-pack-toolbar .button {
   display: inline-flex;
   gap: 0.4rem;
@@ -63,8 +55,8 @@
   .emergency-pack-intro,
   .emergency-pack-choices,
   .emergency-pack-toolbar,
-  .emergency-pack-area,
-  .emergency-pack-area-prompt,
+  .my-area-inline,
+  .my-area-inline__prompt,
   .inline-status,
   .loading-state {
     display: none !important;
